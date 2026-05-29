@@ -1,38 +1,39 @@
 @include('layouts.header-v2')
 
 <style>
-    .login-page-wrapper {
-        min-height: 100vh;
+    /* Navbar dari header-v2 sudah punya z-index tinggi, pastikan bg/overlay di bawahnya */
+    .login-fullscreen {
         position: relative;
-        display: flex;
-        flex-direction: column;
+        min-height: 100vh;
     }
 
-    .login-bg {
+    /* Background image & overlay hanya di bawah konten, tidak menutupi navbar */
+    .login-fullscreen::before {
+        content: '';
         position: fixed;
         inset: 0;
-        z-index: 0;
+        z-index: -2;
         background-image: url('{{ asset('storage/'.$set->gambar_login) }}');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
     }
 
-    .login-overlay {
+    .login-fullscreen::after {
+        content: '';
         position: fixed;
         inset: 0;
-        z-index: 1;
+        z-index: -1;
         background: rgba(230, 32, 32, 0.72);
     }
 
     .login-content {
         position: relative;
-        z-index: 2;
-        flex: 1;
+        z-index: 1;
         display: flex;
         align-items: center;
-        padding-top: 100px;
-        padding-bottom: 40px;
+        padding-top: 120px;
+        padding-bottom: 60px;
         min-height: 100vh;
     }
 
@@ -40,7 +41,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding-right: 40px;
+        padding-right: 48px;
     }
 
     .login-info-col .badge-event {
@@ -55,28 +56,29 @@
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,0.35);
         margin-bottom: 20px;
+        width: fit-content;
     }
 
     .login-info-col h1 {
         font-size: 2.6rem;
         font-weight: 800;
         color: #fff;
-        line-height: 1.2;
+        line-height: 1.25;
         margin-bottom: 18px;
-        text-shadow: 0 2px 12px rgba(0,0,0,0.18);
+        text-shadow: 0 2px 12px rgba(0,0,0,0.2);
     }
 
     .login-info-col p {
-        font-size: 1.05rem;
+        font-size: 1rem;
         color: rgba(255,255,255,0.88);
-        line-height: 1.75;
+        line-height: 1.8;
         margin-bottom: 28px;
     }
 
     .login-info-features {
         list-style: none;
         padding: 0;
-        margin: 0 0 32px 0;
+        margin: 0;
     }
 
     .login-info-features li {
@@ -84,8 +86,8 @@
         align-items: center;
         gap: 10px;
         color: rgba(255,255,255,0.92);
-        font-size: 0.95rem;
-        margin-bottom: 12px;
+        font-size: 0.94rem;
+        margin-bottom: 13px;
     }
 
     .login-info-features li i {
@@ -99,32 +101,31 @@
         border-radius: 20px;
         box-shadow: 0 20px 60px rgba(0,0,0,0.25);
         padding: 40px 36px;
-        border: none;
     }
 
     .login-card .card-logo {
-        width: 56px;
-        height: 56px;
+        width: 52px;
+        height: 52px;
         object-fit: contain;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
 
     .login-card h2 {
-        font-size: 1.5rem;
+        font-size: 1.45rem;
         font-weight: 800;
         color: #1a1a1a;
         margin-bottom: 4px;
     }
 
     .login-card .subtitle {
-        color: #888;
-        font-size: 0.88rem;
-        margin-bottom: 28px;
+        color: #999;
+        font-size: 0.87rem;
+        margin-bottom: 26px;
     }
 
     .login-card .form-label {
         font-weight: 600;
-        font-size: 0.88rem;
+        font-size: 0.87rem;
         color: #333;
         margin-bottom: 6px;
     }
@@ -133,13 +134,14 @@
         border-radius: 10px;
         border: 1.5px solid #e0e0e0;
         padding: 11px 14px;
-        font-size: 0.95rem;
-        transition: border-color 0.2s;
+        font-size: 0.94rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .login-card .form-control:focus {
         border-color: #E62020;
         box-shadow: 0 0 0 3px rgba(230,32,32,0.1);
+        outline: none;
     }
 
     .btn-login-primary {
@@ -149,8 +151,9 @@
         border-radius: 10px;
         padding: 12px;
         font-weight: 700;
-        font-size: 0.97rem;
+        font-size: 0.96rem;
         width: 100%;
+        cursor: pointer;
         transition: background 0.2s;
     }
 
@@ -166,8 +169,9 @@
         border-radius: 10px;
         padding: 12px;
         font-weight: 700;
-        font-size: 0.97rem;
+        font-size: 0.96rem;
         width: 100%;
+        cursor: pointer;
         transition: background 0.2s;
     }
 
@@ -177,6 +181,8 @@
     }
 
     .btn-login-outline {
+        display: block;
+        text-align: center;
         background: transparent;
         color: #666;
         border: 1.5px solid #ddd;
@@ -185,6 +191,7 @@
         font-weight: 600;
         font-size: 0.93rem;
         width: 100%;
+        text-decoration: none;
         transition: all 0.2s;
     }
 
@@ -194,62 +201,51 @@
         background: rgba(230,32,32,0.04);
     }
 
-    .login-divider {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 18px 0;
-        color: #bbb;
-        font-size: 0.82rem;
-    }
-
-    .login-divider::before,
-    .login-divider::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: #e8e8e8;
-    }
-
     .login-footer-text {
         text-align: center;
         color: #bbb;
         font-size: 0.78rem;
-        margin-top: 20px;
+        margin-top: 22px;
     }
 
     @media (max-width: 767.98px) {
-        .login-info-col {
-            display: none;
-        }
-        .login-content {
-            align-items: flex-start;
-            padding-top: 90px;
-        }
-        .login-card {
-            padding: 28px 20px;
-        }
+        .login-info-col { display: none; }
+        .login-content { padding-top: 100px; }
+        .login-card { padding: 28px 20px; }
     }
 </style>
 
-<div class="login-page-wrapper">
-    <div class="login-bg"></div>
-    <div class="login-overlay"></div>
-
+<div class="login-fullscreen">
     <div class="login-content">
         <div class="container">
             <div class="row align-items-center justify-content-center g-4">
 
-                {{-- Col kiri: informasi event --}}
+                {{-- Col kiri: informasi event dari $set --}}
                 <div class="col-md-8 col-lg-7 login-info-col">
-                    <span class="badge-event">Society Event - Science Bank</span>
-                    <h1>Portal Layanan<br>Data Terbuka</h1>
-                    <p>Akses informasi, data, dan layanan Kementerian Pertahanan RI secara mudah, cepat, dan aman melalui satu platform terintegrasi.</p>
+                    <span class="badge-event">{{ $set->nama_app ?? env('APP_NAME', 'Society Event') }}</span>
+                    <h1>{!! nl2br(e($set->judul_login ?? 'Portal Layanan')) !!}</h1>
+                    <p>{{ $set->deskripsi_login ?? $set->deskripsi_app ?? 'Akses informasi, data, dan layanan secara mudah, cepat, dan aman melalui satu platform terintegrasi.' }}</p>
                     <ul class="login-info-features">
-                        <li><i class="fa-solid fa-circle-check"></i> Data dan informasi resmi Kementerian Pertahanan RI</li>
-                        <li><i class="fa-solid fa-circle-check"></i> Akses berbagai layanan event dan kegiatan</li>
-                        <li><i class="fa-solid fa-circle-check"></i> Sistem keamanan berlapis dengan verifikasi OTP</li>
-                        <li><i class="fa-solid fa-circle-check"></i> Registrasi mudah dan proses validasi transparan</li>
+                        @if(!empty($set->fitur1_login))
+                            <li><i class="fa-solid fa-circle-check"></i> {{ $set->fitur1_login }}</li>
+                        @else
+                            <li><i class="fa-solid fa-circle-check"></i> Data dan informasi resmi terverifikasi</li>
+                        @endif
+                        @if(!empty($set->fitur2_login))
+                            <li><i class="fa-solid fa-circle-check"></i> {{ $set->fitur2_login }}</li>
+                        @else
+                            <li><i class="fa-solid fa-circle-check"></i> Akses berbagai layanan event dan kegiatan</li>
+                        @endif
+                        @if(!empty($set->fitur3_login))
+                            <li><i class="fa-solid fa-circle-check"></i> {{ $set->fitur3_login }}</li>
+                        @else
+                            <li><i class="fa-solid fa-circle-check"></i> Sistem keamanan berlapis dengan verifikasi OTP</li>
+                        @endif
+                        @if(!empty($set->fitur4_login))
+                            <li><i class="fa-solid fa-circle-check"></i> {{ $set->fitur4_login }}</li>
+                        @else
+                            <li><i class="fa-solid fa-circle-check"></i> Registrasi mudah dan proses validasi transparan</li>
+                        @endif
                     </ul>
                 </div>
 
@@ -284,13 +280,13 @@
                                     data-bs-target="#modalUnduh">
                                     <i class="fa-solid fa-user-plus me-2"></i> Registrasi
                                 </button>
-                                <a href="{{ route('lupa-password') }}" class="btn-login-outline text-decoration-none text-center d-block">
+                                <a href="{{ route('lupa-password') }}" class="btn-login-outline">
                                     <i class="fa-solid fa-key me-2"></i> Lupa Password
                                 </a>
                             </div>
                         </form>
 
-                        <div class="login-footer-text">© 2026 Kementerian Pertahanan RI</div>
+                        <div class="login-footer-text">&copy; {{ date('Y') }} {{ $set->nama_app ?? env('APP_NAME') }}</div>
                     </div>
                 </div>
 

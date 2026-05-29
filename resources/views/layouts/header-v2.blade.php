@@ -1,302 +1,207 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ optional($set)->nama_app ?? config('app.name') }}</title>
+	<base href="../../../" />
+	<title><?= env('APP_NAME', 'Society Event - Science Bank'); ?></title>
+	<meta charset="utf-8" />
+	<meta name="description" content="=" />
+	<meta name="keywords" content="" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:type" content="article" />
+	<meta property="og:title" content="Satu Data Pertahanan - Kementrian Pertahanan" />
+	<meta name="csrf-token" content="{{ csrf_token() }}">
+	<meta property="og:site_name" content="Satu Data Pertahanan" />
+	<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+	<link rel="shortcut icon" href="{{ asset('images/logo.png') }}" />
+	<link href="{{ asset('assets/css/min/font.min.css') }}" rel="stylesheet" type="text/css" />
 
-    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-
-    {{-- Bootstrap 5 CSS --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-
-    {{-- Font Awesome 6 --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-    {{-- Google Fonts: Inter --}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-    {{-- SweetAlert2 --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
-    {{-- Custom front CSS (local) --}}
-    <link rel="stylesheet" href="{{ asset('assets/css/front.css') }}">
-
-    <style>
-        *, *::before, *::after { box-sizing: border-box; }
-
-        html {
-            height: 100%;
-            overflow-x: hidden;
-            overscroll-behavior: none;
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            min-height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            overscroll-behavior-y: none;
-            background-color: #f8f9fa;
-        }
-
-        /* NAVBAR */
-        .navbar-v2 {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1050;
-            background: #fff;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-            transition: box-shadow 0.3s;
-        }
-
-        .navbar-v2 .navbar-inner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 70px;
-            padding: 0 24px;
-        }
-
-        .navbar-v2 .navbar-brand-area {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-        }
-
-        .navbar-v2 .brand-logo { width: 40px; height: 40px; object-fit: contain; }
-
-        .navbar-v2 .brand-name {
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: #E62020;
-            line-height: 1.2;
-        }
-
-        .navbar-v2 .brand-sub { font-size: 0.7rem; color: #888; font-weight: 400; }
-
-        .navbar-v2 .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            list-style: none;
-            margin: 0; padding: 0;
-        }
-
-        .navbar-v2 .nav-links li a {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #444;
-            text-decoration: none;
-            transition: background 0.18s, color 0.18s;
-            white-space: nowrap;
-        }
-
-        .navbar-v2 .nav-links li a:hover,
-        .navbar-v2 .nav-links li a.active {
-            background: rgba(230,32,32,0.08);
-            color: #E62020;
-        }
-
-        .navbar-v2 .nav-links li a.active { font-weight: 700; }
-
-        .navbar-v2 .nav-actions { display: flex; align-items: center; gap: 8px; }
-
-        .navbar-v2 .btn-nav-login {
-            background: #E62020; color: #fff; border: none;
-            border-radius: 8px; padding: 8px 18px;
-            font-weight: 600; font-size: 0.875rem;
-            text-decoration: none; transition: background 0.2s; white-space: nowrap;
-        }
-        .navbar-v2 .btn-nav-login:hover { background: #c41a1a; color: #fff; }
-
-        .navbar-v2 .btn-nav-register {
-            background: transparent; color: #E62020;
-            border: 1.5px solid #E62020; border-radius: 8px;
-            padding: 7px 16px; font-weight: 600; font-size: 0.875rem;
-            text-decoration: none; transition: all 0.2s; white-space: nowrap;
-        }
-        .navbar-v2 .btn-nav-register:hover { background: #E62020; color: #fff; }
-
-        .navbar-v2 .user-dropdown { position: relative; }
-
-        .navbar-v2 .user-avatar-btn {
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(230,32,32,0.06); border: none;
-            border-radius: 10px; padding: 6px 12px;
-            cursor: pointer; font-size: 0.875rem; color: #333;
-            font-weight: 500; transition: background 0.2s;
-        }
-        .navbar-v2 .user-avatar-btn:hover { background: rgba(230,32,32,0.12); }
-
-        .navbar-v2 .avatar-circle {
-            width: 32px; height: 32px; background: #E62020;
-            border-radius: 50%; display: flex; align-items: center;
-            justify-content: center; color: #fff; font-weight: 700; font-size: 0.8rem;
-        }
-
-        .navbar-v2 .dropdown-menu-custom {
-            display: none; position: absolute; right: 0;
-            top: calc(100% + 8px); background: #fff;
-            border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-            min-width: 200px; padding: 8px; z-index: 2000;
-        }
-        .navbar-v2 .dropdown-menu-custom.show { display: block; }
-
-        .navbar-v2 .dropdown-menu-custom a,
-        .navbar-v2 .dropdown-menu-custom button {
-            display: flex; align-items: center; gap: 10px;
-            width: 100%; padding: 9px 12px; border-radius: 8px;
-            font-size: 0.875rem; color: #333; text-decoration: none;
-            background: none; border: none; cursor: pointer;
-            text-align: left; transition: background 0.15s;
-        }
-        .navbar-v2 .dropdown-menu-custom a:hover,
-        .navbar-v2 .dropdown-menu-custom button:hover {
-            background: rgba(230,32,32,0.06); color: #E62020;
-        }
-        .navbar-v2 .dropdown-divider-custom { border-top: 1px solid #f0f0f0; margin: 4px 0; }
-
-        .navbar-v2 .hamburger-btn {
-            display: none; background: none; border: none;
-            cursor: pointer; padding: 6px; border-radius: 8px;
-            color: #333; font-size: 1.3rem; transition: background 0.2s;
-        }
-        .navbar-v2 .hamburger-btn:hover { background: rgba(230,32,32,0.08); color: #E62020; }
-
-        .navbar-v2 .mobile-menu {
-            display: none; flex-direction: column;
-            background: #fff; border-top: 1px solid #f0f0f0;
-            padding: 12px 16px 16px; gap: 4px;
-        }
-        .navbar-v2 .mobile-menu.open { display: flex; }
-
-        .navbar-v2 .mobile-menu a,
-        .navbar-v2 .mobile-menu button {
-            display: flex; align-items: center; gap: 8px;
-            padding: 10px 14px; border-radius: 8px;
-            font-size: 0.9rem; font-weight: 500; color: #444;
-            text-decoration: none; background: none; border: none;
-            cursor: pointer; transition: background 0.15s; text-align: left;
-        }
-        .navbar-v2 .mobile-menu a:hover,
-        .navbar-v2 .mobile-menu a.active { background: rgba(230,32,32,0.08); color: #E62020; }
-        .navbar-v2 .mobile-menu .mobile-divider { border-top: 1px solid #f0f0f0; margin: 6px 0; }
-        .navbar-v2 .mobile-menu .btn-mobile-login {
-            background: #E62020; color: #fff;
-            border-radius: 8px; font-weight: 700; justify-content: center;
-        }
-        .navbar-v2 .mobile-menu .btn-mobile-login:hover { background: #c41a1a; }
-
-        @media (max-width: 991.98px) {
-            .navbar-v2 .nav-links,
-            .navbar-v2 .nav-actions { display: none; }
-            .navbar-v2 .hamburger-btn { display: flex; align-items: center; justify-content: center; }
-        }
-    </style>
+	<link href="{{ asset('assets/css/min/datatables.bundle.min.css') }}" rel="stylesheet" type="text/css" />
+	<link href="{{ asset('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
+	<link href="{{ asset('assets/css/min/style.bundle.min.css') }}" rel="stylesheet" type="text/css" />
+	<link href="{{ asset('assets/css/min/front.min.css') }}" rel="stylesheet" type="text/css" />
+	<script src="{{ asset('assets/js/min/swal.min.js') }}"></script>
+	<script src="{{ asset('assets/js/min/jquery.min.js') }}"></script>
 </head>
-<body>
 
-<nav class="navbar-v2">
-    <div class="container-fluid">
-        <div class="navbar-inner">
-            <a href="{{ url(env('APP_ROUTE').'/home') }}" class="navbar-brand-area">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="brand-logo">
-                <div>
-                    <div class="brand-name">{{ optional($set)->nama_app ?? config('app.name') }}</div>
-                    <div class="brand-sub">Portal Layanan</div>
-                </div>
-            </a>
+<body id="kt_app_body" data-kt-app-header-fixed-mobile="true" data-kt-app-toolbar-enabled="true" class="app-default">
+	<div class="d-flex flex-column flex-root app-root" id="kt_app_root">
+		<div class="app-page flex-column flex-column-fluid" id="kt_app_page">
+			<div id="kt_app_header" class="app-header" data-kt-sticky="true"
+				data-kt-sticky-activate="{default: false, lg: true}" data-kt-sticky-name="app-header-sticky"
+				data-kt-sticky-offset="{default: false, lg: '300px'}">
+				<div class="app-container container-xxl d-flex align-items-stretch justify-content-between"
+					id="kt_app_header_container">
+					<div class="d-flex align-items-center d-lg-none ms-n3 me-2" title="Show sidebar menu">
+						<div class="btn btn-icon btn-color-gray-600 btn-active-color-primary w-35px h-35px"
+							id="kt_app_header_menu_toggle">
+							<i class="ki-outline ki-abstract-14 fs-2"></i>
+						</div>
+					</div>
+					<div class="d-flex align-items-center flex-grow-1 flex-lg-grow-0 me-lg-15">
+						<a href="{{ env('APP_ROUTE') }}" class="d-flex align-items-center">
+							<img alt="Logo" src="{{ asset('images/logo.png') }}" class="h-70px d-lg-none my-5" />
+							<img alt="Logo" src="{{ asset('images/logo.png') }}"
+								class="h-70px d-none d-lg-inline app-sidebar-logo-default theme-light-show" />
+							<div class="ms-3 d-flex flex-column">
+								<span class="fw-bold text-white fs-4 d-none d-md-block">
+									Society Event
+								</span>
+								<span class="fw-bold text-white fs-4 d-block d-md-none">
+									Society Event
+								</span>
+								<span class="fw-bold text-white fs-6 d-none d-md-block">
+									Science Bank
+								</span>
+								<span class="fw-bold text-white fs-6 d-block d-md-none">
+									Science Bank
+								</span>
 
-            <ul class="nav-links">
-                <li><a href="{{ url(env('APP_ROUTE').'/home') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'home' ? 'active' : '' }}"><i class="fa-solid fa-house"></i> Beranda</a></li>
-                <li><a href="{{ route('list') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'list' ? 'active' : '' }}"><i class="fa-solid fa-database"></i> Data</a></li>
-                <li><a href="{{ route('list-organisasi') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'list-organisasi' ? 'active' : '' }}"><i class="fa-solid fa-building"></i> Organisasi</a></li>
-                <li><a href="{{ route('list-topik') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'list-topik' ? 'active' : '' }}"><i class="fa-solid fa-tags"></i> Topik</a></li>
-                <li><a href="{{ route('hubungi-kami') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'hubungi-kami' ? 'active' : '' }}"><i class="fa-solid fa-envelope"></i> Hubungi</a></li>
-            </ul>
+							</div>
+						</a>
+					</div>
+					<div class="d-flex align-items-stretch justify-content-end flex-lg-grow-1"
+						id="kt_app_header_wrapper">
+						<div class="app-header-menu app-header-mobile-drawer align-items-stretch" data-kt-drawer="true"
+							data-kt-drawer-name="app-header-menu" data-kt-drawer-activate="{default: true, lg: false}"
+							data-kt-drawer-overlay="true" data-kt-drawer-width="350px" data-kt-drawer-direction="start"
+							data-kt-drawer-toggle="#kt_app_header_menu_toggle" data-kt-swapper="true"
+							data-kt-swapper-mode="{default: 'append', lg: 'prepend'}"
+							data-kt-swapper-parent="{default: '#kt_app_body', lg: '#kt_app_header_wrapper'}">
+							<div class="menu menu-rounded menu-active-bg menu-state-primary menu-column menu-lg-row menu-title-gray-700 menu-icon-gray-500 menu-arrow-gray-500 menu-bullet-gray-500 my-5 my-lg-0 align-items-stretch fw-semibold px-2 px-lg-0 justify-content-end w-100"
+								id="kt_app_header_menu" data-kt-menu="true">
+								{{-- About --}}
+								<div class="menu-item me-0 me-lg-2">
+									<a href="{{ route('about') }}" class="menu-link">
+										<span class="menu-title fs-5">
+											<span class="fw-bold 
+                {{ $menu_aktif == 'about' ? 'text-maroon-active' : 'text-white' }} 
+                hover:text-maroon-active transition-colors">
+												About
+											</span>
+										</span>
+									</a>
+								</div>
 
-            <div class="nav-actions">
-                @if(session('id_user'))
-                <div class="user-dropdown" id="userDropdown">
-                    <button class="user-avatar-btn" onclick="toggleDropdown()">
-                        <div class="avatar-circle">{{ strtoupper(substr(session('nama_user'), 0, 1)) }}</div>
-                        <span class="d-none d-lg-inline">{{ session('nama_user') }}</span>
-                        <i class="fa-solid fa-chevron-down" style="font-size:0.7rem;color:#888;"></i>
-                    </button>
-                    <div class="dropdown-menu-custom" id="dropdownMenu">
-                        <a href="{{ route('profile-user') }}"><i class="fa-solid fa-user"></i> Profil Saya</a>
-                        <a href="{{ route('monitoring-permohonan') }}"><i class="fa-solid fa-list-check"></i> Monitoring</a>
-                        <a href="{{ route('riwayat-user') }}"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat</a>
-                        <div class="dropdown-divider-custom"></div>
-                        <form action="{{ route('logout-backend-action') }}" method="POST" style="margin:0;">
-                            @csrf
-                            <button type="submit"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
-                        </form>
-                    </div>
-                </div>
-                @else
-                <a href="{{ route('login') }}" class="btn-nav-login"><i class="fa-solid fa-right-to-bracket"></i> Masuk</a>
-                <a href="{{ route('register') }}" class="btn-nav-register"><i class="fa-solid fa-user-plus"></i> Daftar</a>
-                @endif
-            </div>
+								{{-- Event --}}
+								<div class="menu-item me-0 me-lg-2">
+									<a href="{{ route('about') }}" class="menu-link">
+										<span class="menu-title fs-5">
+											<span class="fw-bold 
+                {{ $menu_aktif == 'event' ? 'text-maroon-active' : 'text-white' }} 
+                hover:text-maroon-active transition-colors">
+												Event
+											</span>
+										</span>
+									</a>
+								</div>
 
-            <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileMenu()">
-                <i class="fa-solid fa-bars" id="hamburgerIcon"></i>
-            </button>
-        </div>
+								{{-- Paper --}}
+								<div class="menu-item me-0 me-lg-2">
+									<a href="{{ route('about') }}" class="menu-link">
+										<span class="menu-title fs-5">
+											<span class="fw-bold 
+                {{ $menu_aktif == 'paper' ? 'text-maroon-active' : 'text-white' }} 
+                hover:text-maroon-active transition-colors">
+												Paper
+											</span>
+										</span>
+									</a>
+								</div>
 
-        <div class="mobile-menu" id="mobileMenu">
-            <a href="{{ url(env('APP_ROUTE').'/home') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'home' ? 'active' : '' }}"><i class="fa-solid fa-house"></i> Beranda</a>
-            <a href="{{ route('list') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'list' ? 'active' : '' }}"><i class="fa-solid fa-database"></i> Data</a>
-            <a href="{{ route('list-organisasi') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'list-organisasi' ? 'active' : '' }}"><i class="fa-solid fa-building"></i> Organisasi</a>
-            <a href="{{ route('list-topik') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'list-topik' ? 'active' : '' }}"><i class="fa-solid fa-tags"></i> Topik</a>
-            <a href="{{ route('hubungi-kami') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'hubungi-kami' ? 'active' : '' }}"><i class="fa-solid fa-envelope"></i> Hubungi Kami</a>
-            <div class="mobile-divider"></div>
-            @if(session('id_user'))
-            <a href="{{ route('profile-user') }}"><i class="fa-solid fa-user"></i> Profil Saya</a>
-            <a href="{{ route('monitoring-permohonan') }}"><i class="fa-solid fa-list-check"></i> Monitoring</a>
-            <a href="{{ route('riwayat-user') }}"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat</a>
-            <div class="mobile-divider"></div>
-            <form action="{{ route('logout-backend-action') }}" method="POST" style="margin:0;">
-                @csrf
-                <button type="submit" style="color:#E62020;"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
-            </form>
-            @else
-            <a href="{{ route('login') }}" class="btn-mobile-login"><i class="fa-solid fa-right-to-bracket"></i> Masuk</a>
-            <a href="{{ route('register') }}" style="border:1.5px solid #E62020;color:#E62020;border-radius:8px;justify-content:center;"><i class="fa-solid fa-user-plus"></i> Daftar</a>
-            @endif
-        </div>
-    </div>
-</nav>
+								<?php if (empty(session('id_user'))) {?>
+								<div class="menu-item me-0">
+									<a href="{{ route('login') }}" class="btn btn-login">
+										<i class="fa-solid fa-circle-user me-2 text-white"></i> Login / Register
+									</a>
+								</div>
+								<?php } else {?>
+								<div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
+									data-kt-menu-placement="bottom-start"
+									class="menu-item menu-lg-down-accordion menu-sub-lg-down-indention me-0 me-lg-2">
+									<span class="menu-link bg-warning">
+										<span class="menu-title text-white"> <i class="fa fa-user px-2 py-4 text-white">
+											</i> Hallo, {{ session('nama_user')}}</span>
+										<span class="menu-arrow d-lg-none"></span>
+									</span>
+									<div
+										class="menu-sub menu-sub-lg-down-accordion menu-sub-lg-dropdown px-lg-2 py-lg-4 w-lg-200px">
+										<div class="menu-item">
+											<a class="menu-link mb-2 hover:text-maroon-active transition-colors" href="{{ route('riwayat-user') }}"
+												data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click"
+												data-bs-placement="right">
+												<span class="menu-icon">
+													<span class="bullet w-10px h-10px"></span>
+												</span>
+												<span class="menu-title">Riwayat Permohonan</span>
+											</a>
+											<a class="menu-link mb-2 hover:text-maroon-active transition-colors" href="{{ route('profile-user') }}"
+												data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click"
+												data-bs-placement="right">
+												<span class="menu-icon">
+													<span class="bullet w-10px h-10px"></span>
+												</span>
+												<span class="menu-title">Profil Saya</span>
+											</a>
+											<a class="menu-link mb-2 hover:text-maroon-active transition-colors" href="{{ route('ganti-password-user') }}"
+												data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click"
+												data-bs-placement="right">
+												<span class="menu-icon">
+													<span class="bullet w-10px h-10px"></span>
+												</span>
+												<span class="menu-title">Ganti Password</span>
+											</a>
+										</div>
+										<div class="menu-item">
+											<a href="javascript:void(0)" id="btnLogout"
+												class="btn btn-danger text-white btn-block w-100">
+												<i class="fa-solid fa-power-off"></i> Logout
+											</a>
+										</div>
+										<script>
+											$(document).ready(function () {
+												$("#btnLogout").on("click", function (e) {
+													e.preventDefault();
 
-<script>
-    function toggleMobileMenu() {
-        const menu = document.getElementById('mobileMenu');
-        const icon = document.getElementById('hamburgerIcon');
-        menu.classList.toggle('open');
-        icon.className = menu.classList.contains('open') ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
-    }
-    function toggleDropdown() {
-        document.getElementById('dropdownMenu').classList.toggle('show');
-    }
-    document.addEventListener('click', function(e) {
-        const dd = document.getElementById('userDropdown');
-        if (dd && !dd.contains(e.target)) {
-            const m = document.getElementById('dropdownMenu');
-            if (m) m.classList.remove('show');
-        }
-    });
-</script>
+													Swal.fire({
+														title: "Konfirmasi",
+														text: "Yakin ingin logout?",
+														icon: "warning",
+														showCancelButton: true,
+														confirmButtonColor: "#d33",
+														cancelButtonColor: "#3085d6",
+														confirmButtonText: "Ya, Logout!"
+													}).then((result) => {
+														if (result.isConfirmed) {
+															$.ajax({
+																url: "{{ route('logout-backend-action') }}",
+																type: "POST",
+																data: { _token: "{{ csrf_token() }}" },
+																success: function (res) {
+																	if (res.status) {
+																		Swal.fire("Berhasil!", res.message, "success").then(() => {
+																			window.location.href = "{{ route('login') }}";
+																		});
+																	} else {
+																		Swal.fire("Gagal!", res.message, "error");
+																	}
+																},
+																error: function () {
+																	Swal.fire("Error!", "Terjadi kesalahan, coba lagi.", "error");
+																}
+															});
+														}
+													});
+												});
+											});
+										</script>
+									</div>
+								</div>
+								<?php }?>
+
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>

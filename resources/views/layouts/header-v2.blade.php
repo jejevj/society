@@ -6,14 +6,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ optional($set)->nama_app ?? config('app.name') }}</title>
 
-    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-    <link rel="stylesheet" href="{{ asset('assets/bootstrap/css/bootstrap.min.css') }}">
+    <link rel="icon" type="image/png" href="{{ asset('ldt-asset/images/logo.png') }}">
+    <link rel="stylesheet" href="{{ asset('ldt-asset/assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="{{ asset('assets/css/web.css') }}">
+    <link rel="stylesheet" href="{{ asset('ldt-asset/assets/css/web.css') }}">
 
     <style>
         *, *::before, *::after { box-sizing: border-box; }
@@ -145,7 +145,6 @@
 
         .navbar-v2 .btn-nav-register:hover { background: #E62020; color: #fff; }
 
-        /* User Dropdown */
         .navbar-v2 .user-dropdown { position: relative; }
 
         .navbar-v2 .user-avatar-btn {
@@ -221,7 +220,6 @@
             margin: 4px 0;
         }
 
-        /* Hamburger */
         .navbar-v2 .hamburger-btn {
             display: none;
             background: none;
@@ -239,7 +237,6 @@
             color: #E62020;
         }
 
-        /* Mobile Menu */
         .navbar-v2 .mobile-menu {
             display: none;
             flex-direction: column;
@@ -307,7 +304,7 @@
     <div class="container-fluid">
         <div class="navbar-inner">
             <a href="{{ url(env('APP_ROUTE').'/home') }}" class="navbar-brand-area">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="brand-logo">
+                <img src="{{ asset('ldt-asset/images/logo.png') }}" alt="Logo" class="brand-logo">
                 <div>
                     <div class="brand-name">{{ optional($set)->nama_app ?? config('app.name') }}</div>
                     <div class="brand-sub">Portal Layanan</div>

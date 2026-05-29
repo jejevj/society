@@ -60,7 +60,6 @@
     color: #fff;
 }
 
-
 .btn-marron {
     background: #7a1f2b;
     color: #fff;
@@ -157,13 +156,12 @@
 }
 
 .mw-480 {
-    max-width: 480px;;
+    max-width: 480px;
 }
 
 .w-250px {
-    width: 250px;;
+    width: 250px;
 }
-
 
 .statistik-card {
     border-radius: 18px !important;
@@ -243,7 +241,7 @@
 }
 
 /* ============================================= */
-/* HOVER MENU - ADMIN PANEL (menggunakan #f8ee93) */
+/* HOVER MENU - ADMIN PANEL                      */
 /* ============================================= */
 
 .menu-item.menu-lg-down-accordion:hover > span.menu-link > .menu-title {
@@ -261,7 +259,74 @@
 }
 
 /* ============================================= */
-/* APP TOOLBAR - Breadcrumb & Page Title Area     */
+/* APP HEADER - Navbar konsisten di semua state  */
+/* (normal, sticky, scroll, animating)           */
+/* ============================================= */
+
+#kt_app_header,
+#kt_app_header.app-header,
+#kt_app_header.app-header-sticky,
+#kt_app_header.app-header-minimize,
+#kt_app_header[data-kt-sticky-enabled="true"],
+#kt_app_header[data-kt-sticky-enabled="false"],
+[data-kt-app-header-fixed="true"] #kt_app_header,
+[data-kt-app-header-fixed-desktop="true"] #kt_app_header,
+[data-kt-app-header-fixed-mobile="true"] #kt_app_header,
+.app-header-sticky-on #kt_app_header,
+.header-fixed #kt_app_header {
+    background-color: #7a1f2b !important;
+    background: #7a1f2b !important;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.2) !important;
+    border-bottom: none !important;
+    transition: box-shadow 0.3s ease !important;
+}
+
+/* Teks menu di header tetap putih di semua state */
+#kt_app_header .menu-title,
+#kt_app_header .menu-link .menu-title,
+#kt_app_header .menu-title span {
+    color: rgba(255, 255, 255, 0.88) !important;
+}
+
+/* Arrow menu */
+#kt_app_header .menu-arrow {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Bullet separator di menu */
+#kt_app_header .menu .menu-item .menu-link .bullet {
+    background-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Teks brand Society Event / Science Bank */
+#kt_app_header .fw-bold,
+#kt_app_header span.fw-bold {
+    color: #ffffff !important;
+}
+
+/* Icon hamburger mobile */
+#kt_app_header .btn-color-gray-600 {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Submenu dropdown: tetap putih dengan teks gelap */
+#kt_app_header .menu-sub,
+#kt_app_header .menu-sub-lg-dropdown {
+    background-color: #ffffff !important;
+    border: 1px solid #ebebeb !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+#kt_app_header .menu-sub .menu-title {
+    color: #3f3f3f !important;
+}
+
+#kt_app_header .menu-sub .menu-item:hover .menu-title {
+    color: #7a1f2b !important;
+}
+
+/* ============================================= */
+/* APP TOOLBAR - Breadcrumb & Page Title Area    */
 /* ============================================= */
 
 #kt_app_toolbar {
@@ -276,7 +341,7 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(248,238,147,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(248, 238, 147, 0.4), transparent);
 }
 
 /* Breadcrumb links */
@@ -301,7 +366,7 @@
     font-size: 0.85rem;
 }
 
-/* Breadcrumb bullet/separator icon */
+/* Breadcrumb bullet/separator */
 #kt_app_toolbar .bullet {
     background-color: rgba(255, 255, 255, 0.45) !important;
 }
@@ -310,7 +375,7 @@
 #kt_app_toolbar .page-heading,
 #kt_app_toolbar h1.page-heading {
     color: #ffffff !important;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 /* Page description subtitle */
@@ -319,8 +384,15 @@
     color: rgba(255, 255, 255, 0.65) !important;
 }
 
-/* Responsive: smaller screens */
+/* Responsive */
 @media (max-width: 991.98px) {
+    #kt_app_header,
+    #kt_app_header.app-header,
+    #kt_app_header.app-header-sticky {
+        background-color: #7a1f2b !important;
+        background: #7a1f2b !important;
+    }
+
     #kt_app_toolbar {
         padding-top: 16px !important;
         padding-bottom: 16px !important;

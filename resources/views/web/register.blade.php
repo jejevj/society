@@ -1,4 +1,4 @@
-@include('layouts.header-v2')
+@include('layouts.header-front')
 
 <style>
     .register-fullscreen {
@@ -350,4 +350,4 @@
     });
 </script>
 
-@include('layouts.footer-v2')
+@include('layouts.footer-front')

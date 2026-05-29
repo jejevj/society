@@ -1,10 +1,7 @@
-@include('layouts.header-v2')
+@include('layouts.header-front')
 
-				<div class="app-wrapper flex-column flex-row-fluid mt-150" id="kt_app_wrapper">
+				<div style="margin-top: 90px;">
 					<div class="container-xxl">
-						<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-							<div class="d-flex flex-column flex-column-fluid">
-								<div id="kt_app_content" class="app-content">
 									<div class="card card-flush mb-10">
 										<div class="card border-0 list-header-monitoring" style="background-image: url('{{ asset('storage/'.$set->gambar_tentang) }}'); ">
 											<div class="card-body d-block text-start">
@@ -52,12 +49,10 @@
 																			Sistem Data Terintegrasi dan Terbuka
 																		</div>
 																	</div>
-
 																	<div class="text-muted fs-7 text-md-end">
 																		© 2026 Kementerian Pertahanan Republik Indonesia.<br>
 																		All rights reserved.
 																	</div>
-
 																</div>
 															</div>
 														</div>
@@ -65,10 +60,8 @@
 												</div>
 											</div>
 										</div>
-
 									</div>
-								</div>
-							</div>
-							
+				</div>
+			</div>
 
-@include('layouts.footer-v2')
+@include('layouts.footer-front')

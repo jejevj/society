@@ -5,7 +5,7 @@
 
                 <div class="col-12 col-md-4">
                     <div class="footer-brand">
-                        <img src="{{ asset('ldt-asset/images/logo.png') }}" alt="Logo" class="footer-logo">
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="footer-logo">
                         <span class="footer-brand-name">{{ optional($set)->nama_app ?? config('app.name') }}</span>
                     </div>
                     <p class="footer-desc">
@@ -123,8 +123,8 @@
     }
 </style>
 
-<script src="{{ asset('ldt-asset/assets/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ asset('ldt-asset/assets/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset('assets/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('assets/jquery/jquery.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 
 </body>

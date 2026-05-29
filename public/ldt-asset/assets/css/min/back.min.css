@@ -63,7 +63,6 @@
 
 .btn-marron {
     background: #7a1f2b;
-    /* maroon */
     color: #fff;
     padding: 8px 18px;
     border-radius: 8px;
@@ -76,7 +75,6 @@
 
 .btn-marron:hover {
     background: #f15f73;
-    /* maroon */
     color: #fff;
     padding: 8px 18px;
     border-radius: 8px;
@@ -159,13 +157,11 @@
 }
 
 .mw-480 {
-    max-width: 480px;
-    ;
+    max-width: 480px;;
 }
 
 .w-250px {
-    width: 250px;
-    ;
+    width: 250px;;
 }
 
 
@@ -250,19 +246,87 @@
 /* HOVER MENU - ADMIN PANEL (menggunakan #f8ee93) */
 /* ============================================= */
 
-/* Hover pada Parent Menu (hanya parent yang berubah) */
 .menu-item.menu-lg-down-accordion:hover > span.menu-link > .menu-title {
     color: #f8ee93 !important;
     transition: color 0.2s ease;
 }
 
-/* Hover pada Submenu (hanya submenu yang di-hover yang berubah) */
 .menu-sub .menu-item:hover .menu-title {
     color: #f8ee93 !important;
     transition: color 0.2s ease;
 }
 
-/* Optional: Hilangkan efek hover default dari Metronic */
 .menu-link:hover .menu-title {
     color: inherit;
+}
+
+/* ============================================= */
+/* APP TOOLBAR - Breadcrumb & Page Title Area     */
+/* ============================================= */
+
+#kt_app_toolbar {
+    background: linear-gradient(135deg, #7a1f2b 0%, #a83240 60%, #7a1f2b 100%);
+    position: relative;
+}
+
+#kt_app_toolbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(248,238,147,0.4), transparent);
+}
+
+/* Breadcrumb links */
+#kt_app_toolbar .breadcrumb-item a,
+#kt_app_toolbar .breadcrumb .breadcrumb-item a {
+    color: rgba(255, 255, 255, 0.75) !important;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+}
+
+#kt_app_toolbar .breadcrumb-item a:hover {
+    color: #f8ee93 !important;
+}
+
+/* Breadcrumb separator & active item */
+#kt_app_toolbar .breadcrumb-item,
+#kt_app_toolbar .breadcrumb-item.active,
+#kt_app_toolbar .breadcrumb-item span,
+#kt_app_toolbar .breadcrumb-item::before {
+    color: rgba(255, 255, 255, 0.55) !important;
+    font-size: 0.85rem;
+}
+
+/* Breadcrumb bullet/separator icon */
+#kt_app_toolbar .bullet {
+    background-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Page heading title */
+#kt_app_toolbar .page-heading,
+#kt_app_toolbar h1.page-heading {
+    color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+
+/* Page description subtitle */
+#kt_app_toolbar .page-desc,
+#kt_app_toolbar .page-heading span.page-desc {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Responsive: smaller screens */
+@media (max-width: 991.98px) {
+    #kt_app_toolbar {
+        padding-top: 16px !important;
+        padding-bottom: 16px !important;
+    }
+
+    #kt_app_toolbar .page-heading {
+        font-size: 1.1rem !important;
+    }
 }

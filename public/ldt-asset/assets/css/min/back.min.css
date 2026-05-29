@@ -132,28 +132,6 @@
     color: white;
 }
 
-/* ============================================= */
-/* MENU ACTIVE & HOVER STATES                    */
-/* ============================================= */
-
-/* Parent menu aktif: kuning, tanpa underline */
-.text-maroon-active {
-    color: #f8ee93 !important;
-    font-weight: 700 !important;
-    position: relative;
-    display: inline-block;
-    border-bottom: none !important;
-    text-decoration: none !important;
-}
-
-/* Submenu aktif */
-.text-maroon-child-active {
-    color: #E62020 !important;
-    font-weight: 700 !important;
-    position: relative;
-    display: inline-block;
-}
-
 .text-maroon {
     color: #E62020 !important;
     position: relative;
@@ -281,7 +259,18 @@
     text-decoration: none !important;
 }
 
-/* Hover parent menu navbar: kuning #f8ee93, tanpa underline */
+/* Parent menu AKTIF: kuning #f8ee93, bold, tanpa underline */
+/* Specificity lebih tinggi agar override .menu-title di atas */
+#kt_app_header .menu-item .menu-link .menu-title.text-maroon-active,
+#kt_app_header .menu-link > .menu-title.text-maroon-active,
+#kt_app_header span.menu-title.text-maroon-active {
+    color: #f8ee93 !important;
+    font-weight: 700 !important;
+    border-bottom: none !important;
+    text-decoration: none !important;
+}
+
+/* Parent menu HOVER: kuning #f8ee93, bold, tanpa underline */
 #kt_app_header .menu-item:hover > .menu-link > .menu-title,
 #kt_app_header .menu-item.menu-lg-down-accordion:hover > span.menu-link > .menu-title {
     color: #f8ee93 !important;
@@ -326,7 +315,7 @@
     font-weight: 500;
 }
 
-/* Submenu item hover: background merah tipis + teks #E62020 */
+/* Submenu item hover */
 #kt_app_header .menu-sub .menu-item:hover > .menu-link {
     background-color: rgba(230, 32, 32, 0.07) !important;
     border-radius: 6px;
@@ -337,8 +326,9 @@
     transition: color 0.2s ease;
 }
 
-/* Submenu aktif: bold merah + background + border kiri */
-#kt_app_header .menu-sub .menu-item .text-maroon-child-active {
+/* Submenu aktif */
+#kt_app_header .menu-sub .menu-item .menu-title.text-maroon-child-active,
+#kt_app_header .menu-sub .menu-item span.menu-title.text-maroon-child-active {
     color: #E62020 !important;
     font-weight: 700 !important;
 }
@@ -368,7 +358,6 @@
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
 }
 
-/* Breadcrumb links */
 #kt_app_toolbar .breadcrumb-item a,
 #kt_app_toolbar .breadcrumb .breadcrumb-item a {
     color: rgba(255, 255, 255, 0.75) !important;
@@ -381,7 +370,6 @@
     color: #ffffff !important;
 }
 
-/* Breadcrumb separator & active item */
 #kt_app_toolbar .breadcrumb-item,
 #kt_app_toolbar .breadcrumb-item.active,
 #kt_app_toolbar .breadcrumb-item span,
@@ -390,25 +378,21 @@
     font-size: 0.85rem;
 }
 
-/* Breadcrumb bullet/separator */
 #kt_app_toolbar .bullet {
     background-color: rgba(255, 255, 255, 0.45) !important;
 }
 
-/* Page heading title */
 #kt_app_toolbar .page-heading,
 #kt_app_toolbar h1.page-heading {
     color: #ffffff !important;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* Page description subtitle */
 #kt_app_toolbar .page-desc,
 #kt_app_toolbar .page-heading span.page-desc {
     color: rgba(255, 255, 255, 0.65) !important;
 }
 
-/* Responsive */
 @media (max-width: 991.98px) {
     #kt_app_header,
     #kt_app_header.app-header,

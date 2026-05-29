@@ -10,12 +10,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/about', [App\Http\Controllers\WebHomeController::class, 'index'])->name('about');
     Route::get('/home', [App\Http\Controllers\WebHomeController::class, 'index'])->name('home');
 
-
-
-
-
-
-    
     Route::get('/countDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getCountData'])->name('countDataDashboard');
     Route::get('/listDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getListData'])->name('listDataDashboard');
     Route::get('/topikDashboard', [App\Http\Controllers\WebDashboardController::class, 'getTopik'])->name('topikDashboard');
@@ -34,6 +28,7 @@ Route::prefix('society-event')->group(function () {
     Route::post('/hubungiKamiAction', [App\Http\Controllers\WebHubungiController::class, 'hubungiKamiAction'])->name('hubungiKamiAction');
 
     Route::get('/login', [App\Http\Controllers\WebLoginController::class, 'index'])->name('login');
+    Route::get('/register', [App\Http\Controllers\WebLoginController::class, 'register'])->name('register');
     Route::post('/registrasiAction', [App\Http\Controllers\WebLoginController::class, 'registrasiAction'])->name('registrasiAction');
     Route::get('/verifikasiAkun/{token}', [App\Http\Controllers\WebLoginController::class, 'verifikasiAkun'])->name('verifikasiAkun');
     Route::post('/loginAction', [App\Http\Controllers\WebLoginController::class, 'loginAction'])->name('loginAction');
@@ -54,8 +49,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/file-preview/{fileName}', [App\Http\Controllers\WebDataController::class, 'filePreview'])->where('fileName', '.*')->name('file-preview');
     Route::get('/filePreviewShow/{sifat}/{file}', [App\Http\Controllers\WebDataController::class, 'filePreviewShow'])->where('file', '.*')->name('show-file');
 
-
-   
     Route::get('/preview-csv/{kode}/{id}', [App\Http\Controllers\WebDataController::class, 'previewCsv'])->name('preview.csv');
 
     Route::get('/pushDataset/{kode}', [App\Http\Controllers\RabbitMQController::class, 'pushDataset'])->name('pushDataset');
@@ -84,10 +77,8 @@ Route::prefix('society-event')->group(function () {
     // end front end 
 
     Route::get('admin-panel', [App\Http\Controllers\DashboardController::class, 'index'])->name('admin-panel');
-    // route menu  referensi dashboard
     Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
-    // route menu  referensi sponsor
     Route::get('ref-sponsor', [App\Http\Controllers\ReffSponsorController::class, 'index'])->name('ref-sponsor');
     Route::get('/getTableSponsor', [App\Http\Controllers\ReffSponsorController::class, 'getTableSponsor'])->name('getTableSponsor');
     Route::get('tambah-ref-sponsor', [App\Http\Controllers\ReffSponsorController::class, 'tambah'])->name('tambah-ref-sponsor');
@@ -96,8 +87,6 @@ Route::prefix('society-event')->group(function () {
     Route::post('/updateSponsorAction', [App\Http\Controllers\ReffSponsorController::class, 'updateSponsorAction'])->name('updateSponsorAction');
     Route::post('/deleteSponsorAction', [App\Http\Controllers\ReffSponsorController::class, 'deleteSponsorAction'])->name('deleteSponsorAction');
 
-
-    // route menu  referensi role
     Route::get('ref-role', [App\Http\Controllers\ReffRoleController::class, 'index'])->name('ref-role');
     Route::get('/getTableRole', [App\Http\Controllers\ReffRoleController::class, 'getTableRole'])->name('getTableRole');
     Route::get('/editRole/{id_role}', [App\Http\Controllers\ReffRoleController::class, 'editRole'])->name('editRole');
@@ -112,7 +101,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/editAksesMenu/{id_akses_menu}', [App\Http\Controllers\ReffRoleController::class, 'editAksesMenu'])->name('editAksesMenu');
     Route::post('/updateAksesMenuAction', [App\Http\Controllers\ReffRoleController::class, 'updateAksesMenuAction'])->name('updateAksesMenuAction');
     
-    // route menu  referensi menu
     Route::get('ref-menu', [App\Http\Controllers\ReffMenuController::class, 'index'])->name('ref-menu');
     Route::get('/getTableMenu', [App\Http\Controllers\ReffMenuController::class, 'getTableMenu'])->name('getTableMenu');
     Route::get('/editMenu/{id_menu}', [App\Http\Controllers\ReffMenuController::class, 'editMenu'])->name('editMenu');
@@ -121,7 +109,6 @@ Route::prefix('society-event')->group(function () {
     Route::post('/deleteMenuAction', [App\Http\Controllers\ReffMenuController::class, 'deleteMenuAction'])->name('deleteMenuAction');
     Route::post('/updateMenuAction', [App\Http\Controllers\ReffMenuController::class, 'updateMenuAction'])->name('updateMenuAction');
 
-    // route menu  referensi pengguna
     Route::get('ref-pengguna', [App\Http\Controllers\ReffUserController::class, 'index'])->name('ref-pengguna');
     Route::get('/getTableUser', [App\Http\Controllers\ReffUserController::class, 'getTableUser'])->name('getTableUser');
     Route::get('tambah-ref-pengguna', [App\Http\Controllers\ReffUserController::class, 'tambah'])->name('tambah-ref-pengguna');
@@ -130,14 +117,12 @@ Route::prefix('society-event')->group(function () {
     Route::post('/updateUserAction', [App\Http\Controllers\ReffUserController::class, 'updateUserAction'])->name('updateUserAction');
     Route::post('/deleteUserAction', [App\Http\Controllers\ReffUserController::class, 'deleteUserAction'])->name('deleteUserAction');
 
-    // route login
     Route::get('login-backend', [App\Http\Controllers\LoginController::class, 'index'])->name('login-backend');
     Route::post('/login-backend-action', [App\Http\Controllers\LoginController::class, 'loginBackendAction'])->name('login-backend-action');
     Route::post('logout-backend-action', [App\Http\Controllers\LoginController::class, 'logoutBackendAction'])->name('logout-backend-action');
     Route::get('/otpAdminPanelLogin/{otp}', [App\Http\Controllers\LoginController::class, 'otpAdminPanelLogin'])->name('otpAdminPanelLogin');
     Route::post('/verifyOtpAdminPanelAction', [App\Http\Controllers\LoginController::class, 'verifyOtpAdminPanelAction'])->name('verifyOtpAdminPanelAction');
 
-    // route menu  referensi topik
     Route::get('ref-topik', [App\Http\Controllers\ReffTopikController::class, 'index'])->name('ref-topik');
     Route::get('/getTableTopik', [App\Http\Controllers\ReffTopikController::class, 'getTableTopik'])->name('getTableTopik');
     Route::get('/editTopik/{id_topik}', [App\Http\Controllers\ReffTopikController::class, 'editTopik'])->name('editTopik');
@@ -146,8 +131,6 @@ Route::prefix('society-event')->group(function () {
     Route::post('/deleteTopikAction', [App\Http\Controllers\ReffTopikController::class, 'deleteTopikAction'])->name('deleteTopikAction');
     Route::post('/updateTopikAction', [App\Http\Controllers\ReffTopikController::class, 'updateTopikAction'])->name('updateTopikAction');
 
-    
-    // route menu  link tautan
     Route::get('tautan', [App\Http\Controllers\TautanController::class, 'index'])->name('tautan');
     Route::get('tambah-tautan', [App\Http\Controllers\TautanController::class, 'tambah'])->name('tambah-tautan');
     Route::get('/getTableTautan', [App\Http\Controllers\TautanController::class, 'getTableTautan'])->name('getTableTautan');
@@ -156,7 +139,6 @@ Route::prefix('society-event')->group(function () {
     Route::post('/updateTautanAction', [App\Http\Controllers\TautanController::class, 'updateTautanAction'])->name('updateTautanAction');
     Route::post('/deleteTautanAction', [App\Http\Controllers\TautanController::class, 'deleteTautanAction'])->name('deleteTautanAction');
 
-    // route menu  pengaturan
     Route::get('setting', [App\Http\Controllers\SettingController::class, 'index'])->name('setting');
     Route::post('/updateSettingAction', [App\Http\Controllers\SettingController::class, 'updateSettingAction'])->name('updateSettingAction');
     Route::post('/addSliderAction', [App\Http\Controllers\SettingController::class, 'addSliderAction'])->name('addSliderAction');
@@ -167,7 +149,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/editSlider/{id_slider}', [App\Http\Controllers\SettingController::class, 'editSlider'])->name('editSlider');
     Route::post('/updateSliderAction', [App\Http\Controllers\SettingController::class, 'updateSliderAction'])->name('updateSliderAction');
 
-    // route menu  profil pengguna
     Route::get('profile', [App\Http\Controllers\ProfilController::class, 'index'])->name('profile');
     Route::post('updateProfilAction', [App\Http\Controllers\ProfilController::class, 'updateProfilAction'])->name('updateProfilAction');
     Route::post('updatePasswordAction', [App\Http\Controllers\ProfilController::class, 'updatePasswordAction'])->name('updatePasswordAction');

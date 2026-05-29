@@ -32,22 +32,28 @@ class WebLoginController extends Controller
 
     public function index(Request $request)
     {
-        // if (!$request->session()->has('id')) {
-        //     return Redirect::to('/login-backend');
-        // }
         $menu_aktif = 'login';
-        // $navbar = $this->dataService->getMenuHTML($menu_aktif, Session::getFacadeRoot());
        
         $data = [
             'menu' => 'login',
             'menu_aktif' => $menu_aktif,
             'set' =>  DB::table('app_setting')->where('id_setting', 1)->first(),
-            
-
         ];
 
         return view('web.login', $data);
+    }
 
+    public function register(Request $request)
+    {
+        $menu_aktif = 'register';
+
+        $data = [
+            'menu' => 'register',
+            'menu_aktif' => $menu_aktif,
+            'set' => DB::table('app_setting')->where('id_setting', 1)->first(),
+        ];
+
+        return view('web.register', $data);
     }
 
     public function registrasiAction(Request $request)
@@ -293,7 +299,6 @@ class WebLoginController extends Controller
 
     public function otpLogin($key, Request $request)
     {
-        
         $menu_aktif = 'otp';
        
         $data = [
@@ -301,12 +306,9 @@ class WebLoginController extends Controller
             'menu_aktif' => $menu_aktif,
             'key' => $key,
             'set' =>  DB::table('app_setting')->where('id_setting', 1)->first(),
-            
-
         ];
 
         return view('web.otp-login', $data);
-
     }
 
     
@@ -332,7 +334,6 @@ class WebLoginController extends Controller
             return response()->json(['status' => false, 'message' => 'Kode OTP salah']);
         }
 
-       
         session([
             'id_user'   => $user->id_user,
             'nama_user' => $user->nama_user,
@@ -342,7 +343,7 @@ class WebLoginController extends Controller
             'jenis_user' => 'publik',
         ]);
 
-         $data_log = [
+        $data_log = [
             'email' => $user->username_user,
             'nama' => $user->nama_user,
             'otp' => $request->otp
@@ -354,7 +355,6 @@ class WebLoginController extends Controller
                 'otp_user' => ''
             ]);
 
-        
         if($upd){
             $this->dataService->createLogWeb($request,'verifyOtpAction' ,'Berhasil verifikasi kode OTP','',json_encode($data_log));
             return response()->json(['status' => true, 'message' => 'Kode OTP sesuai']);
@@ -362,30 +362,24 @@ class WebLoginController extends Controller
             $this->dataService->createLogWeb($request,'verifyOtpAction' ,'Gagal mengirimkan kode OTP','',json_encode($data_log));
             return response()->json(['status' => false, 'message' => 'gagal verifikasi OTP, silahkan coba kembali']);
         }
-        
     }
 
 
     public function lupaPassword(Request $request)
     {
-        
         $menu_aktif = 'lupa password';
        
         $data = [
             'menu' => 'Lupa Password',
             'menu_aktif' => $menu_aktif,
             'set' =>  DB::table('app_setting')->where('id_setting', 1)->first(),
-            
-
         ];
 
         return view('web.lupa-password', $data);
-
     }
 
     public function passwordBaru(Request $request, $token)
     {
-        
         $menu_aktif = 'password baru';
        
         $data = [
@@ -393,12 +387,9 @@ class WebLoginController extends Controller
             'menu_aktif' => $menu_aktif,
             'token' => $token,
             'set' =>  DB::table('app_setting')->where('id_setting', 1)->first(),
-            
-
         ];
 
         return view('web.password-baru', $data);
-
     }
 
     public function lupaPasswordAction(Request $request)
@@ -406,7 +397,6 @@ class WebLoginController extends Controller
 
         $validator = Validator::make($request->all(), [
             'email'  => 'required|email|max:200',
-            
         ]);
 
         if ($validator->fails()) {
@@ -432,8 +422,6 @@ class WebLoginController extends Controller
                 'verify_token' => $token
             ]);
 
-
-
         if($insert){
             $verificationUrl = url(env('APP_ROUTE') . '/password-baru/' . $token);
             Mail::to($request->email)->queue(
@@ -447,7 +435,6 @@ class WebLoginController extends Controller
                 )
             );
 
-
             $this->dataService->createLogWeb($request,'lupaPasswordAction' ,'Berhasil mengajukan lupa password');
             return response()->json([
                 'success' => true,
@@ -460,8 +447,6 @@ class WebLoginController extends Controller
                 'message' => 'Pengajuan lupa password gagal'
             ]);
         }
-        
-        
     }
 
     
@@ -472,7 +457,6 @@ class WebLoginController extends Controller
             'password'  => 'required|max:200',
             'konfirmasi'  => 'required|max:200',
             'token' => 'required',
-            
         ]);
 
         if ($validator->fails()) {
@@ -506,10 +490,7 @@ class WebLoginController extends Controller
                 'password_user' => $password
             ]);
 
-
-
         if($insert){
-            
             $this->dataService->createLogWeb($request,'ganitPasswordAction' ,'Berhasil ganti password');
             return response()->json([
                 'success' => true,
@@ -522,11 +503,5 @@ class WebLoginController extends Controller
                 'message' => 'Gagal ganti password'
             ]);
         }
-        
     }
-
-
-    
-
-
 }

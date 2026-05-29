@@ -1,4 +1,4 @@
-@include('layouts.header-front')
+@include('layouts.header-v2')
 
 				<div style="margin-top: 90px;">
 					<div class="container-xxl">
@@ -64,4 +64,4 @@
 				</div>
 			</div>
 
-@include('layouts.footer-front')
+@include('layouts.footer-v2')

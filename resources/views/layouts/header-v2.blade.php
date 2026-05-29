@@ -23,6 +23,23 @@
 	<link href="{{ asset('assets/css/min/front.min.css') }}" rel="stylesheet" type="text/css" />
 	<script src="{{ asset('assets/js/min/swal.min.js') }}"></script>
 	<script src="{{ asset('assets/js/min/jquery.min.js') }}"></script>
+
+	{{-- Override Metronic wrapper agar halaman publik bisa full width --}}
+	<style>
+		#kt_app_root,
+		#kt_app_page {
+			max-width: 100% !important;
+			width: 100% !important;
+			padding-left: 0 !important;
+			padding-right: 0 !important;
+			margin-left: 0 !important;
+			margin-right: 0 !important;
+		}
+		body.app-default {
+			padding: 0 !important;
+			margin: 0 !important;
+		}
+	</style>
 </head>
 
 <body id="kt_app_body" data-kt-app-header-fixed-mobile="true" data-kt-app-toolbar-enabled="true" class="app-default">

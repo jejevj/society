@@ -1,4 +1,4 @@
-@include('layouts.header-front')
+@include('layouts.header-v2')
 
 <div class="banner-hero" style="margin-top: 80px;">
     <div class="h-100 my-4">
@@ -100,4 +100,4 @@
     </div>
 </div>
 
-@include('layouts.footer-front')
+@include('layouts.footer-v2')

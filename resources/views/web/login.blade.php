@@ -1,13 +1,11 @@
 @include('layouts.header-v2')
 
 <style>
-    /* Navbar dari header-v2 sudah punya z-index tinggi, pastikan bg/overlay di bawahnya */
     .login-fullscreen {
         position: relative;
         min-height: 100vh;
     }
 
-    /* Background image & overlay hanya di bawah konten, tidak menutupi navbar */
     .login-fullscreen::before {
         content: '';
         position: fixed;
@@ -90,10 +88,12 @@
         margin-bottom: 13px;
     }
 
-    .login-info-features li i {
+    .login-info-features li .feat-icon {
         color: #f8ee93;
         font-size: 1rem;
         flex-shrink: 0;
+        width: 18px;
+        text-align: center;
     }
 
     .login-card {
@@ -155,16 +155,17 @@
         width: 100%;
         cursor: pointer;
         transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
-    .btn-login-primary:hover {
-        background: #c41a1a;
-        color: #fff;
-    }
+    .btn-login-primary:hover { background: #c41a1a; color: #fff; }
 
     .btn-login-secondary {
-        background: #f8ee93;
-        color: #7a6200;
+        background: #f5c842;
+        color: #5a4200;
         border: none;
         border-radius: 10px;
         padding: 12px;
@@ -173,18 +174,22 @@
         width: 100%;
         cursor: pointer;
         transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
-    .btn-login-secondary:hover {
-        background: #f0e050;
-        color: #5a4800;
-    }
+    .btn-login-secondary:hover { background: #e0b030; color: #3a2a00; }
 
     .btn-login-outline {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
         text-align: center;
         background: transparent;
-        color: #666;
+        color: #555;
         border: 1.5px solid #ddd;
         border-radius: 10px;
         padding: 11px;
@@ -208,6 +213,21 @@
         margin-top: 22px;
     }
 
+    .login-switch-link {
+        text-align: center;
+        margin-top: 16px;
+        font-size: 0.87rem;
+        color: #888;
+    }
+
+    .login-switch-link a {
+        color: #E62020;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .login-switch-link a:hover { text-decoration: underline; }
+
     @media (max-width: 767.98px) {
         .login-info-col { display: none; }
         .login-content { padding-top: 100px; }
@@ -220,32 +240,16 @@
         <div class="container">
             <div class="row align-items-center justify-content-center g-4">
 
-                {{-- Col kiri: informasi event dari $set --}}
+                {{-- Col kiri: informasi event --}}
                 <div class="col-md-8 col-lg-7 login-info-col">
                     <span class="badge-event">{{ $set->nama_app ?? env('APP_NAME', 'Society Event') }}</span>
                     <h1>{!! nl2br(e($set->judul_login ?? 'Portal Layanan')) !!}</h1>
                     <p>{{ $set->deskripsi_login ?? $set->deskripsi_app ?? 'Akses informasi, data, dan layanan secara mudah, cepat, dan aman melalui satu platform terintegrasi.' }}</p>
                     <ul class="login-info-features">
-                        @if(!empty($set->fitur1_login))
-                            <li><i class="fa-solid fa-circle-check"></i> {{ $set->fitur1_login }}</li>
-                        @else
-                            <li><i class="fa-solid fa-circle-check"></i> Data dan informasi resmi terverifikasi</li>
-                        @endif
-                        @if(!empty($set->fitur2_login))
-                            <li><i class="fa-solid fa-circle-check"></i> {{ $set->fitur2_login }}</li>
-                        @else
-                            <li><i class="fa-solid fa-circle-check"></i> Akses berbagai layanan event dan kegiatan</li>
-                        @endif
-                        @if(!empty($set->fitur3_login))
-                            <li><i class="fa-solid fa-circle-check"></i> {{ $set->fitur3_login }}</li>
-                        @else
-                            <li><i class="fa-solid fa-circle-check"></i> Sistem keamanan berlapis dengan verifikasi OTP</li>
-                        @endif
-                        @if(!empty($set->fitur4_login))
-                            <li><i class="fa-solid fa-circle-check"></i> {{ $set->fitur4_login }}</li>
-                        @else
-                            <li><i class="fa-solid fa-circle-check"></i> Registrasi mudah dan proses validasi transparan</li>
-                        @endif
+                        <li><span class="feat-icon"><i class="fa-solid fa-circle-check"></i></span> {{ $set->fitur1_login ?? 'Data dan informasi resmi terverifikasi' }}</li>
+                        <li><span class="feat-icon"><i class="fa-solid fa-circle-check"></i></span> {{ $set->fitur2_login ?? 'Akses berbagai layanan event dan kegiatan' }}</li>
+                        <li><span class="feat-icon"><i class="fa-solid fa-shield-halved"></i></span> {{ $set->fitur3_login ?? 'Sistem keamanan berlapis dengan verifikasi OTP' }}</li>
+                        <li><span class="feat-icon"><i class="fa-solid fa-user-check"></i></span> {{ $set->fitur4_login ?? 'Registrasi mudah dan proses validasi transparan' }}</li>
                     </ul>
                 </div>
 
@@ -260,28 +264,21 @@
                             @csrf
                             <div class="mb-4">
                                 <label class="form-label">Email</label>
-                                <input type="email" name="email"
-                                    class="form-control"
-                                    placeholder="Masukkan email anda">
+                                <input type="email" name="email" class="form-control" placeholder="Masukkan email anda">
                             </div>
                             <div class="mb-5">
                                 <label class="form-label">Password</label>
-                                <input type="password" name="password"
-                                    class="form-control"
-                                    placeholder="Masukkan password anda">
+                                <input type="password" name="password" class="form-control" placeholder="Masukkan password anda">
                             </div>
                             <div class="d-grid gap-3">
                                 <button type="submit" class="btn-login-primary">
-                                    <i class="fa-solid fa-right-to-bracket me-2"></i> Login
+                                    <i class="fa-solid fa-right-to-bracket"></i> Login
                                 </button>
-                                <button type="button"
-                                    class="btn-login-secondary"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalUnduh">
-                                    <i class="fa-solid fa-user-plus me-2"></i> Registrasi
+                                <button type="button" class="btn-login-secondary" data-bs-toggle="modal" data-bs-target="#modalUnduh">
+                                    <i class="fa-solid fa-user-plus"></i> Registrasi
                                 </button>
                                 <a href="{{ route('lupa-password') }}" class="btn-login-outline">
-                                    <i class="fa-solid fa-key me-2"></i> Lupa Password
+                                    <i class="fa-solid fa-key"></i> Lupa Password
                                 </a>
                             </div>
                         </form>
@@ -307,54 +304,38 @@
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="nama" class="form-label">Nama Lengkap</label>
-                                <input type="text" class="form-control" id="nama" name="nama">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">No Identitas</label>
-                                <input type="text" class="form-control" name="identitas" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">File No Identitas</label>
-                                <input type="file" class="form-control" name="file">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">No Telepon</label>
-                                <input type="text" class="form-control" name="telepon" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Pekerjaan</label>
-                                <input type="text" class="form-control" name="pekerjaan">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Alamat</label>
-                                <textarea name="alamat" class="form-control" rows="5"></textarea>
-                            </div>
-                        </div>
+                        <div class="col-md-6"><div class="mb-3">
+                            <label class="form-label">Nama Lengkap</label>
+                            <input type="text" class="form-control" name="nama">
+                        </div></div>
+                        <div class="col-md-6"><div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email">
+                        </div></div>
+                        <div class="col-md-6"><div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password">
+                        </div></div>
+                        <div class="col-md-6"><div class="mb-3">
+                            <label class="form-label">No Identitas</label>
+                            <input type="text" class="form-control" name="identitas" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        </div></div>
+                        <div class="col-md-6"><div class="mb-3">
+                            <label class="form-label">File No Identitas</label>
+                            <input type="file" class="form-control" name="file">
+                        </div></div>
+                        <div class="col-md-6"><div class="mb-3">
+                            <label class="form-label">No Telepon</label>
+                            <input type="text" class="form-control" name="telepon" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        </div></div>
+                        <div class="col-md-6"><div class="mb-3">
+                            <label class="form-label">Pekerjaan</label>
+                            <input type="text" class="form-control" name="pekerjaan">
+                        </div></div>
+                        <div class="col-md-6"><div class="mb-3">
+                            <label class="form-label">Alamat</label>
+                            <textarea name="alamat" class="form-control" rows="4"></textarea>
+                        </div></div>
                     </div>
                 </div>
                 <div class="modal-footer">

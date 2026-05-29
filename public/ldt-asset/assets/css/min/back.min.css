@@ -1,68 +1,69 @@
-.mt-100{
+.mt-100 {
     margin-top: 100px;
 }
 
 .upload-box {
-			border: 2px dashed #0d6efd;
-			padding: 30px;
-			text-align: center;
-			cursor: pointer;
-			border-radius: 10px;
-			background-color: #f8f9fa;
-			transition: background 0.3s;
-		}
+    border: 2px dashed #0d6efd;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+    transition: background 0.3s;
+}
 
-		.upload-box:hover {
-			background-color: #e2e6ea;
-		}
+.upload-box:hover {
+    background-color: #e2e6ea;
+}
 
-		.upload-box input[type="file"] {
-			display: none;
-		}
+.upload-box input[type="file"] {
+    display: none;
+}
 
-		#file-name {
-			margin-top: 10px;
-			font-weight: 500;
-			color: #0d6efd;
-		}
+#file-name {
+    margin-top: 10px;
+    font-weight: 500;
+    color: #0d6efd;
+}
 
-		.select2-container .select2-selection--single {
-			height: 40px !important;
-			display: flex;
-			align-items: center; 
-		}
+.select2-container .select2-selection--single {
+    height: 40px !important;
+    display: flex;
+    align-items: center;
+}
 
-		.select2-container--default .select2-selection--single .select2-selection__rendered {
-			line-height: 40px !important; 
-		}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 40px !important;
+}
 
-		.notif-item {
-			transition: all 0.2s ease;
-			border-bottom: 1px solid #f1f1f1;
-		}
+.notif-item {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f1f1;
+}
 
-		.notif-item:hover {
-			background-color: #f8f9fa;
-		}
+.notif-item:hover {
+    background-color: #f8f9fa;
+}
 
-		.notif-icon {
-			width: 40px;
-			height: 40px;
-			border-radius: 50%;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			font-size: 16px;
-		}
+.notif-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
 
-.bg-marron{
+.bg-marron {
     background: #7a1f2b;
     color: #fff;
 }
 
 
-.btn-marron{
-    background: #7a1f2b; /* maroon */
+.btn-marron {
+    background: #7a1f2b;
+    /* maroon */
     color: #fff;
     padding: 8px 18px;
     border-radius: 8px;
@@ -73,8 +74,9 @@
     align-items: center;
 }
 
-.btn-marron:hover{
-    background: #f15f73; /* maroon */
+.btn-marron:hover {
+    background: #f15f73;
+    /* maroon */
     color: #fff;
     padding: 8px 18px;
     border-radius: 8px;
@@ -105,12 +107,12 @@
     border-radius: 8px;
     font-weight: 600;
     transition: 0.3s;
-	color:white;
+    color: white;
 }
 
 .btn-marron-submit:hover {
     background: #E52320;
-	color:white;
+    color: white;
 }
 
 .btn-white-submit {
@@ -120,17 +122,17 @@
     border-radius: 8px;
     font-weight: 600;
     transition: 0.3s;
-	color:#E62020;
+    color: #E62020;
 }
 
 .btn-white-submit:hover {
     background: #a7a3a3;
-	color:#E52320;
+    color: #E52320;
 }
 
-.bg-orange{
+.bg-orange {
     background: #E52320;
-	color:white;
+    color: white;
 }
 
 .text-maroon-active {
@@ -151,21 +153,23 @@
     display: inline-block;
 }
 
-.bg-login{
-	background: url("../../logo-v2/bg-login-adm-panel.png") no-repeat center center fixed;
+.bg-login {
+    background: url("../../logo-v2/bg-login-adm-panel.png") no-repeat center center fixed;
     background-size: cover;
 }
 
-.mw-480{
-	max-width: 480px;;
+.mw-480 {
+    max-width: 480px;
+    ;
 }
 
-.w-250px{
-	width: 250px;;
+.w-250px {
+    width: 250px;
+    ;
 }
 
 
-.statistik-card{
+.statistik-card {
     border-radius: 18px !important;
     transition: all .25s ease !important;
     background: #fff !important;
@@ -173,71 +177,92 @@
     position: relative !important;
 }
 
-.statistik-card:hover{
+.statistik-card:hover {
     transform: translateY(-4px) !important;
-    box-shadow: 0 12px 30px rgba(0,0,0,.08) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .08) !important;
 }
 
-.statistik-success{
+.statistik-success {
     border-left: 5px solid #daba08 !important;
-	border-right: 5px solid #daba08 !important;
+    border-right: 5px solid #daba08 !important;
 }
 
-.statistik-primary{
+.statistik-primary {
     border-left: 5px solid #976d01 !important;
-	border-right: 5px solid #976d01 !important;
+    border-right: 5px solid #976d01 !important;
 }
 
-.statistik-warning{
+.statistik-warning {
     border-left: 5px solid #703c00 !important;
-	border-right: 5px solid #703c00 !important;
+    border-right: 5px solid #703c00 !important;
 }
 
-.statistik-icon{
+.statistik-icon {
     width: 58px !important;
     height: 58px !important;
     border-radius: 16px !important;
-    background: rgba(0,0,0,.04) !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    font-size:24px !important;
-    color:#7a0019 !important;
+    background: rgba(0, 0, 0, .04) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 24px !important;
+    color: #7a0019 !important;
 }
 
-.aktivitas-wrapper{
+.aktivitas-wrapper {
     background: #fff4f4;
     border-radius: 18px;
     padding: 10px 0;
 }
 
-.aktivitas-item{
-    display:flex;
-    align-items:flex-start;
-    gap:16px;
-    padding:18px 0;
-    margin:15px;
-    border-bottom:1px dashed #beb5b5 !important;
+.aktivitas-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 0;
+    margin: 15px;
+    border-bottom: 1px dashed #beb5b5 !important;
 }
 
-.aktivitas-item:last-child{
-    border-bottom:none;
+.aktivitas-item:last-child {
+    border-bottom: none;
 }
 
-.aktivitas-icon{
-    width:48px;
-    height:48px;
-    min-width:48px;
-    border-radius:14px;
-    background: rgba(122,0,25,.08);
-    color:#7a0019;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:18px;
+.aktivitas-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 14px;
+    background: rgba(122, 0, 25, .08);
+    color: #7a0019;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
 }
 
-.aktivitas-icon.warning{
-    background: rgba(212,160,23,.10);
-    color:#d4a017;
+.aktivitas-icon.warning {
+    background: rgba(212, 160, 23, .10);
+    color: #d4a017;
+}
+
+/* ============================================= */
+/* HOVER MENU - ADMIN PANEL (menggunakan #f8ee93) */
+/* ============================================= */
+
+/* Hover pada Parent Menu (hanya parent yang berubah) */
+.menu-item.menu-lg-down-accordion:hover > span.menu-link > .menu-title {
+    color: #f8ee93 !important;
+    transition: color 0.2s ease;
+}
+
+/* Hover pada Submenu (hanya submenu yang di-hover yang berubah) */
+.menu-sub .menu-item:hover .menu-title {
+    color: #f8ee93 !important;
+    transition: color 0.2s ease;
+}
+
+/* Optional: Hilangkan efek hover default dari Metronic */
+.menu-link:hover .menu-title {
+    color: inherit;
 }

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="id">
@@ -17,20 +16,14 @@
 		<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 		<link rel="shortcut icon" href="{{ asset('images/logo.png') }}" />
 		<link href="{{ asset('assets/css/min/font.min.css') }}" rel="stylesheet" type="text/css" />
-		<!-- <link href="{{ asset('assets/css/min/datatables.bundle.min.css') }}" rel="stylesheet" type="text/css" /> -->
 		<link href="{{ asset('assets/css/min/style_back.bundle.min.css') }}" rel="stylesheet" type="text/css" />
-
 		<link href="{{ asset('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
 		<link href="{{ asset('assets/css/datatable.css') }}" rel="stylesheet" type="text/css" />
 		<script src="{{ asset('assets/js/min/jquery.min.js') }}"></script>
-		<!-- <script src="{{ asset('assets/js/jquery-datatable.js') }}"></script> -->
 		<script src="{{ asset('assets/js/tinymce/tinymce.min.js') }}"></script>
 		<link href="{{ asset('assets/css/select2.css') }}" rel="stylesheet" type="text/css" />
 		<link href="{{ asset('assets/css/min/back.min.css') }}" rel="stylesheet" type="text/css" />
 		<script src="{{ asset('assets/js/select2.js') }}"></script>
-
-
-
 	</head>
 	<body id="kt_app_body" data-kt-app-header-fixed-mobile="true" data-kt-app-toolbar-enabled="true" class="app-default">
 		<div class="d-flex flex-column flex-root app-root" id="kt_app_root">
@@ -72,6 +65,8 @@
                                                     </span>
                                                     <span class="menu-title <?php if($p_menu[0] == 'profil'){ echo 'text-maroon-child-active';}?>">Profile</span>
                                                 </a>
+                                            </div>
+                                            <div class="menu-item">
 												<a class="menu-link" href="{{ route('ganti-password') }}" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                                                     <span class="menu-icon">
                                                         <span class="bullet w-10px h-10px"></span>
@@ -88,7 +83,6 @@
 												$(document).ready(function(){
 													$("#btnLogout").on("click", function(e){
 														e.preventDefault();
-
 														Swal.fire({
 															title: "Confirm",
 															text: "Are you sure you want to log out?",

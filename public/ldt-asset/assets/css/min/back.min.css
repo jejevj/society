@@ -134,21 +134,19 @@
 
 /* ============================================= */
 /* MENU ACTIVE & HOVER STATES                    */
-/* text-maroon-active  = parent menu aktif       */
-/* text-maroon-child-active = submenu aktif      */
 /* ============================================= */
 
-/* Parent menu aktif: putih bold + underline tipis */
+/* Parent menu aktif: putih bold, tanpa underline */
 .text-maroon-active {
     color: #ffffff !important;
     font-weight: 700 !important;
     position: relative;
     display: inline-block;
-    border-bottom: 2px solid rgba(255,255,255,0.8);
-    padding-bottom: 2px;
+    border-bottom: none !important;
+    text-decoration: none !important;
 }
 
-/* Submenu aktif: warna #E62020 dengan background putih tipis */
+/* Submenu aktif */
 .text-maroon-child-active {
     color: #E62020 !important;
     font-weight: 700 !important;
@@ -279,12 +277,15 @@
 #kt_app_header .menu-link .menu-title,
 #kt_app_header .menu-title span {
     color: rgba(255, 255, 255, 0.88) !important;
+    border-bottom: none !important;
+    text-decoration: none !important;
 }
 
 /* Hover parent menu navbar: putih solid */
 #kt_app_header .menu-item:hover > .menu-link > .menu-title,
 #kt_app_header .menu-item.menu-lg-down-accordion:hover > span.menu-link > .menu-title {
     color: #ffffff !important;
+    font-weight: 700 !important;
     transition: color 0.2s ease;
 }
 
@@ -334,7 +335,7 @@
     transition: color 0.2s ease;
 }
 
-/* Submenu item aktif (text-maroon-child-active) */
+/* Submenu aktif: bold merah + background + border kiri */
 #kt_app_header .menu-sub .menu-item .text-maroon-child-active {
     color: #E62020 !important;
     font-weight: 700 !important;
@@ -343,7 +344,7 @@
 #kt_app_header .menu-sub .menu-item:has(.text-maroon-child-active) > .menu-link {
     background-color: rgba(230, 32, 32, 0.1) !important;
     border-radius: 6px;
-    border-left: 3px solid #E62020;
+    border-left: 3px solid #E62020 !important;
 }
 
 /* ============================================= */

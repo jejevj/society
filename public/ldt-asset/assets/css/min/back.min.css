@@ -136,9 +136,9 @@
 /* MENU ACTIVE & HOVER STATES                    */
 /* ============================================= */
 
-/* Parent menu aktif: putih bold, tanpa underline */
+/* Parent menu aktif: kuning, tanpa underline */
 .text-maroon-active {
-    color: #ffffff !important;
+    color: #f8ee93 !important;
     font-weight: 700 !important;
     position: relative;
     display: inline-block;
@@ -281,11 +281,13 @@
     text-decoration: none !important;
 }
 
-/* Hover parent menu navbar: putih solid */
+/* Hover parent menu navbar: kuning #f8ee93, tanpa underline */
 #kt_app_header .menu-item:hover > .menu-link > .menu-title,
 #kt_app_header .menu-item.menu-lg-down-accordion:hover > span.menu-link > .menu-title {
-    color: #ffffff !important;
+    color: #f8ee93 !important;
     font-weight: 700 !important;
+    text-decoration: none !important;
+    border-bottom: none !important;
     transition: color 0.2s ease;
 }
 

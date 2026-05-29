@@ -108,7 +108,7 @@
 }
 
 .btn-marron-submit:hover {
-    background: #E52320;
+    background: #c41a1a;
     color: white;
 }
 
@@ -124,11 +124,11 @@
 
 .btn-white-submit:hover {
     background: #a7a3a3;
-    color: #E52320;
+    color: #c41a1a;
 }
 
 .bg-orange {
-    background: #E52320;
+    background: #E62020;
     color: white;
 }
 
@@ -145,7 +145,7 @@
 }
 
 .text-maroon {
-    color: #7a1f2b !important;
+    color: #E62020 !important;
     position: relative;
     display: inline-block;
 }
@@ -200,7 +200,7 @@
     align-items: center !important;
     justify-content: center !important;
     font-size: 24px !important;
-    color: #7a0019 !important;
+    color: #E62020 !important;
 }
 
 .aktivitas-wrapper {
@@ -227,8 +227,8 @@
     height: 48px;
     min-width: 48px;
     border-radius: 14px;
-    background: rgba(122, 0, 25, .08);
-    color: #7a0019;
+    background: rgba(230, 32, 32, .08);
+    color: #E62020;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -274,8 +274,8 @@
 [data-kt-app-header-fixed-mobile="true"] #kt_app_header,
 .app-header-sticky-on #kt_app_header,
 .header-fixed #kt_app_header {
-    background-color: #7a1f2b !important;
-    background: #7a1f2b !important;
+    background-color: #E62020 !important;
+    background: #E62020 !important;
     box-shadow: 0 2px 14px rgba(0, 0, 0, 0.2) !important;
     border-bottom: none !important;
     transition: box-shadow 0.3s ease !important;
@@ -322,7 +322,7 @@
 }
 
 #kt_app_header .menu-sub .menu-item:hover .menu-title {
-    color: #7a1f2b !important;
+    color: #E62020 !important;
 }
 
 /* ============================================= */
@@ -330,7 +330,7 @@
 /* ============================================= */
 
 #kt_app_toolbar {
-    background: linear-gradient(135deg, #7a1f2b 0%, #a83240 60%, #7a1f2b 100%);
+    background: linear-gradient(135deg, #c41a1a 0%, #E62020 60%, #c41a1a 100%);
     position: relative;
 }
 
@@ -341,7 +341,7 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(248, 238, 147, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
 }
 
 /* Breadcrumb links */
@@ -354,7 +354,7 @@
 }
 
 #kt_app_toolbar .breadcrumb-item a:hover {
-    color: #f8ee93 !important;
+    color: #ffffff !important;
 }
 
 /* Breadcrumb separator & active item */
@@ -375,7 +375,7 @@
 #kt_app_toolbar .page-heading,
 #kt_app_toolbar h1.page-heading {
     color: #ffffff !important;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Page description subtitle */
@@ -389,8 +389,8 @@
     #kt_app_header,
     #kt_app_header.app-header,
     #kt_app_header.app-header-sticky {
-        background-color: #7a1f2b !important;
-        background: #7a1f2b !important;
+        background-color: #E62020 !important;
+        background: #E62020 !important;
     }
 
     #kt_app_toolbar {

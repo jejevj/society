@@ -4,35 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ isset($set) ? $set->nama_app : config('app.name') }}</title>
+    <title>{{ optional($set)->nama_app ?? config('app.name') }}</title>
 
-    {{-- Favicon --}}
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-
-    {{-- Bootstrap 5 --}}
     <link rel="stylesheet" href="{{ asset('assets/bootstrap/css/bootstrap.min.css') }}">
-
-    {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-    {{-- Google Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-    {{-- SweetAlert2 --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
-    {{-- Custom CSS --}}
     <link rel="stylesheet" href="{{ asset('assets/css/web.css') }}">
 
     <style>
-        /* ================================================
-           GLOBAL RESET - FIX SCROLL BOUNCE / OVERSCROLL
-        ================================================ */
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { box-sizing: border-box; }
 
         html {
             height: 100%;
@@ -52,18 +36,13 @@
             background-color: #f8f9fa;
         }
 
-        /* ================================================
-           NAVBAR
-        ================================================ */
+        /* NAVBAR */
         .navbar-v2 {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             z-index: 1050;
             background: #fff;
             box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-            padding: 0 0;
             transition: box-shadow 0.3s;
         }
 
@@ -83,8 +62,7 @@
         }
 
         .navbar-v2 .brand-logo {
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             object-fit: contain;
         }
 
@@ -106,12 +84,10 @@
             align-items: center;
             gap: 4px;
             list-style: none;
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
         }
 
-        .navbar-v2 .nav-links li a,
-        .navbar-v2 .nav-links li button {
+        .navbar-v2 .nav-links li a {
             display: flex;
             align-items: center;
             gap: 6px;
@@ -121,9 +97,6 @@
             font-weight: 500;
             color: #444;
             text-decoration: none;
-            background: none;
-            border: none;
-            cursor: pointer;
             transition: background 0.18s, color 0.18s;
             white-space: nowrap;
         }
@@ -134,9 +107,7 @@
             color: #E62020;
         }
 
-        .navbar-v2 .nav-links li a.active {
-            font-weight: 700;
-        }
+        .navbar-v2 .nav-links li a.active { font-weight: 700; }
 
         .navbar-v2 .nav-actions {
             display: flex;
@@ -157,10 +128,7 @@
             white-space: nowrap;
         }
 
-        .navbar-v2 .btn-nav-login:hover {
-            background: #c41a1a;
-            color: #fff;
-        }
+        .navbar-v2 .btn-nav-login:hover { background: #c41a1a; color: #fff; }
 
         .navbar-v2 .btn-nav-register {
             background: transparent;
@@ -175,15 +143,10 @@
             white-space: nowrap;
         }
 
-        .navbar-v2 .btn-nav-register:hover {
-            background: #E62020;
-            color: #fff;
-        }
+        .navbar-v2 .btn-nav-register:hover { background: #E62020; color: #fff; }
 
-        /* User dropdown */
-        .navbar-v2 .user-dropdown {
-            position: relative;
-        }
+        /* User Dropdown */
+        .navbar-v2 .user-dropdown { position: relative; }
 
         .navbar-v2 .user-avatar-btn {
             display: flex;
@@ -200,13 +163,10 @@
             transition: background 0.2s;
         }
 
-        .navbar-v2 .user-avatar-btn:hover {
-            background: rgba(230,32,32,0.12);
-        }
+        .navbar-v2 .user-avatar-btn:hover { background: rgba(230,32,32,0.12); }
 
-        .navbar-v2 .user-avatar-btn .avatar-circle {
-            width: 32px;
-            height: 32px;
+        .navbar-v2 .avatar-circle {
+            width: 32px; height: 32px;
             background: #E62020;
             border-radius: 50%;
             display: flex;
@@ -230,9 +190,7 @@
             z-index: 2000;
         }
 
-        .navbar-v2 .dropdown-menu-custom.show {
-            display: block;
-        }
+        .navbar-v2 .dropdown-menu-custom.show { display: block; }
 
         .navbar-v2 .dropdown-menu-custom a,
         .navbar-v2 .dropdown-menu-custom button {
@@ -263,7 +221,7 @@
             margin: 4px 0;
         }
 
-        /* Hamburger mobile */
+        /* Hamburger */
         .navbar-v2 .hamburger-btn {
             display: none;
             background: none;
@@ -281,7 +239,7 @@
             color: #E62020;
         }
 
-        /* Mobile menu */
+        /* Mobile Menu */
         .navbar-v2 .mobile-menu {
             display: none;
             flex-direction: column;
@@ -291,9 +249,7 @@
             gap: 4px;
         }
 
-        .navbar-v2 .mobile-menu.open {
-            display: flex;
-        }
+        .navbar-v2 .mobile-menu.open { display: flex; }
 
         .navbar-v2 .mobile-menu a,
         .navbar-v2 .mobile-menu button {
@@ -332,15 +288,11 @@
             justify-content: center;
         }
 
-        .navbar-v2 .mobile-menu .btn-mobile-login:hover {
-            background: #c41a1a;
-        }
+        .navbar-v2 .mobile-menu .btn-mobile-login:hover { background: #c41a1a; }
 
         @media (max-width: 991.98px) {
             .navbar-v2 .nav-links,
-            .navbar-v2 .nav-actions {
-                display: none;
-            }
+            .navbar-v2 .nav-actions { display: none; }
             .navbar-v2 .hamburger-btn {
                 display: flex;
                 align-items: center;
@@ -354,16 +306,14 @@
 <nav class="navbar-v2">
     <div class="container-fluid">
         <div class="navbar-inner">
-            {{-- Brand --}}
             <a href="{{ url(env('APP_ROUTE').'/home') }}" class="navbar-brand-area">
                 <img src="{{ asset('images/logo.png') }}" alt="Logo" class="brand-logo">
                 <div>
-                    <div class="brand-name">{{ isset($set) ? $set->nama_app : config('app.name') }}</div>
+                    <div class="brand-name">{{ optional($set)->nama_app ?? config('app.name') }}</div>
                     <div class="brand-sub">Portal Layanan</div>
                 </div>
             </a>
 
-            {{-- Desktop Nav --}}
             <ul class="nav-links">
                 <li><a href="{{ url(env('APP_ROUTE').'/home') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'home' ? 'active' : '' }}"><i class="fa-solid fa-house"></i> Beranda</a></li>
                 <li><a href="{{ route('list') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'list' ? 'active' : '' }}"><i class="fa-solid fa-database"></i> Data</a></li>
@@ -372,14 +322,13 @@
                 <li><a href="{{ route('hubungi-kami') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'hubungi-kami' ? 'active' : '' }}"><i class="fa-solid fa-envelope"></i> Hubungi</a></li>
             </ul>
 
-            {{-- Desktop Actions --}}
             <div class="nav-actions">
                 @if(session('id_user'))
                 <div class="user-dropdown" id="userDropdown">
                     <button class="user-avatar-btn" onclick="toggleDropdown()">
                         <div class="avatar-circle">{{ strtoupper(substr(session('nama_user'), 0, 1)) }}</div>
                         <span class="d-none d-lg-inline">{{ session('nama_user') }}</span>
-                        <i class="fa-solid fa-chevron-down" style="font-size:0.7rem; color:#888;"></i>
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.7rem;color:#888;"></i>
                     </button>
                     <div class="dropdown-menu-custom" id="dropdownMenu">
                         <a href="{{ route('profile-user') }}"><i class="fa-solid fa-user"></i> Profil Saya</a>
@@ -398,13 +347,11 @@
                 @endif
             </div>
 
-            {{-- Hamburger --}}
             <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileMenu()">
                 <i class="fa-solid fa-bars" id="hamburgerIcon"></i>
             </button>
         </div>
 
-        {{-- Mobile Menu --}}
         <div class="mobile-menu" id="mobileMenu">
             <a href="{{ url(env('APP_ROUTE').'/home') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'home' ? 'active' : '' }}"><i class="fa-solid fa-house"></i> Beranda</a>
             <a href="{{ route('list') }}" class="{{ isset($menu_aktif) && $menu_aktif == 'list' ? 'active' : '' }}"><i class="fa-solid fa-database"></i> Data</a>
@@ -423,7 +370,7 @@
             </form>
             @else
             <a href="{{ route('login') }}" class="btn-mobile-login"><i class="fa-solid fa-right-to-bracket"></i> Masuk</a>
-            <a href="{{ route('register') }}" style="border:1.5px solid #E62020; color:#E62020; border-radius:8px; justify-content:center;"><i class="fa-solid fa-user-plus"></i> Daftar</a>
+            <a href="{{ route('register') }}" style="border:1.5px solid #E62020;color:#E62020;border-radius:8px;justify-content:center;"><i class="fa-solid fa-user-plus"></i> Daftar</a>
             @endif
         </div>
     </div>
@@ -434,22 +381,16 @@
         const menu = document.getElementById('mobileMenu');
         const icon = document.getElementById('hamburgerIcon');
         menu.classList.toggle('open');
-        if (menu.classList.contains('open')) {
-            icon.className = 'fa-solid fa-xmark';
-        } else {
-            icon.className = 'fa-solid fa-bars';
-        }
+        icon.className = menu.classList.contains('open') ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
     }
-
     function toggleDropdown() {
         document.getElementById('dropdownMenu').classList.toggle('show');
     }
-
     document.addEventListener('click', function(e) {
         const dd = document.getElementById('userDropdown');
         if (dd && !dd.contains(e.target)) {
-            const menu = document.getElementById('dropdownMenu');
-            if (menu) menu.classList.remove('show');
+            const m = document.getElementById('dropdownMenu');
+            if (m) m.classList.remove('show');
         }
     });
 </script>

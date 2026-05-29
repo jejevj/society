@@ -3,7 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\DB;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,13 +15,14 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if (env('APP_ENV') === 'production') {
-            URL::forceScheme('https');
-        }
-
-        // Add Blade directive for storage assets
-        \Blade::directive('storage', function ($expression) {
-            return "<?php echo url('/ldt-asset/storage/' . ltrim($expression, '/')); ?>";
+        // Share $set ke semua view yang menggunakan layouts header/footer web
+        View::composer('*', function ($view) {
+            try {
+                $set = DB::table('app_setting')->where('id_setting', 1)->first();
+            } catch (\Exception $e) {
+                $set = null;
+            }
+            $view->with('set', $set);
         });
     }
 }

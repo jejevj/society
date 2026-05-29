@@ -3,14 +3,13 @@
         <div class="container">
             <div class="row g-4">
 
-                {{-- Brand & Deskripsi --}}
                 <div class="col-12 col-md-4">
                     <div class="footer-brand">
                         <img src="{{ asset('images/logo.png') }}" alt="Logo" class="footer-logo">
-                        <span class="footer-brand-name">{{ isset($set) ? $set->nama_app : config('app.name') }}</span>
+                        <span class="footer-brand-name">{{ optional($set)->nama_app ?? config('app.name') }}</span>
                     </div>
                     <p class="footer-desc">
-                        {{ isset($set) ? ($set->deskripsi_app ?? 'Platform layanan data dan informasi terintegrasi.') : 'Platform layanan data dan informasi terintegrasi.' }}
+                        {{ optional($set)->deskripsi_app ?? 'Platform layanan data dan informasi terintegrasi.' }}
                     </p>
                     <div class="footer-socials">
                         <a href="#" class="social-btn" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
@@ -20,7 +19,6 @@
                     </div>
                 </div>
 
-                {{-- Navigasi --}}
                 <div class="col-6 col-md-2">
                     <h6 class="footer-heading">Navigasi</h6>
                     <ul class="footer-links">
@@ -32,7 +30,6 @@
                     </ul>
                 </div>
 
-                {{-- Layanan --}}
                 <div class="col-6 col-md-2">
                     <h6 class="footer-heading">Layanan</h6>
                     <ul class="footer-links">
@@ -44,29 +41,19 @@
                     </ul>
                 </div>
 
-                {{-- Kontak --}}
                 <div class="col-12 col-md-4">
                     <h6 class="footer-heading">Kontak</h6>
                     <ul class="footer-contact">
-                        @if(isset($set) && $set->alamat_app)
-                        <li>
-                            <span class="contact-icon"><i class="fa-solid fa-location-dot"></i></span>
-                            <span>{{ $set->alamat_app }}</span>
-                        </li>
+                        @if(optional($set)->alamat_app)
+                        <li><span class="contact-icon"><i class="fa-solid fa-location-dot"></i></span><span>{{ $set->alamat_app }}</span></li>
                         @endif
-                        @if(isset($set) && $set->telpon_app)
-                        <li>
-                            <span class="contact-icon"><i class="fa-solid fa-phone"></i></span>
-                            <span>{{ $set->telpon_app }}</span>
-                        </li>
+                        @if(optional($set)->telpon_app)
+                        <li><span class="contact-icon"><i class="fa-solid fa-phone"></i></span><span>{{ $set->telpon_app }}</span></li>
                         @endif
-                        @if(isset($set) && $set->email_app)
-                        <li>
-                            <span class="contact-icon"><i class="fa-solid fa-envelope"></i></span>
-                            <span>{{ $set->email_app }}</span>
-                        </li>
+                        @if(optional($set)->email_app)
+                        <li><span class="contact-icon"><i class="fa-solid fa-envelope"></i></span><span>{{ $set->email_app }}</span></li>
                         @endif
-                        @if(!isset($set) || (!$set->alamat_app && !$set->telpon_app && !$set->email_app))
+                        @if(!optional($set)->alamat_app && !optional($set)->telpon_app && !optional($set)->email_app)
                         <li><span class="contact-icon"><i class="fa-solid fa-circle-info"></i></span><span>Informasi kontak belum diatur.</span></li>
                         @endif
                     </ul>
@@ -76,11 +63,10 @@
         </div>
     </div>
 
-    {{-- Bottom Bar --}}
     <div class="footer-bottom">
         <div class="container">
             <div class="footer-bottom-inner">
-                <span>&copy; {{ date('Y') }} {{ isset($set) ? $set->nama_app : config('app.name') }}. Hak cipta dilindungi.</span>
+                <span>&copy; {{ date('Y') }} {{ optional($set)->nama_app ?? config('app.name') }}. Hak cipta dilindungi.</span>
                 <span class="footer-bottom-right">Dibuat dengan <i class="fa-solid fa-heart" style="color:#f87171;"></i> untuk pelayanan publik</span>
             </div>
         </div>
@@ -88,55 +74,37 @@
 </footer>
 
 <style>
-    /* ====================================
-       FOOTER V2
-    ==================================== */
     .footer-v2 {
         background: #1a1a2e;
         color: #ccc;
         margin-top: auto;
     }
-
-    .footer-main {
-        padding: 56px 0 40px;
-    }
-
+    .footer-main { padding: 56px 0 40px; }
     .footer-brand {
         display: flex;
         align-items: center;
         gap: 10px;
         margin-bottom: 14px;
     }
-
     .footer-logo {
-        width: 38px;
-        height: 38px;
+        width: 38px; height: 38px;
         object-fit: contain;
         filter: brightness(0) invert(1);
     }
-
     .footer-brand-name {
         font-size: 1.05rem;
         font-weight: 800;
         color: #fff;
     }
-
     .footer-desc {
         font-size: 0.875rem;
         color: #aaa;
         line-height: 1.75;
         margin-bottom: 18px;
     }
-
-    .footer-socials {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
+    .footer-socials { display: flex; gap: 8px; flex-wrap: wrap; }
     .social-btn {
-        width: 36px;
-        height: 36px;
+        width: 36px; height: 36px;
         border-radius: 8px;
         background: rgba(255,255,255,0.07);
         color: #ccc;
@@ -148,12 +116,7 @@
         transition: background 0.2s, color 0.2s;
         flex-shrink: 0;
     }
-
-    .social-btn:hover {
-        background: #E62020;
-        color: #fff;
-    }
-
+    .social-btn:hover { background: #E62020; color: #fff; }
     .footer-heading {
         font-size: 0.875rem;
         font-weight: 700;
@@ -165,17 +128,8 @@
         border-bottom: 2px solid #E62020;
         display: inline-block;
     }
-
-    .footer-links {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .footer-links li {
-        margin-bottom: 9px;
-    }
-
+    .footer-links { list-style: none; padding: 0; margin: 0; }
+    .footer-links li { margin-bottom: 9px; }
     .footer-links li a {
         display: flex;
         align-items: center;
@@ -185,24 +139,9 @@
         text-decoration: none;
         transition: color 0.2s, gap 0.2s;
     }
-
-    .footer-links li a i {
-        font-size: 0.65rem;
-        color: #E62020;
-        flex-shrink: 0;
-    }
-
-    .footer-links li a:hover {
-        color: #fff;
-        gap: 10px;
-    }
-
-    .footer-contact {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
+    .footer-links li a i { font-size: 0.65rem; color: #E62020; flex-shrink: 0; }
+    .footer-links li a:hover { color: #fff; gap: 10px; }
+    .footer-contact { list-style: none; padding: 0; margin: 0; }
     .footer-contact li {
         display: flex;
         align-items: flex-start;
@@ -212,7 +151,6 @@
         margin-bottom: 12px;
         line-height: 1.6;
     }
-
     .contact-icon {
         color: #E62020;
         font-size: 0.95rem;
@@ -221,13 +159,11 @@
         width: 16px;
         text-align: center;
     }
-
     .footer-bottom {
         background: rgba(0,0,0,0.25);
         border-top: 1px solid rgba(255,255,255,0.06);
         padding: 16px 0;
     }
-
     .footer-bottom-inner {
         display: flex;
         align-items: center;
@@ -237,13 +173,11 @@
         font-size: 0.8rem;
         color: #888;
     }
-
     .footer-bottom-right {
         display: flex;
         align-items: center;
         gap: 5px;
     }
-
     @media (max-width: 767.98px) {
         .footer-main { padding: 36px 0 28px; }
         .footer-bottom-inner { justify-content: center; text-align: center; }
@@ -251,7 +185,6 @@
     }
 </style>
 
-{{-- Scripts --}}
 <script src="{{ asset('assets/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('assets/jquery/jquery.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>

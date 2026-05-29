@@ -178,6 +178,7 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
+        text-decoration: none;
     }
 
     .btn-login-secondary:hover { background: #e0b030; color: #3a2a00; }
@@ -212,21 +213,6 @@
         font-size: 0.78rem;
         margin-top: 22px;
     }
-
-    .login-switch-link {
-        text-align: center;
-        margin-top: 16px;
-        font-size: 0.87rem;
-        color: #888;
-    }
-
-    .login-switch-link a {
-        color: #E62020;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-    .login-switch-link a:hover { text-decoration: underline; }
 
     @media (max-width: 767.98px) {
         .login-info-col { display: none; }
@@ -274,9 +260,9 @@
                                 <button type="submit" class="btn-login-primary">
                                     <i class="fa-solid fa-right-to-bracket"></i> Login
                                 </button>
-                                <button type="button" class="btn-login-secondary" data-bs-toggle="modal" data-bs-target="#modalUnduh">
+                                <a href="{{ route('register') }}" class="btn-login-secondary">
                                     <i class="fa-solid fa-user-plus"></i> Registrasi
-                                </button>
+                                </a>
                                 <a href="{{ route('lupa-password') }}" class="btn-login-outline">
                                     <i class="fa-solid fa-key"></i> Lupa Password
                                 </a>
@@ -292,61 +278,6 @@
     </div>
 </div>
 
-{{-- Modal Registrasi --}}
-<div class="modal fade" id="modalUnduh" tabindex="-1" aria-labelledby="modalUnduhLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form method="POST" id="actForm" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title text-marron" id="modalUnduhLabel">Registrasi Akun</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6"><div class="mb-3">
-                            <label class="form-label">Nama Lengkap</label>
-                            <input type="text" class="form-control" name="nama">
-                        </div></div>
-                        <div class="col-md-6"><div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" name="email">
-                        </div></div>
-                        <div class="col-md-6"><div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" class="form-control" name="password">
-                        </div></div>
-                        <div class="col-md-6"><div class="mb-3">
-                            <label class="form-label">No Identitas</label>
-                            <input type="text" class="form-control" name="identitas" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                        </div></div>
-                        <div class="col-md-6"><div class="mb-3">
-                            <label class="form-label">File No Identitas</label>
-                            <input type="file" class="form-control" name="file">
-                        </div></div>
-                        <div class="col-md-6"><div class="mb-3">
-                            <label class="form-label">No Telepon</label>
-                            <input type="text" class="form-control" name="telepon" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                        </div></div>
-                        <div class="col-md-6"><div class="mb-3">
-                            <label class="form-label">Pekerjaan</label>
-                            <input type="text" class="form-control" name="pekerjaan">
-                        </div></div>
-                        <div class="col-md-6"><div class="mb-3">
-                            <label class="form-label">Alamat</label>
-                            <textarea name="alamat" class="form-control" rows="4"></textarea>
-                        </div></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-marron" id="btnKirim">Registrasi</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
     @if(session('success'))
         Swal.fire({ icon: 'success', title: 'Berhasil', text: '{{ session('success') }}' });
@@ -356,37 +287,6 @@
     @endif
 
     $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
-
-    $(document).ready(function () {
-        $("#actForm").on("submit", function (e) {
-            e.preventDefault();
-            let formData = new FormData(this);
-            $.ajax({
-                url: "{{ route('registrasiAction') }}",
-                type: "POST",
-                data: formData,
-                contentType: false,
-                processData: false,
-                beforeSend: function () {
-                    Swal.fire({ title: "Sedang diproses...", text: "Mohon tunggu sebentar", allowOutsideClick: false, allowEscapeKey: false, didOpen: () => { Swal.showLoading(); } });
-                },
-                success: function (response) {
-                    Swal.close();
-                    if (response.success) {
-                        Swal.fire({ icon: "success", title: "Berhasil", text: response.message, timer: 2000, showConfirmButton: false }).then(() => { location.reload(); });
-                    } else {
-                        Swal.fire({ icon: "error", title: "Gagal", text: response.message });
-                    }
-                },
-                error: function (xhr) {
-                    Swal.close();
-                    let message = 'Terjadi kesalahan.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) { message = xhr.responseJSON.message; }
-                    Swal.fire({ icon: "error", title: "Registrasi Gagal", text: message });
-                }
-            });
-        });
-    });
 
     $(document).ready(function () {
         $("#actLoginForm").on("submit", function (e) {

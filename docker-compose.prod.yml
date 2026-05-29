@@ -1,0 +1,34 @@
+services:
+  app:
+    image: sdi-app:latest
+    container_name: laravel-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    ports:
+      - "8080:80"
+    volumes:
+      - storage-data:/var/www/html/storage/app/public
+      - ./app:/var/www/html/app
+      - ./resources:/var/www/html/resources
+      - ./routes:/var/www/html/routes
+      - ./config:/var/www/html/config
+      - ./public:/var/www/html/public
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=https://apps.syscloud.my.id
+      - ASSET_URL=https://apps.syscloud.my.id/ldt-asset/
+      - APP_ROUTE=ldt
+      - APP_URL_CHATBOT=https://apps.syscloud.my.id/chatbot/
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  storage-data:
+    driver: local

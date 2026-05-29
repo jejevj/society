@@ -1,0 +1,103 @@
+0000000000000000000000000000000000000000 ab6dcf12fdfe4e17d89559497ae02cdac99f4378 Basril Hafi <basril@ciptaartha.com> 1758190650 +0700	commit (initial): first commit
+ab6dcf12fdfe4e17d89559497ae02cdac99f4378 0000000000000000000000000000000000000000 Basril Hafi <basril@ciptaartha.com> 1758190666 +0700	Branch: renamed refs/heads/master to refs/heads/main
+0000000000000000000000000000000000000000 ab6dcf12fdfe4e17d89559497ae02cdac99f4378 Basril Hafi <basril@ciptaartha.com> 1758190666 +0700	Branch: renamed refs/heads/master to refs/heads/main
+ab6dcf12fdfe4e17d89559497ae02cdac99f4378 ed811f33dd70d4663f4fc80295c96cf32761eed2 Basril Hafi <basril@ciptaartha.com> 1758190796 +0700	pull origin main --rebase (start): checkout ed811f33dd70d4663f4fc80295c96cf32761eed2
+ed811f33dd70d4663f4fc80295c96cf32761eed2 9ee7df750e6063bb96a0d7c451af6ebc1a88efce Basril Hafi <basril@ciptaartha.com> 1758190961 +0700	rebase (continue): first commit
+9ee7df750e6063bb96a0d7c451af6ebc1a88efce 9ee7df750e6063bb96a0d7c451af6ebc1a88efce Basril Hafi <basril@ciptaartha.com> 1758191002 +0700	rebase (finish): returning to refs/heads/main
+9ee7df750e6063bb96a0d7c451af6ebc1a88efce e94c36f6b293cdcd4fed68695f0e7e905f26cb09 Basril Hafi <basril@ciptaartha.com> 1758536266 +0700	commit: upd
+e94c36f6b293cdcd4fed68695f0e7e905f26cb09 96fd236c8d07661984aa76bf232cccf10232c1a1 Basril Hafi <basril@ciptaartha.com> 1758613389 +0700	commit: upd2
+96fd236c8d07661984aa76bf232cccf10232c1a1 ecf9f2beca1ae32eb37000462bc039d7ec415666 Basril Hafi <basril@ciptaartha.com> 1758684113 +0700	pull: Fast-forward
+ecf9f2beca1ae32eb37000462bc039d7ec415666 245fde1df732826887a329889d6d46c83ec4333f Basril Hafi <basril@ciptaartha.com> 1759130644 +0700	commit: ok
+245fde1df732826887a329889d6d46c83ec4333f 74b8ca334d439399d34212092adc1183d9f96714 Basril Hafi <basril@ciptaartha.com> 1759206563 +0700	commit: ok
+74b8ca334d439399d34212092adc1183d9f96714 ee5c9f374edbaf7e6424dae4656a0258c6cf0d14 Basril Hafi <basril@ciptaartha.com> 1759379566 +0700	commit: o
+ee5c9f374edbaf7e6424dae4656a0258c6cf0d14 ce0d5b938a42da68e45c3faa9df6a29f19f1fe6a Basril Hafi <basril@ciptaartha.com> 1759718892 +0700	commit: ui
+ce0d5b938a42da68e45c3faa9df6a29f19f1fe6a 46801b823cadaea90e048765a8189a346dfb946e Basril Hafi <basril@ciptaartha.com> 1760326190 +0700	commit: dev
+46801b823cadaea90e048765a8189a346dfb946e 83d4c590988137db8dd73de6ee947c488f1a3e34 Basril Hafi <basril@ciptaartha.com> 1772420766 +0700	commit: rev
+83d4c590988137db8dd73de6ee947c488f1a3e34 f498d2b81c90662f5d24eb57f0627368be71a3a6 Basril Hafi <basril@ciptaartha.com> 1773212204 +0700	commit: email
+f498d2b81c90662f5d24eb57f0627368be71a3a6 45336db3bb266347830872884aec3d6fd9b47244 Basril Hafi <basril@ciptaartha.com> 1773213336 +0700	commit: email
+45336db3bb266347830872884aec3d6fd9b47244 6f9adc32e27cd4bee8530a70953ed0f3c83c6193 Basril Hafi <basril@ciptaartha.com> 1773222350 +0700	commit: update controller dan tambah halaman error
+6f9adc32e27cd4bee8530a70953ed0f3c83c6193 c90b3193cdcc81d2cce59b353d1c46be76facddb Basril Hafi <basril@ciptaartha.com> 1773226427 +0700	commit: header login backend
+c90b3193cdcc81d2cce59b353d1c46be76facddb 771310b824484547b4c3733eec3c54ad694ba225 Basril Hafi <basril@ciptaartha.com> 1773226687 +0700	commit: header login backend
+771310b824484547b4c3733eec3c54ad694ba225 a73135d8fe07aead6541d9dc1cedc3e6c1d3c020 Basril Hafi <basril@ciptaartha.com> 1774591927 +0700	commit: servicePro
+a73135d8fe07aead6541d9dc1cedc3e6c1d3c020 aff00fa26f6eb51139c7847453ccd85fc42ec6c1 Basril Hafi <basril@ciptaartha.com> 1774592378 +0700	commit: servicePro2
+aff00fa26f6eb51139c7847453ccd85fc42ec6c1 8d2c87198c4381c5817e5d818df25177ea62608a Basril Hafi <basril@ciptaartha.com> 1774845151 +0700	commit: count data reff
+8d2c87198c4381c5817e5d818df25177ea62608a 18564d5db556fcc962aa3bcf7c9517bc1ac3d60b Basril Hafi <basril@ciptaartha.com> 1774863011 +0700	commit: cdn
+18564d5db556fcc962aa3bcf7c9517bc1ac3d60b 332f9fa23808b6730e4cc1a10d92a98c7cb87f59 Basril Hafi <basril@ciptaartha.com> 1774932246 +0700	commit: update data pada log
+332f9fa23808b6730e4cc1a10d92a98c7cb87f59 6e942563fd642bb76252ed59c6bf1a641e778f7d Basril Hafi <basril@ciptaartha.com> 1775019661 +0700	commit: penyesuaian web public
+6e942563fd642bb76252ed59c6bf1a641e778f7d 21c5cf11e77f72cce63f06b8342c57e06b642658 Basril Hafi <basril@ciptaartha.com> 1775020111 +0700	commit: fix preview data terbatas
+21c5cf11e77f72cce63f06b8342c57e06b642658 f3dde2989e6704ec0f4fe6bd0ef687082b991841 Basril Hafi <basril@ciptaartha.com> 1775020381 +0700	commit: fix preview data terbatas2
+f3dde2989e6704ec0f4fe6bd0ef687082b991841 a261b7006427c3be22e944a3e21b489114c67b05 Basril Hafi <basril@ciptaartha.com> 1775121968 +0700	commit: upload file beda server
+a261b7006427c3be22e944a3e21b489114c67b05 74d1d24255445a87698273091b431a22ff142723 Basril Hafi <basril@ciptaartha.com> 1775633508 +0700	commit: search fix
+74d1d24255445a87698273091b431a22ff142723 5e28fdc1792b71095f5083b78154b95d32509fac Basril Hafi <basril@ciptaartha.com> 1776060712 +0700	commit: penyesuaian layout depan
+5e28fdc1792b71095f5083b78154b95d32509fac 0894274dcaaa7fb4a5da3f9f05bfd252037d124d Basril Hafi <basril@ciptaartha.com> 1776060765 +0700	pull origin main --rebase (start): checkout 0894274dcaaa7fb4a5da3f9f05bfd252037d124d
+0894274dcaaa7fb4a5da3f9f05bfd252037d124d d2bb0416324d21fe353838036409e6f7ac8531f3 Basril Hafi <basril@ciptaartha.com> 1776060765 +0700	pull origin main --rebase (pick): penyesuaian layout depan
+d2bb0416324d21fe353838036409e6f7ac8531f3 d2bb0416324d21fe353838036409e6f7ac8531f3 Basril Hafi <basril@ciptaartha.com> 1776060765 +0700	pull origin main --rebase (finish): returning to refs/heads/main
+d2bb0416324d21fe353838036409e6f7ac8531f3 0a55cc0779336e09d4d77fa34f79510092ce8937 Basril Hafi <basril@ciptaartha.com> 1776071696 +0700	commit: UI login
+0a55cc0779336e09d4d77fa34f79510092ce8937 efc2696553058a96d2e9cef60eb5a416d9dc1caf Basril Hafi <basril@ciptaartha.com> 1776138750 +0700	commit: minor
+efc2696553058a96d2e9cef60eb5a416d9dc1caf 50e366cd9f885820e8df51c14157c562114874a0 Basril Hafi <basril@ciptaartha.com> 1776150527 +0700	commit: minor lg
+50e366cd9f885820e8df51c14157c562114874a0 9546122d4ce1ea138ccbe9485ee1aad145c08277 Basril Hafi <basril@ciptaartha.com> 1776151344 +0700	commit: lazy loading
+9546122d4ce1ea138ccbe9485ee1aad145c08277 318a0ded47618f9be6552a1166577592c58e2095 Basril Hafi <basril@ciptaartha.com> 1776157008 +0700	commit: meta
+318a0ded47618f9be6552a1166577592c58e2095 37dd212425c183889e22ae03806268767c91e36f Basril Hafi <basril@ciptaartha.com> 1776164082 +0700	commit: asset route
+37dd212425c183889e22ae03806268767c91e36f 35b11ad927d61832918fdae3a12d754056073cc2 Basril Hafi <basril@ciptaartha.com> 1776675977 +0700	commit: update ldt
+35b11ad927d61832918fdae3a12d754056073cc2 95ccdc465a000022f6b605ae835eabcbf962a65e Basril Hafi <basril@ciptaartha.com> 1776676097 +0700	commit: assetnya
+95ccdc465a000022f6b605ae835eabcbf962a65e f9a4ac38411b92b737c21743e1da5ab338bcaacb Basril Hafi <basril@ciptaartha.com> 1777373172 +0700	commit: update temp
+f9a4ac38411b92b737c21743e1da5ab338bcaacb 9259b295ca1360db590588ad3d87f2bb39a0cc80 Basril Hafi <basril@ciptaartha.com> 1777373217 +0700	pull origin main --rebase (start): checkout 9259b295ca1360db590588ad3d87f2bb39a0cc80
+9259b295ca1360db590588ad3d87f2bb39a0cc80 1ccd71335d1c08e921c02c4b49ff35606e4fb271 Basril Hafi <basril@ciptaartha.com> 1777373217 +0700	pull origin main --rebase (pick): update temp
+1ccd71335d1c08e921c02c4b49ff35606e4fb271 1ccd71335d1c08e921c02c4b49ff35606e4fb271 Basril Hafi <basril@ciptaartha.com> 1777373217 +0700	pull origin main --rebase (finish): returning to refs/heads/main
+1ccd71335d1c08e921c02c4b49ff35606e4fb271 09bc37fc4942f95a9b4cd88ef2c765936ba956ea Basril Hafi <basril@ciptaartha.com> 1777976314 +0700	commit: update revisi
+09bc37fc4942f95a9b4cd88ef2c765936ba956ea a306dda08c443d21b3d17b27d42ecf5a458b866c Basril Hafi <basril@ciptaartha.com> 1778121309 +0700	pull origin docker: Fast-forward
+a306dda08c443d21b3d17b27d42ecf5a458b866c c068c3cf69f4a7677273b8b984757d19b13d09b9 Basril Hafi <basril@ciptaartha.com> 1778127322 +0700	pull origin docker: Fast-forward
+c068c3cf69f4a7677273b8b984757d19b13d09b9 7beffbcb20dceac818f3e2968cf1a81e7b412cf5 Basril Hafi <basril@ciptaartha.com> 1778128012 +0700	commit: update master
+7beffbcb20dceac818f3e2968cf1a81e7b412cf5 ac9cac53077e637d4e2dd4ea28566f4c57c721b8 Basril Hafi <basril@ciptaartha.com> 1778134429 +0700	commit (merge): url to asset
+ac9cac53077e637d4e2dd4ea28566f4c57c721b8 8b6d702a39498d46a6bb93950f4798f38a086767 Basril Hafi <basril@ciptaartha.com> 1778135934 +0700	pull origin docker: Fast-forward
+8b6d702a39498d46a6bb93950f4798f38a086767 bf01c43ae1c9f8e1d8c3da2fa99fc7468f9f2b6d Basril Hafi <basril@ciptaartha.com> 1778136257 +0700	commit: update lagi
+bf01c43ae1c9f8e1d8c3da2fa99fc7468f9f2b6d 959d0dc5139babeb776543b8e8901058080590c1 Basril Hafi <basril@ciptaartha.com> 1778210947 +0700	commit: update validasi
+959d0dc5139babeb776543b8e8901058080590c1 c06fb45da1f3e596be406acbf40da1e0287de293 Basril Hafi <basril@ciptaartha.com> 1778215380 +0700	commit: notif
+c06fb45da1f3e596be406acbf40da1e0287de293 a7756ea0c269caa5ebe6746b063785588d5e250a Basril Hafi <basril@ciptaartha.com> 1778215813 +0700	commit: notif
+a7756ea0c269caa5ebe6746b063785588d5e250a 2ff049e441b66241cf23c4fc22a257a4bab1ff7f Basril Hafi <basril@ciptaartha.com> 1778221103 +0700	commit: notif
+2ff049e441b66241cf23c4fc22a257a4bab1ff7f 849e85bbf632c6165f6a2b6c52d86f4107e2053c Basril Hafi <basril@ciptaartha.com> 1778223252 +0700	commit: notif
+849e85bbf632c6165f6a2b6c52d86f4107e2053c 2a9e702414d8fa24f18b774acea9e09cf5e2f056 Basril Hafi <basril@ciptaartha.com> 1778223893 +0700	commit: notif
+2a9e702414d8fa24f18b774acea9e09cf5e2f056 633aaaa780c6669b31d456c84f48c129d3fcd60a Basril Hafi <basril@ciptaartha.com> 1778233054 +0700	commit: update
+633aaaa780c6669b31d456c84f48c129d3fcd60a 4dc58f29c9d33c29ae6bf1bf352605510062970a Basril Hafi <basril@ciptaartha.com> 1778243815 +0700	commit: update
+4dc58f29c9d33c29ae6bf1bf352605510062970a 2b05c6dff135156a37ae06f01560fa934836f321 Basril Hafi <basril@ciptaartha.com> 1778250423 +0700	commit: update
+2b05c6dff135156a37ae06f01560fa934836f321 e127cf0fd6a15578d25acaeea1205714d9720750 Basril Hafi <basril@ciptaartha.com> 1778250795 +0700	commit: update
+e127cf0fd6a15578d25acaeea1205714d9720750 5ddc9890d927ffcf6f9f5446cfe31d9c4c215a39 Basril Hafi <basril@ciptaartha.com> 1778480741 +0700	commit: upd
+5ddc9890d927ffcf6f9f5446cfe31d9c4c215a39 c451860cb32f372255482a17005a62a767280cdf Basril Hafi <basril@ciptaartha.com> 1778482998 +0700	commit: upd
+c451860cb32f372255482a17005a62a767280cdf a0d095d932ca12ce4991fe06d01d6c2121a107a5 Basril Hafi <basril@ciptaartha.com> 1778487321 +0700	commit: upd
+a0d095d932ca12ce4991fe06d01d6c2121a107a5 79a341016e3bdb3538de34eed59baed7df9482bb Basril Hafi <basril@ciptaartha.com> 1778487806 +0700	commit: upd
+79a341016e3bdb3538de34eed59baed7df9482bb d5ce746ba0eda216dfa2f83217365da0cff723d6 Basril Hafi <basril@ciptaartha.com> 1778487944 +0700	commit: upd
+d5ce746ba0eda216dfa2f83217365da0cff723d6 503163ab645d41d76e7fe6fbc2ff78cc65b60b51 Basril Hafi <basril@ciptaartha.com> 1778490804 +0700	commit: upd
+503163ab645d41d76e7fe6fbc2ff78cc65b60b51 9baf4f97e95775ef0e0058d9edbab23676e5851b Basril Hafi <basril@ciptaartha.com> 1778492304 +0700	commit: upd
+9baf4f97e95775ef0e0058d9edbab23676e5851b 6c3e8c464d79c7cd0242d5a1b9149388a72705f7 Basril Hafi <basril@ciptaartha.com> 1778492645 +0700	commit: upd
+6c3e8c464d79c7cd0242d5a1b9149388a72705f7 50d2b5826dddfca72a4453a4dcd85a01451a240e Basril Hafi <basril@ciptaartha.com> 1778495546 +0700	commit: upd
+50d2b5826dddfca72a4453a4dcd85a01451a240e e69cad2eced683dd3598d1124a6460002d6a4967 Basril Hafi <basril@ciptaartha.com> 1778497508 +0700	commit: upd
+e69cad2eced683dd3598d1124a6460002d6a4967 bbf42251892944ca001d81ae748e5c121e839048 Basril Hafi <basril@ciptaartha.com> 1778550921 +0700	commit: dump
+bbf42251892944ca001d81ae748e5c121e839048 ce750310a6fdbf5275b6b0fee5a99d385be580e4 Basril Hafi <basril@ciptaartha.com> 1778551202 +0700	commit: dump
+ce750310a6fdbf5275b6b0fee5a99d385be580e4 9b250072bff77aca3b0b455da7ac082066d19fc9 Basril Hafi <basril@ciptaartha.com> 1778551371 +0700	commit: dump
+9b250072bff77aca3b0b455da7ac082066d19fc9 ef2ea0d9428404abef6646b70c87931ae013459d Basril Hafi <basril@ciptaartha.com> 1778552541 +0700	commit: antivirus
+ef2ea0d9428404abef6646b70c87931ae013459d 6d1328b5c6fc6a3bfa6a36615121927a972af2c9 Basril Hafi <basril@ciptaartha.com> 1778552894 +0700	commit: antivirus
+6d1328b5c6fc6a3bfa6a36615121927a972af2c9 5c4ae4a890961a5d9a90578e5b1d33d233a4cd3f Basril Hafi <basril@ciptaartha.com> 1778553067 +0700	commit: antivirus
+5c4ae4a890961a5d9a90578e5b1d33d233a4cd3f 4b2485c4b8e285d79a4538986f6e0247d9f44aeb Basril Hafi <basril@ciptaartha.com> 1778556619 +0700	commit: dashboard
+4b2485c4b8e285d79a4538986f6e0247d9f44aeb 019f2388f2d6c7ec28c14de41aa495ef2fac607e Basril Hafi <basril@ciptaartha.com> 1778559450 +0700	commit: dashboard
+019f2388f2d6c7ec28c14de41aa495ef2fac607e 61f54dc780704dec923c92fba7f07815f17ed943 Basril Hafi <basril@ciptaartha.com> 1778563489 +0700	commit: thumbnail
+61f54dc780704dec923c92fba7f07815f17ed943 01a0c58abd4949130c158a4df60fd3db4e14817c Basril Hafi <basril@ciptaartha.com> 1778563945 +0700	commit: thumbnail
+01a0c58abd4949130c158a4df60fd3db4e14817c fb15b30ef3af70c49087acb5234b4a67f350b940 Basril Hafi <basril@ciptaartha.com> 1778567196 +0700	commit: thumbnail
+fb15b30ef3af70c49087acb5234b4a67f350b940 74839905ffc815bd96b5517564faf91b7d5a8d96 Basril Hafi <basril@ciptaartha.com> 1778567455 +0700	commit: thumbnail
+74839905ffc815bd96b5517564faf91b7d5a8d96 783db0ddd4ed88ad307c25989945cf777012fa89 Basril Hafi <basril@ciptaartha.com> 1778643748 +0700	commit: thumbnail
+783db0ddd4ed88ad307c25989945cf777012fa89 5739772b5101bd9060e4c1a74242b5d23d4479df Basril Hafi <basril@ciptaartha.com> 1778645541 +0700	commit: thumbnail
+5739772b5101bd9060e4c1a74242b5d23d4479df 49d6edadc75ccf4893e0a09cb3fca66c668561c5 Basril Hafi <basril@ciptaartha.com> 1778645791 +0700	commit: thumbnail
+49d6edadc75ccf4893e0a09cb3fca66c668561c5 4746869015290f6a987142d21d43da40dac4e9d1 Basril Hafi <basril@ciptaartha.com> 1778645864 +0700	commit: thumbnail
+4746869015290f6a987142d21d43da40dac4e9d1 194e674fbcc96ee5df28da488810eded856a0af1 Basril Hafi <basril@ciptaartha.com> 1778646411 +0700	commit: thumbnail
+194e674fbcc96ee5df28da488810eded856a0af1 9b80f83c63948021d4d73b2c72c135377e72c349 Basril Hafi <basril@ciptaartha.com> 1778646744 +0700	commit: thumbnail
+9b80f83c63948021d4d73b2c72c135377e72c349 ce9a6d798a5d4514ba44075dc4bbae5055435e70 Basril Hafi <basril@ciptaartha.com> 1778647363 +0700	commit: thumbnail
+ce9a6d798a5d4514ba44075dc4bbae5055435e70 55cd52fceeb0e1e4898f03af6c40dd43c36844d7 Basril Hafi <basril@ciptaartha.com> 1778668301 +0700	commit: thumbnail
+55cd52fceeb0e1e4898f03af6c40dd43c36844d7 eae9778a15c78147bb5189016c16220a0dbdb99c Basril Hafi <basril@ciptaartha.com> 1779094644 +0700	commit: update revisi v1
+eae9778a15c78147bb5189016c16220a0dbdb99c caea611235c7f52cd5fcd28ba63a9885906b81aa Basril Hafi <basril@ciptaartha.com> 1779176833 +0700	commit: update semua revisi
+caea611235c7f52cd5fcd28ba63a9885906b81aa a440737c5c6b7bb4bfee85514bcfb0f36427a193 Basril Hafi <basril@ciptaartha.com> 1779700401 +0700	commit: header
+a440737c5c6b7bb4bfee85514bcfb0f36427a193 0000000000000000000000000000000000000000 Basril Hafi <basril@ciptaartha.com> 1780012902 +0700	Branch: renamed refs/heads/main to refs/heads/main
+a440737c5c6b7bb4bfee85514bcfb0f36427a193 a440737c5c6b7bb4bfee85514bcfb0f36427a193 Basril Hafi <basril@ciptaartha.com> 1780012902 +0700	Branch: renamed refs/heads/main to refs/heads/main
+a440737c5c6b7bb4bfee85514bcfb0f36427a193 e278da9137f74f72258e5d668ab87c30a6ab053f Basril Hafi <basril@ciptaartha.com> 1780012923 +0700	commit: new
+e278da9137f74f72258e5d668ab87c30a6ab053f 5188b33e2413445c86797944313e62287e6df040 Basril Hafi <basril@ciptaartha.com> 1780027541 +0700	commit: update
+5188b33e2413445c86797944313e62287e6df040 696ce9fa1b7ead522890ce77be10b1fedcda9d2a Basril Hafi <basril@ciptaartha.com> 1780030085 +0700	commit: upd
+696ce9fa1b7ead522890ce77be10b1fedcda9d2a 4bb07ad821b8b1ae1ae5a22715a307bd9a03962d jejevjcap <j.angga@ciptaartha.com> 1780066579 +0700	commit: assets
+4bb07ad821b8b1ae1ae5a22715a307bd9a03962d 6996e2c51ca008a370307aa8cee06e77268eec75 jejevjcap <j.angga@ciptaartha.com> 1780066591 +0700	pull origin main: Merge made by the 'ort' strategy.

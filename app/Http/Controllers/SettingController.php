@@ -76,18 +76,26 @@ class SettingController extends Controller
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             
             $query = DB::table('app_slider as a')
-                ->selectRaw('A.*')
-                ->where('jenis_slider', 'gambar');
+                ->select(
+                    'a.id_slider',
+                    'a.judul_slider',
+                    'a.gambar_slider',
+                    'a.urutan_slider',
+                    'a.jenis_slider',
+                    'a.created_at',
+                    'a.updated_at'
+                )
+                ->where('a.jenis_slider', 'gambar');
                 
-                if ($request->filled('nama')) {
-                    $query->where('a.judul_slider', 'ILIKE', '%' . $request->input('nama') . '%');
-                }
+            if ($request->filled('nama')) {
+                $query->where('a.judul_slider', 'like', '%' . $request->input('nama') . '%');
+            }
                 
-           $query->orderBy('a.urutan_slider', 'asc')->get();
+            $query->orderBy('a.urutan_slider', 'asc');
 
             return DataTables::of($query)
                 ->addIndexColumn()  
-                 ->addColumn('foto', function ($row) {
+                ->addColumn('foto', function ($row) {
                     if ($row->gambar_slider) {
                         $url = asset('storage/' . $row->gambar_slider);
                         return '<img src="'.$url.'" width="80" class="img-thumbnail"/>';
@@ -107,8 +115,7 @@ class SettingController extends Controller
                     
                     return $btn;
                 })
-                
-                ->rawColumns(['foto','action'])
+                ->rawColumns(['foto', 'action'])
                 ->make(true);
         }
     }
@@ -121,18 +128,25 @@ class SettingController extends Controller
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             
             $query = DB::table('app_slider as a')
-                ->selectRaw('A.*')
-                ->where('jenis_slider', 'text');
+                ->select(
+                    'a.id_slider',
+                    'a.judul_slider',
+                    'a.deskripsi_slider',
+                    'a.urutan_slider',
+                    'a.jenis_slider',
+                    'a.created_at',
+                    'a.updated_at'
+                )
+                ->where('a.jenis_slider', 'text');
                 
-                if ($request->filled('nama')) {
-                    $query->where('a.judul_slider', 'ILIKE', '%' . $request->input('nama') . '%');
-                }
+            if ($request->filled('nama')) {
+                $query->where('a.judul_slider', 'like', '%' . $request->input('nama') . '%');
+            }
                 
-           $query->orderBy('a.urutan_slider', 'asc')->get();
+            $query->orderBy('a.urutan_slider', 'asc');
 
             return DataTables::of($query)
                 ->addIndexColumn()  
-                
                 ->addColumn('action', function ($row) use ($cek) {
                     $id_hash = Crypt::encrypt($row->id_slider);
                     $infoUrl = route('editSlider', $id_hash);
@@ -146,11 +160,11 @@ class SettingController extends Controller
                     
                     return $btn;
                 })
-                
                 ->rawColumns(['action'])
                 ->make(true);
         }
     }
+
     public function editSlider($id_slider, Request $request)
     {
         $menu_aktif = 'setting||konten';
@@ -163,7 +177,6 @@ class SettingController extends Controller
         
         $id_slider_dec = Crypt::decrypt($id_slider);
         $detail = DB::table('app_slider')->where('id_slider', $id_slider_dec)->first();
-        // dd($detail);
         $data = [
             'menu' => 'Edit Slider',
             'menu_aktif' => $menu_aktif,
@@ -313,7 +326,6 @@ class SettingController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'key' => 'required',
-
             ]);
 
             if ($validator->fails()) {
@@ -344,11 +356,11 @@ class SettingController extends Controller
                     'success' => false,
                     'message' => 'Tidak memiliki akses'
                 ], 422);
-                }
+            }
             $validator = Validator::make($request->all(), [
-                'judul'       => 'required|string|max:255',
+                'judul'   => 'required|string|max:255',
                 'urutan'  => 'required',
-                'gambar'     => 'required|image|mimes:jpg,jpeg,png,gif|max:5048',
+                'gambar'  => 'required|image|mimes:jpg,jpeg,png,gif|max:5048',
             ]);
 
             if ($validator->fails()) {
@@ -359,17 +371,16 @@ class SettingController extends Controller
             }
 
             $path = null;
-            $filename = null;
             if ($request->hasFile('gambar')) {
                 $filename = time() . '_' . $request->file('gambar')->getClientOriginalName();
                 $path = $request->file('gambar')->storeAs('slider', $filename, 'public');
             }
             $data = [
-                'judul_slider'      => $request->judul,
+                'judul_slider'  => $request->judul,
                 'urutan_slider' => $request->urutan,
-                'gambar_slider'           => $path,
-                'jenis_slider'           => 'gambar',
-                'created_at'           => now(),
+                'gambar_slider' => $path,
+                'jenis_slider'  => 'gambar',
+                'created_at'    => now(),
             ];
             $insert = DB::table('app_slider')->insert($data);
 
@@ -399,10 +410,10 @@ class SettingController extends Controller
                     'success' => false,
                     'message' => 'Tidak memiliki akses'
                 ], 422);
-                }
+            }
             $validator = Validator::make($request->all(), [
-                'judul'       => 'required|string|max:255',
-                'urutan'  => 'required',
+                'judul'      => 'required|string|max:255',
+                'urutan'     => 'required',
                 'deskripsi'  => 'required|string',
             ]);
 
@@ -414,11 +425,11 @@ class SettingController extends Controller
             }
 
             $data = [
-                'judul_slider'      => $request->judul,
-                'urutan_slider' => $request->urutan,
-                'deskripsi_slider'           => $request->deskripsi,
-                'jenis_slider'           => 'text',
-                'created_at'           => now(),
+                'judul_slider'     => $request->judul,
+                'urutan_slider'    => $request->urutan,
+                'deskripsi_slider' => $request->deskripsi,
+                'jenis_slider'     => 'text',
+                'created_at'       => now(),
             ];
             $insert = DB::table('app_slider')->insert($data);
 
@@ -452,8 +463,7 @@ class SettingController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                
-                'logo'     => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+                'logo' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             ]);
 
             if ($validator->fails()) {
@@ -465,16 +475,16 @@ class SettingController extends Controller
 
             $updateData = [
                 'deskripsi_topik'       => $request->deskripsi_topik,
-                'deskripsi_organisasi'       => $request->deskripsi_organisasi,
+                'deskripsi_organisasi'  => $request->deskripsi_organisasi,
                 'deskripsi_permohonan'  => $request->deskripsi_permohonan,
-                'deskripsi_hubungi'       => $request->deskripsi_hubungi,
-                'deskripsi_tentang'       => $request->deskripsi_tentang,
-                'deskripsi_login'  => $request->deskripsi_login,
-                'url_facebook'  => $request->url_facebook,
-                'url_twitter'  => $request->url_twitter,
-                'url_instagram'  => $request->url_instagram,
-                'url_youtube'  => $request->url_youtube,
-                'url_linkedin'  => $request->url_linkedin,
+                'deskripsi_hubungi'     => $request->deskripsi_hubungi,
+                'deskripsi_tentang'     => $request->deskripsi_tentang,
+                'deskripsi_login'       => $request->deskripsi_login,
+                'url_facebook'          => $request->url_facebook,
+                'url_twitter'           => $request->url_twitter,
+                'url_instagram'         => $request->url_instagram,
+                'url_youtube'           => $request->url_youtube,
+                'url_linkedin'          => $request->url_linkedin,
                 'updated_at'            => now(),
             ];
 
@@ -545,16 +555,14 @@ class SettingController extends Controller
             }
 
             if ($request->hasFile('gambar2_login')) {
-                $filename11 = time() . '_' . $request->file('gambar2_login')->getClientOriginalName();
-                $path11 = $request->file('gambar2_login')->storeAs('image_setting', $filename11, 'public');
-                $updateData['gambar2_login'] = $path11;
+                $filename12 = time() . '_' . $request->file('gambar2_login')->getClientOriginalName();
+                $path12 = $request->file('gambar2_login')->storeAs('image_setting', $filename12, 'public');
+                $updateData['gambar2_login'] = $path12;
             }
 
-
-            $id =  1;
+            $id = 1;
             $dt_exist = DB::table('app_setting')->where('id_setting', $id)->first();
             $update = DB::table('app_setting')->where('id_setting', $id)->update($updateData);
-
 
             if($update){
                 $this->dataService->createLog($request,'updateSettingAction' ,'Berhasil ubah data setting',json_encode($updateData),json_encode($dt_exist));

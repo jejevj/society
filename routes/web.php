@@ -149,6 +149,18 @@ Route::prefix('society-event')->group(function () {
     Route::get('/editSlider/{id_slider}', [App\Http\Controllers\SettingController::class, 'editSlider'])->name('editSlider');
     Route::post('/updateSliderAction', [App\Http\Controllers\SettingController::class, 'updateSliderAction'])->name('updateSliderAction');
 
+    // route menu midtrans configurations
+    Route::get('midtrans-config', [App\Http\Controllers\MidtransConfigController::class, 'index'])->name('midtrans-config');
+    Route::post('/updateMidtransConfigAction', [App\Http\Controllers\MidtransConfigController::class, 'updateMidtransConfigAction'])->name('updateMidtransConfigAction');
+    Route::post('/testMidtransConnectionAction', [App\Http\Controllers\MidtransConfigController::class, 'testConnectionAction'])->name('testMidtransConnectionAction');
+    Route::post('/getMidtransStatusAction', [App\Http\Controllers\MidtransConfigController::class, 'getTransactionStatusAction'])->name('getMidtransStatusAction');
+    Route::post('/approveMidtransAction', [App\Http\Controllers\MidtransConfigController::class, 'approveTransactionAction'])->name('approveMidtransAction');
+    Route::post('/cancelMidtransAction', [App\Http\Controllers\MidtransConfigController::class, 'cancelTransactionAction'])->name('cancelMidtransAction');
+    Route::post('/refundMidtransAction', [App\Http\Controllers\MidtransConfigController::class, 'refundTransactionAction'])->name('refundMidtransAction');
+    Route::post('/expireMidtransAction', [App\Http\Controllers\MidtransConfigController::class, 'expireTransactionAction'])->name('expireMidtransAction');
+    Route::post('/createMidtransSnapTokenAction', [App\Http\Controllers\MidtransConfigController::class, 'createSnapTokenAction'])->name('createMidtransSnapTokenAction');
+    Route::post('/createMidtransChargeAction', [App\Http\Controllers\MidtransConfigController::class, 'createChargeAction'])->name('createMidtransChargeAction');
+
     Route::get('profile', [App\Http\Controllers\ProfilController::class, 'index'])->name('profile');
     Route::post('updateProfilAction', [App\Http\Controllers\ProfilController::class, 'updateProfilAction'])->name('updateProfilAction');
     Route::post('updatePasswordAction', [App\Http\Controllers\ProfilController::class, 'updatePasswordAction'])->name('updatePasswordAction');

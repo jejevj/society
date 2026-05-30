@@ -23,7 +23,7 @@
             min-height: 100vh;
         }
 
-        /* ── Col kiri: gambar ── */
+        /* Col kiri: gambar */
         .login-img {
             flex: 0 0 66.6667%;
             max-width: 66.6667%;
@@ -52,12 +52,12 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            margin-bottom: 28px;
+            margin-bottom: 20px;
         }
 
         .login-img-overlay .brand img {
+            height: 56px;
             width: auto;
-            height: 52px;
             object-fit: contain;
         }
 
@@ -71,7 +71,6 @@
         .login-img-overlay .brand-text span {
             font-size: 0.85rem;
             color: rgba(255,255,255,0.75);
-            font-weight: 400;
         }
 
         .login-img-overlay p {
@@ -81,7 +80,7 @@
             max-width: 480px;
         }
 
-        /* ── Col kanan: form ── */
+        /* Col kanan: form */
         .login-form-col {
             flex: 0 0 33.3333%;
             max-width: 33.3333%;
@@ -99,7 +98,7 @@
         }
 
         .login-form-inner .logo-sm {
-            height: 44px;
+            height: 48px;
             margin-bottom: 24px;
         }
 
@@ -124,7 +123,7 @@
             display: block;
         }
 
-        .form-control {
+        .form-control-login {
             width: 100%;
             border-radius: 10px;
             border: 1.5px solid #e0e0e0;
@@ -135,7 +134,7 @@
             background: #fafafa;
         }
 
-        .form-control:focus {
+        .form-control-login:focus {
             border-color: #E62020;
             box-shadow: 0 0 0 3px rgba(230,32,32,0.1);
             background: #fff;
@@ -168,7 +167,6 @@
             margin-top: 28px;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .login-wrap { flex-direction: column; }
             .login-img { display: none; }
@@ -180,16 +178,12 @@
 
 <div class="login-wrap">
 
-    {{-- Col kiri: gambar about --}}
+    {{-- Col kiri: background image --}}
     <div class="login-img">
-        <img src="{{ asset('storage/' . ($set->gambar_about ?? $set->gambar_login ?? '')) }}" alt="Background">
+        <img src="{{ asset('ldt-asset/images/1780075229_bg-scbank.jpeg') }}" alt="Background Society Event">
         <div class="login-img-overlay">
             <div class="brand">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo">
-                <div class="brand-text">
-                    <h1>{{ $set->nama_app ?? env('APP_NAME', 'Society Event') }}</h1>
-                    <span>Admin Panel</span>
-                </div>
+                <img src="{{ asset('ldt-asset/images/logo-name.png') }}" alt="Logo Society Event">
             </div>
             <p>{{ $set->deskripsi_app ?? 'Kelola data, event, dan layanan secara mudah melalui panel administrasi terpusat.' }}</p>
         </div>
@@ -198,7 +192,7 @@
     {{-- Col kanan: form login --}}
     <div class="login-form-col">
         <div class="login-form-inner">
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo-sm">
+            <img src="{{ asset('ldt-asset/images/logo_.png') }}" alt="Logo" class="logo-sm">
             <h2>Masuk Admin</h2>
             <div class="subtitle">Silakan masuk untuk mengelola sistem</div>
 
@@ -206,18 +200,18 @@
                 @csrf
                 <div class="mb-4">
                     <label class="form-label">Username / Email</label>
-                    <input type="text" name="username" class="form-control" placeholder="Masukkan username atau email">
+                    <input type="text" name="username" class="form-control-login" placeholder="Masukkan username atau email">
                 </div>
                 <div class="mb-4">
                     <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" placeholder="Masukkan password">
+                    <input type="password" name="password" class="form-control-login" placeholder="Masukkan password">
                 </div>
                 <button type="submit" class="btn-submit" id="btn-save">
                     <i class="fa fa-sign-in-alt"></i> Login
                 </button>
             </form>
 
-            <div class="login-footer-text">&copy; {{ date('Y') }} {{ $set->nama_app ?? env('APP_NAME') }}</div>
+            <div class="login-footer-text">&copy; {{ date('Y') }} {{ $set->nama_app ?? env('APP_NAME', 'Society Event') }}</div>
         </div>
     </div>
 

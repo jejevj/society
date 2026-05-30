@@ -334,81 +334,84 @@
 				</div>
 @include('admin-panel.layouts.footer')
 
+{{-- ================================================================ --}}
+{{-- SCRIPTS: diletakkan SETELAH footer agar bundle sudah ter-load     --}}
+{{-- ================================================================ --}}
 <script>
-// ================================================================
-// RE-INIT KTMenu & Bootstrap Tabs after bundle scripts are loaded
-// ================================================================
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
+    // ============================================================
+    // INISIALISASI NAVBAR & TAB
+    // Gunakan window.onload agar semua bundle (KTMenu, Bootstrap)
+    // sudah benar-benar ter-load sebelum dijalankan
+    // ============================================================
+    window.addEventListener('load', function () {
 
-    // Re-init KTMenu for navbar dropdowns
-    if (typeof KTMenu !== 'undefined') {
-        KTMenu.init();
-    }
+        // Re-init KTMenu untuk navbar dropdown
+        if (typeof KTMenu !== 'undefined') {
+            KTMenu.init();
+        }
 
-    // Bootstrap 5 Tab init (fallback manual trigger)
-    var tabLinks = document.querySelectorAll('#midtransMainTab [data-bs-toggle="tab"]');
-    tabLinks.forEach(function(el) {
-        el.addEventListener('click', function(e) {
-            e.preventDefault();
-            // remove active from all
-            tabLinks.forEach(function(t) {
-                t.classList.remove('active');
-                t.setAttribute('aria-selected', 'false');
-                var target = document.querySelector(t.getAttribute('href'));
-                if (target) { target.classList.remove('show', 'active'); }
-            });
-            // activate clicked
-            this.classList.add('active');
-            this.setAttribute('aria-selected', 'true');
-            var pane = document.querySelector(this.getAttribute('href'));
-            if (pane) {
-                pane.classList.add('show', 'active');
-                // init datatable when transaksi tab shown
-                if (this.getAttribute('href') === '#tab_transaksi' && !window._dtTransaksiLoaded) {
-                    initDtTransaksi('all');
+        // Inisialisasi Bootstrap Tab secara manual (fallback)
+        var tabLinks = document.querySelectorAll('#midtransMainTab [data-bs-toggle="tab"]');
+        tabLinks.forEach(function (el) {
+            el.addEventListener('click', function (e) {
+                e.preventDefault();
+                tabLinks.forEach(function (t) {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                    var target = document.querySelector(t.getAttribute('href'));
+                    if (target) { target.classList.remove('show', 'active'); }
+                });
+                this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
+                var pane = document.querySelector(this.getAttribute('href'));
+                if (pane) {
+                    pane.classList.add('show', 'active');
+                    if (this.getAttribute('href') === '#tab_transaksi' && !window._dtTransaksiLoaded) {
+                        initDtTransaksi('all');
+                    }
                 }
-            }
+            });
         });
     });
 
     // ============================================================
     // DATATABLE TRANSAKSI
     // ============================================================
-    var dtTransaksi = null;
-    var currentStatus = 'all';
+    var dtTransaksi        = null;
+    var currentStatus      = 'all';
     window._dtTransaksiLoaded = false;
-    var routeTable  = '{{ route("getTableMidtransTransaksi") }}';
-    var routeSync   = '{{ route("syncMidtransTransaksiAction") }}';
-    var csrfToken   = '{{ csrf_token() }}';
+
+    var routeTable = '{{ route("getTableMidtransTransaksi") }}';
+    var routeSync  = '{{ route("syncMidtransTransaksiAction") }}';
+    var csrfToken  = '{{ csrf_token() }}';
 
     function initDtTransaksi(status) {
         currentStatus = status || 'all';
-        if (dtTransaksi) {
-            dtTransaksi.destroy();
-        }
+        if (dtTransaksi) { dtTransaksi.destroy(); }
         dtTransaksi = $('#dtTransaksi').DataTable({
             processing: true,
             serverSide: true,
             ajax: {
                 url: routeTable,
                 type: 'GET',
-                data: function(d) { d.status = currentStatus; }
+                data: function (d) { d.status = currentStatus; }
             },
             columns: [
-                { data: 'DT_RowIndex', orderable: false, searchable: false, className: 'ps-4' },
+                { data: 'DT_RowIndex',       orderable: false, searchable: false, className: 'ps-4' },
                 { data: 'order_id' },
                 { data: 'transaction_id' },
                 { data: 'transaction_status' },
                 { data: 'payment_type' },
                 { data: 'gross_amount' },
                 { data: 'transaction_time' },
-                { data: 'aksi', orderable: false, searchable: false, className: 'text-center' },
+                { data: 'aksi',              orderable: false, searchable: false, className: 'text-center' },
             ],
             order: [[0, 'desc']],
             pageLength: 10,
             language: {
-                processing: '<span class="spinner-border spinner-border-sm me-2"></span> Loading...',
-                emptyTable: 'Belum ada data transaksi',
+                processing:  '<span class="spinner-border spinner-border-sm me-2"></span> Loading...',
+                emptyTable:  'Belum ada data transaksi',
                 zeroRecords: 'Tidak ada transaksi ditemukan',
             }
         });
@@ -416,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Filter pills
-    $(document).on('click', '.filter-status', function() {
+    $(document).on('click', '.filter-status', function () {
         $('.filter-status').removeClass('active btn-primary').addClass('btn-light-secondary');
         $(this).removeClass('btn-light-secondary').addClass('active btn-primary');
         var status = $(this).data('status');
@@ -428,16 +431,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Sync row button
-    $(document).on('click', '.btn-sync-row', function() {
+    // Sync row
+    $(document).on('click', '.btn-sync-row', function () {
         var orderId = $(this).data('order');
-        var btn = $(this);
+        var btn     = $(this);
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
         $.ajax({
-            url: routeSync,
-            type: 'POST',
+            url: routeSync, type: 'POST',
             data: { _token: csrfToken, order_id: orderId },
-            success: function(res) {
+            success: function (res) {
                 btn.prop('disabled', false).html('<i class="fa fa-sync-alt"></i>');
                 if (res.success) {
                     Swal.fire({ icon: 'success', title: 'Synced!', text: res.message, timer: 1500, showConfirmButton: false });
@@ -446,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
                 }
             },
-            error: function() {
+            error: function () {
                 btn.prop('disabled', false).html('<i class="fa fa-sync-alt"></i>');
                 Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan jaringan.' });
             }
@@ -456,33 +458,32 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================================
     // FORM CONFIG
     // ============================================================
-    $('#formMidtransConfig').on('submit', function(e) {
+    $('#formMidtransConfig').on('submit', function (e) {
         e.preventDefault();
         var paymentTypes = [];
-        $('.payment-type-checkbox:checked').each(function() { paymentTypes.push($(this).val()); });
+        $('.payment-type-checkbox:checked').each(function () { paymentTypes.push($(this).val()); });
         var formData = $(this).serializeArray();
-        paymentTypes.forEach(function(pt) { formData.push({ name: 'payment_types[]', value: pt }); });
+        paymentTypes.forEach(function (pt) { formData.push({ name: 'payment_types[]', value: pt }); });
         $.ajax({
             url: '{{ route("updateMidtransConfigAction") }}',
-            type: 'POST',
-            data: formData,
-            success: function(res) {
+            type: 'POST', data: formData,
+            success: function (res) {
                 if (res.success) {
                     Swal.fire({ icon: 'success', title: 'Saved!', text: res.message, timer: 1800, showConfirmButton: false })
-                        .then(() => location.reload());
+                        .then(function () { location.reload(); });
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: res.message });
                 }
             },
-            error: function(xhr) {
-                var msg = xhr.responseJSON?.message || 'Validation error';
+            error: function (xhr) {
+                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Validation error';
                 Swal.fire({ icon: 'error', title: 'Error', text: msg });
             }
         });
     });
 
     // Payment type highlight
-    $(document).on('change', '.payment-type-checkbox', function() {
+    $(document).on('change', '.payment-type-checkbox', function () {
         var label = $(this).closest('label');
         if ($(this).is(':checked')) {
             label.addClass('border-primary bg-light-primary').removeClass('border-gray-200');
@@ -490,89 +491,101 @@ document.addEventListener('DOMContentLoaded', function () {
             label.removeClass('border-primary bg-light-primary').addClass('border-gray-200');
         }
     });
-    $('#btnSelectAll').on('click', function() {
-        $('.payment-type-checkbox').prop('checked', true).trigger('change');
-    });
-    $('#btnDeselectAll').on('click', function() {
-        $('.payment-type-checkbox').prop('checked', false).trigger('change');
-    });
+    $('#btnSelectAll').on('click',   function () { $('.payment-type-checkbox').prop('checked', true).trigger('change'); });
+    $('#btnDeselectAll').on('click', function () { $('.payment-type-checkbox').prop('checked', false).trigger('change'); });
 
     // Test connection
-    $('#btnTestConnection').on('click', function() {
+    $('#btnTestConnection').on('click', function () {
         var btn = $(this);
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-2"></i> Testing...');
         $.ajax({
             url: '{{ route("testMidtransConnectionAction") }}',
-            type: 'POST',
-            data: { _token: csrfToken },
-            success: function(res) {
+            type: 'POST', data: { _token: csrfToken },
+            success: function (res) {
                 btn.prop('disabled', false).html('<i class="fa fa-plug me-2"></i> Test Connection');
                 Swal.fire({ icon: res.success ? 'success' : 'error', title: res.success ? 'Connected!' : 'Failed', text: res.message });
             },
-            error: function() {
+            error: function () {
                 btn.prop('disabled', false).html('<i class="fa fa-plug me-2"></i> Test Connection');
                 Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
             }
         });
     });
 
-    // Get transaction status
-    $('#btnGetStatus').on('click', function() {
+    // ============================================================
+    // GET TRANSACTION STATUS
+    // FIX: route name was "getTransactionStatusAction" (not defined),
+    //      correct route name is "getMidtransStatusAction"
+    // ============================================================
+    $('#btnGetStatus').on('click', function () {
         var orderId = $('#status_order_id').val().trim();
         if (!orderId) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Masukkan Order ID.' });
         $.ajax({
-            url: '{{ route("getTransactionStatusAction") }}',
-            type: 'POST',
-            data: { _token: csrfToken, order_id: orderId },
-            success: function(res) {
+            url: '{{ route("getMidtransStatusAction") }}',
+            type: 'POST', data: { _token: csrfToken, order_id: orderId },
+            success: function (res) {
                 if (res.success) {
                     $('#statusResult').html('<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:300px">' + JSON.stringify(res.data, null, 2) + '</pre>');
                 } else {
                     $('#statusResult').html('<div class="alert alert-danger mt-2">' + res.message + '</div>');
                 }
+            },
+            error: function () {
+                $('#statusResult').html('<div class="alert alert-danger mt-2">Terjadi kesalahan jaringan.</div>');
             }
         });
     });
 
-    // Transaction actions
+    // ============================================================
+    // TRANSACTION ACTIONS
+    // FIX: corrected route names to match web.php definitions
+    //   approveTransactionAction  -> approveMidtransAction
+    //   cancelTransactionAction   -> cancelMidtransAction
+    //   expireTransactionAction   -> expireMidtransAction
+    //   refundTransactionAction   -> refundMidtransAction
+    // ============================================================
     function doTransactionAction(url, data, resultDiv) {
         $.ajax({
             url: url, type: 'POST',
             data: Object.assign({ _token: csrfToken }, data),
-            success: function(res) {
+            success: function (res) {
                 if (res.success) {
                     $(resultDiv).html('<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:200px">' + JSON.stringify(res.data, null, 2) + '</pre>');
                 } else {
                     $(resultDiv).html('<div class="alert alert-danger mt-2">' + res.message + '</div>');
                 }
+            },
+            error: function () {
+                $(resultDiv).html('<div class="alert alert-danger mt-2">Terjadi kesalahan jaringan.</div>');
             }
         });
     }
-    $('#btnApprove').on('click', function() {
+
+    $('#btnApprove').on('click', function () {
         var o = $('#action_order_id').val().trim();
         if (!o) return;
-        doTransactionAction('{{ route("approveTransactionAction") }}', { order_id: o }, '#actionResult');
+        doTransactionAction('{{ route("approveMidtransAction") }}', { order_id: o }, '#actionResult');
     });
-    $('#btnCancel').on('click', function() {
+    $('#btnCancel').on('click', function () {
         var o = $('#action_order_id').val().trim();
         if (!o) return;
-        doTransactionAction('{{ route("cancelTransactionAction") }}', { order_id: o }, '#actionResult');
+        doTransactionAction('{{ route("cancelMidtransAction") }}', { order_id: o }, '#actionResult');
     });
-    $('#btnExpire').on('click', function() {
+    $('#btnExpire').on('click', function () {
         var o = $('#action_order_id').val().trim();
         if (!o) return;
-        doTransactionAction('{{ route("expireTransactionAction") }}', { order_id: o }, '#actionResult');
+        doTransactionAction('{{ route("expireMidtransAction") }}', { order_id: o }, '#actionResult');
     });
-    $('#btnRefund').on('click', function() {
-        var o = $('#refund_order_id').val().trim();
+    $('#btnRefund').on('click', function () {
+        var o   = $('#refund_order_id').val().trim();
         var amt = $('#refund_amount').val().trim();
         var rsn = $('#refund_reason').val().trim();
         if (!o || !amt || !rsn) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Lengkapi semua field refund.' });
-        doTransactionAction('{{ route("refundTransactionAction") }}', { order_id: o, amount: amt, reason: rsn }, '#refundResult');
+        doTransactionAction('{{ route("refundMidtransAction") }}', { order_id: o, amount: amt, reason: rsn }, '#refundResult');
     });
 
     // Toggle password visibility
-    window.toggleVisibility = function(inputId, btn) {
+    window.toggleVisibility = function (inputId, btn) {
         var input = document.getElementById(inputId);
         var icon  = btn.querySelector('i');
         if (input.type === 'password') {
@@ -584,5 +597,5 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-});
+})();
 </script>

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             AppSettingSeeder::class,
             AppEmailSeeder::class,
             AppSliderSeeder::class,
+            MidtransConfigSeeder::class,
 
             // Users
             AppUserSeeder::class,

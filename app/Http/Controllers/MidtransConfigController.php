@@ -51,6 +51,16 @@ class MidtransConfigController extends Controller
             $selectedTypes = json_decode($config->payment_types, true) ?? [];
         }
 
+        $tabCounts = [
+            'all'        => DB::table('app_midtrans_transaction')->count(),
+            'pending'    => DB::table('app_midtrans_transaction')->where('transaction_status', 'pending')->count(),
+            'settlement' => DB::table('app_midtrans_transaction')->where('transaction_status', 'settlement')->count(),
+            'cancel'     => DB::table('app_midtrans_transaction')->where('transaction_status', 'cancel')->count(),
+            'expire'     => DB::table('app_midtrans_transaction')->where('transaction_status', 'expire')->count(),
+            'deny'       => DB::table('app_midtrans_transaction')->where('transaction_status', 'deny')->count(),
+            'refund'     => DB::table('app_midtrans_transaction')->where('transaction_status', 'refund')->count(),
+        ];
+
         $data = [
             'menu'            => 'Midtrans Configurations',
             'menu_aktif'      => $menu_aktif,
@@ -59,12 +69,170 @@ class MidtransConfigController extends Controller
             'config'          => $config,
             'allPaymentTypes' => $allPaymentTypes,
             'selectedTypes'   => $selectedTypes,
+            'tabCounts'       => $tabCounts,
         ];
 
         if (!$cek['r']) {
             return view('admin-panel.error_page.403-page', $data);
         }
         return view('admin-panel.midtrans.main', $data);
+    }
+
+    public function getTableTransaksi(Request $request)
+    {
+        if (!$request->session()->has('id')) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $status = $request->get('status', 'all');
+        $search = $request->get('search', ['value' => ''])['value'] ?? '';
+        $start  = (int) $request->get('start', 0);
+        $length = (int) $request->get('length', 10);
+        $order  = $request->get('order', [['column' => 0, 'dir' => 'desc']]);
+
+        $columns = ['id_transaksi', 'order_id', 'transaction_status', 'payment_type', 'gross_amount', 'transaction_time', 'updated_at'];
+        $orderCol = $columns[$order[0]['column'] ?? 0] ?? 'id_transaksi';
+        $orderDir = in_array(strtolower($order[0]['dir'] ?? 'desc'), ['asc', 'desc']) ? $order[0]['dir'] : 'desc';
+
+        $query = DB::table('app_midtrans_transaction');
+
+        if ($status !== 'all') {
+            $query->where('transaction_status', $status);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('order_id', 'like', "%{$search}%")
+                  ->orWhere('transaction_id', 'like', "%{$search}%")
+                  ->orWhere('payment_type', 'like', "%{$search}%")
+                  ->orWhere('transaction_status', 'like', "%{$search}%");
+            });
+        }
+
+        $recordsFiltered = $query->count();
+        $recordsTotal    = DB::table('app_midtrans_transaction')->count();
+
+        $data = $query->orderBy($orderCol, $orderDir)
+                      ->skip($start)->take($length)
+                      ->get();
+
+        $rows = [];
+        foreach ($data as $i => $row) {
+            $statusBadge = $this->getStatusBadge($row->transaction_status);
+            $amount      = 'Rp ' . number_format($row->gross_amount, 0, ',', '.');
+            $rows[] = [
+                'DT_RowIndex' => $start + $i + 1,
+                'order_id'           => '<span class="fw-bold">' . e($row->order_id) . '</span>',
+                'transaction_id'     => e($row->transaction_id ?? '-'),
+                'transaction_status' => $statusBadge,
+                'payment_type'       => '<span class="badge badge-light-info">' . e($row->payment_type ?? '-') . '</span>',
+                'gross_amount'       => $amount,
+                'transaction_time'   => $row->transaction_time ? \Carbon\Carbon::parse($row->transaction_time)->format('d M Y H:i') : '-',
+                'aksi' => '
+                    <button class="btn btn-sm btn-light-primary btn-sync-row me-1" data-order="' . e($row->order_id) . '" title="Sync Status">
+                        <i class="fa fa-sync-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light-info btn-detail-row" data-order="' . e($row->order_id) . '" title="Detail">
+                        <i class="fa fa-eye"></i>
+                    </button>',
+            ];
+        }
+
+        return response()->json([
+            'draw'            => (int) $request->get('draw'),
+            'recordsTotal'    => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data'            => $rows,
+        ]);
+    }
+
+    public function syncTransaksiAction(Request $request)
+    {
+        if (!$request->session()->has('id')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), ['order_id' => 'required|string']);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $config = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
+        if (!$config || empty($config->server_key)) {
+            return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
+        }
+
+        $baseUrl = $config->environment === 'production'
+            ? 'https://api.midtrans.com'
+            : 'https://api.sandbox.midtrans.com';
+
+        try {
+            $response = Http::withBasicAuth($config->server_key, '')
+                ->timeout(15)
+                ->get($baseUrl . '/v2/' . $request->order_id . '/status');
+
+            $res = $response->json();
+
+            if (!isset($res['transaction_status'])) {
+                return response()->json(['success' => false, 'message' => $res['status_message'] ?? 'Failed to get status']);
+            }
+
+            $exists = DB::table('app_midtrans_transaction')->where('order_id', $res['order_id'] ?? $request->order_id)->exists();
+
+            $payload = [
+                'transaction_id'     => $res['transaction_id'] ?? null,
+                'transaction_status' => $res['transaction_status'] ?? null,
+                'payment_type'       => $res['payment_type'] ?? null,
+                'gross_amount'       => isset($res['gross_amount']) ? (float) $res['gross_amount'] : null,
+                'currency'           => $res['currency'] ?? 'IDR',
+                'fraud_status'       => $res['fraud_status'] ?? null,
+                'status_message'     => $res['status_message'] ?? null,
+                'bank'               => $res['bank'] ?? null,
+                'masked_card'        => $res['masked_card'] ?? null,
+                'approval_code'      => $res['approval_code'] ?? null,
+                'raw_response'       => json_encode($res),
+                'transaction_time'   => isset($res['transaction_time']) ? \Carbon\Carbon::parse($res['transaction_time']) : null,
+                'settlement_time'    => isset($res['settlement_time']) ? \Carbon\Carbon::parse($res['settlement_time']) : null,
+                'updated_by'         => session('nama'),
+                'updated_at'         => now(),
+            ];
+
+            if ($exists) {
+                DB::table('app_midtrans_transaction')
+                    ->where('order_id', $res['order_id'] ?? $request->order_id)
+                    ->update($payload);
+            } else {
+                $payload['order_id']    = $res['order_id'] ?? $request->order_id;
+                $payload['created_by']  = session('nama');
+                $payload['created_at']  = now();
+                DB::table('app_midtrans_transaction')->insert($payload);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction synced: ' . ($res['transaction_status'] ?? '-'),
+                'status'  => $res['transaction_status'] ?? '-',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    private function getStatusBadge(?string $status): string
+    {
+        $map = [
+            'pending'    => 'warning',
+            'settlement' => 'success',
+            'capture'    => 'success',
+            'cancel'     => 'danger',
+            'deny'       => 'danger',
+            'expire'     => 'secondary',
+            'refund'     => 'info',
+            'partial_refund' => 'info',
+            'authorize'  => 'primary',
+        ];
+        $color = $map[strtolower($status ?? '')] ?? 'secondary';
+        return '<span class="badge badge-light-' . $color . '">' . strtoupper($status ?? '-') . '</span>';
     }
 
     public function updateMidtransConfigAction(Request $request)

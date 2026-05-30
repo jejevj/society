@@ -160,6 +160,8 @@ Route::prefix('society-event')->group(function () {
     Route::post('/expireMidtransAction', [App\Http\Controllers\MidtransConfigController::class, 'expireTransactionAction'])->name('expireMidtransAction');
     Route::post('/createMidtransSnapTokenAction', [App\Http\Controllers\MidtransConfigController::class, 'createSnapTokenAction'])->name('createMidtransSnapTokenAction');
     Route::post('/createMidtransChargeAction', [App\Http\Controllers\MidtransConfigController::class, 'createChargeAction'])->name('createMidtransChargeAction');
+    Route::get('/getTableMidtransTransaksi', [App\Http\Controllers\MidtransConfigController::class, 'getTableTransaksi'])->name('getTableMidtransTransaksi');
+    Route::post('/syncMidtransTransaksiAction', [App\Http\Controllers\MidtransConfigController::class, 'syncTransaksiAction'])->name('syncMidtransTransaksiAction');
 
     Route::get('profile', [App\Http\Controllers\ProfilController::class, 'index'])->name('profile');
     Route::post('updateProfilAction', [App\Http\Controllers\ProfilController::class, 'updateProfilAction'])->name('updateProfilAction');

@@ -185,6 +185,13 @@ Route::prefix('society-event')->group(function () {
     Route::get('/editProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'editProgramEvent'])->name('editProgramEvent');
     Route::post('/addProgramEventAction', [App\Http\Controllers\EventController::class, 'addProgramEventAction'])->name('addProgramEventAction');
 
+    // route menu event timeline
+    Route::get('event-timeline', [App\Http\Controllers\EventTimelineController::class, 'index'])->name('event-timeline');
+    Route::get('/getTableTimeline', [App\Http\Controllers\EventTimelineController::class, 'getTableTimeline'])->name('getTableTimeline');
+    Route::post('/addTimelineAction', [App\Http\Controllers\EventTimelineController::class, 'addTimelineAction'])->name('addTimelineAction');
+    Route::post('/updateTimelineAction', [App\Http\Controllers\EventTimelineController::class, 'updateTimelineAction'])->name('updateTimelineAction');
+    Route::post('/deleteTimelineAction', [App\Http\Controllers\EventTimelineController::class, 'deleteTimelineAction'])->name('deleteTimelineAction');
+
     // route menu event registrasi peserta
     Route::get('event-registrasi', [App\Http\Controllers\EventRegistrasiController::class, 'index'])->name('event-registrasi');
     Route::get('/getTableRegistrasi', [App\Http\Controllers\EventRegistrasiController::class, 'getTableRegistrasi'])->name('getTableRegistrasi');

@@ -18,7 +18,7 @@ class EventAddonController extends Controller
     public function index($kode_event)
     {
         $cek_permit = $this->cekPermit();
-        $detail     = DB::table('event')->where('kode_event', $kode_event)->first();
+        $detail     = DB::table('t_event')->where('kode_event', $kode_event)->first();
 
         if (!$detail) abort(404);
 
@@ -80,7 +80,7 @@ class EventAddonController extends Controller
     public function tambah($kode_event)
     {
         $cek_permit = $this->cekPermit();
-        $detail     = DB::table('event')->where('kode_event', $kode_event)->first();
+        $detail     = DB::table('t_event')->where('kode_event', $kode_event)->first();
         if (!$detail) abort(404);
 
         $breadcrumb = '
@@ -109,7 +109,7 @@ class EventAddonController extends Controller
         $detail     = DB::table('event_addon')->where('kode_addon', $kode_addon)->first();
         if (!$detail) abort(404);
 
-        $event = DB::table('event')->where('kode_event', $detail->kode_event)->first();
+        $event = DB::table('t_event')->where('kode_event', $detail->kode_event)->first();
 
         $breadcrumb = '
             <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 pt-1">
@@ -227,7 +227,7 @@ class EventAddonController extends Controller
     public function addonRegistrasi($kode_event)
     {
         $cek_permit = $this->cekPermit();
-        $detail     = DB::table('event')->where('kode_event', $kode_event)->first();
+        $detail     = DB::table('t_event')->where('kode_event', $kode_event)->first();
         if (!$detail) abort(404);
 
         return view('admin-panel.event.addon.registrasi', [

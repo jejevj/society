@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('jenis_menu', 50)->nullable();
             $table->string('kode_menu')->nullable();
             $table->string('icon_menu')->nullable();
-            $table->integer('parent_menu')->nullable()->default(0);
+            $table->integer('parent_menu')->nullable();
             $table->integer('urutan_menu')->nullable();
             $table->text('deskripsi_menu')->nullable();
             $table->timestamps();

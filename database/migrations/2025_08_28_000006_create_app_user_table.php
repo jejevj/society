@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('organisasi_user')->nullable();
             $table->string('verify_token')->nullable();
             $table->string('otp_user')->nullable();
-            $table->char('is_otp', 1)->default('Y');
+            $table->string('is_otp', 1)->default('Y');
             $table->timestamps();
         });
     }

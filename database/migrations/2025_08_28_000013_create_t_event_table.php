@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('lokasi_event')->nullable();
             $table->date('tanggal_awal_event')->nullable();
             $table->date('tanggal_akhir_event')->nullable();
-            $table->char('status_event', 1)->default('Y');
+            $table->string('status_event', 1)->default('Y');
             $table->string('background_event')->nullable();
             $table->string('created_by_event')->nullable();
             $table->timestamp('created_at_event')->nullable()->useCurrentOnUpdate();

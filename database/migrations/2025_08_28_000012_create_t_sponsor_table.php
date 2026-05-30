@@ -13,8 +13,7 @@ return new class extends Migration
             $table->string('nama')->nullable();
             $table->string('logo')->nullable();
             $table->integer('urutan')->nullable();
-            $table->timestamp('created_at')->nullable()->useCurrentOnUpdate();
-            $table->dateTime('updated_at')->nullable();
+            $table->timestamps();
         });
     }
 

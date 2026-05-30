@@ -34,7 +34,7 @@ return new class extends Migration
             $table->text('url_youtube')->nullable();
             $table->text('url_linkedin')->nullable();
             $table->string('kode', 10)->nullable();
-            $table->char('cek_antivirus', 1)->default('Y');
+            $table->string('cek_antivirus', 1)->default('Y');
             $table->string('url_antivirus')->nullable();
             $table->string('url_chatbot')->nullable();
             $table->timestamps();

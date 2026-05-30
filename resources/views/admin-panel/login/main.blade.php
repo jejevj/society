@@ -23,7 +23,6 @@
             min-height: 100vh;
         }
 
-        /* Col kiri: gambar */
         .login-img {
             flex: 0 0 66.6667%;
             max-width: 66.6667%;
@@ -68,7 +67,6 @@
             max-width: 480px;
         }
 
-        /* Col kanan: form */
         .login-form-col {
             flex: 0 0 33.3333%;
             max-width: 33.3333%;
@@ -168,10 +166,10 @@
 
     {{-- Col kiri: background image --}}
     <div class="login-img">
-        <img src="/{{ ltrim(env('APP_ROUTE',''), '/') }}/images/1780075229_bg-scbank.jpeg" alt="Background Society Event">
+        <img src="/ldt-asset/images/1780075229_bg-scbank.jpeg" alt="Background Society Event">
         <div class="login-img-overlay">
             <div class="brand">
-                <img src="/{{ ltrim(env('APP_ROUTE',''), '/') }}/images/logo-name.png" alt="Logo Society Event">
+                <img src="/ldt-asset/images/logo-name.png" alt="Logo Society Event">
             </div>
             <p>{{ $set->deskripsi_app ?? 'Kelola data, event, dan layanan secara mudah melalui panel administrasi terpusat.' }}</p>
         </div>
@@ -180,7 +178,7 @@
     {{-- Col kanan: form login --}}
     <div class="login-form-col">
         <div class="login-form-inner">
-            <img src="/{{ ltrim(env('APP_ROUTE',''), '/') }}/images/logo_.png" alt="Logo" class="logo-sm">
+            <img src="/ldt-asset/images/logo_.png" alt="Logo" class="logo-sm">
             <h2>Masuk Admin</h2>
             <div class="subtitle">Silakan masuk untuk mengelola sistem</div>
 

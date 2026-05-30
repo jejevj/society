@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             ReffAksesMenuSeeder::class,
             AppUserSeeder::class,
             TautanSeeder::class,
+            TEventSeeder::class,
             PesertaSeeder::class,
         ]);
     }

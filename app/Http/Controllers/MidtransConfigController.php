@@ -24,7 +24,7 @@ class MidtransConfigController extends Controller
         $menu_aktif = 'midtrans-config||setting-group';
         if (!$request->session()->has('id')) {
             $prefix = trim(env('APP_ROUTE'), '/');
-            return Redirect::to(($prefix ? '/' . $prefix : '') . '/login-backend');
+            return Redirect::to(($prefix ? '/' . $prefix : '') . '/admin-panel');
         }
         $cek    = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
         $navbar = $this->dataService->getMenuHTML($menu_aktif, Session::getFacadeRoot());
@@ -55,21 +55,10 @@ class MidtransConfigController extends Controller
             'menu'            => 'Midtrans Configurations',
             'menu_aktif'      => $menu_aktif,
             'navbar'          => $navbar,
-            'cek'             => $cek,
+            'cek_permit'      => $cek,
             'config'          => $config,
             'allPaymentTypes' => $allPaymentTypes,
             'selectedTypes'   => $selectedTypes,
-            'breadcrumb'      => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-                                    <li class="breadcrumb-item text-white fw-bold lh-1">
-                                        <a class="text-white text-hover-primary">
-                                            <i class="ki-outline ki-home text-white fs-3"></i>
-                                        </a>
-                                    </li>
-                                    <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4 text-white mx-n1"></i></li>
-                                    <li class="breadcrumb-item text-white fw-bold lh-1">Settings</li>
-                                    <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4 text-white mx-n1"></i></li>
-                                    <li class="breadcrumb-item text-white fw-bold lh-1">Midtrans Configurations</li>
-                                  </ul>',
         ];
 
         if (!$cek['r']) {
@@ -143,25 +132,11 @@ class MidtransConfigController extends Controller
             if (!$config || empty($config->server_key)) {
                 return response()->json(['success' => false, 'message' => 'Server key not configured yet']);
             }
-
-            $baseUrl = $config->environment === 'production'
-                ? 'https://api.midtrans.com'
-                : 'https://api.sandbox.midtrans.com';
-
+            $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
             try {
-                $response = Http::withBasicAuth($config->server_key, '')
-                    ->timeout(10)
-                    ->get($baseUrl . '/v2/payment-types');
-
-                if ($response->status() === 401) {
-                    return response()->json(['success' => false, 'message' => 'Invalid server key (401 Unauthorized)']);
-                }
-
-                return response()->json([
-                    'success'     => true,
-                    'message'     => 'Connection successful! Environment: ' . strtoupper($config->environment),
-                    'status_code' => $response->status(),
-                ]);
+                $response = Http::withBasicAuth($config->server_key, '')->timeout(10)->get($baseUrl . '/v2/payment-types');
+                if ($response->status() === 401) return response()->json(['success' => false, 'message' => 'Invalid server key (401 Unauthorized)']);
+                return response()->json(['success' => true, 'message' => 'Connection successful! Environment: ' . strtoupper($config->environment), 'status_code' => $response->status()]);
             } catch (\Exception $e) {
                 return response()->json(['success' => false, 'message' => 'Connection failed: ' . $e->getMessage()]);
             }
@@ -171,144 +146,71 @@ class MidtransConfigController extends Controller
     public function getTransactionStatusAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $validator = Validator::make($request->all(), [
-                'order_id' => 'required|string',
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            }
-
+            $validator = Validator::make($request->all(), ['order_id' => 'required|string']);
+            if ($validator->fails()) return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
             $config = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
-            if (!$config || empty($config->server_key)) {
-                return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
-            }
-
-            $baseUrl = $config->environment === 'production'
-                ? 'https://api.midtrans.com'
-                : 'https://api.sandbox.midtrans.com';
-
+            if (!$config || empty($config->server_key)) return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
+            $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
             try {
-                $response = Http::withBasicAuth($config->server_key, '')
-                    ->timeout(15)
-                    ->get($baseUrl . '/v2/' . $request->order_id . '/status');
-
+                $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->get($baseUrl . '/v2/' . $request->order_id . '/status');
                 return response()->json(['success' => true, 'data' => $response->json()]);
-            } catch (\Exception $e) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()]);
-            }
+            } catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()]); }
         }
     }
 
     public function approveTransactionAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $validator = Validator::make($request->all(), [
-                'order_id' => 'required|string',
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            }
-
+            $validator = Validator::make($request->all(), ['order_id' => 'required|string']);
+            if ($validator->fails()) return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
             $config  = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
-            $baseUrl = $config->environment === 'production'
-                ? 'https://api.midtrans.com'
-                : 'https://api.sandbox.midtrans.com';
-
+            $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
             try {
-                $response = Http::withBasicAuth($config->server_key, '')
-                    ->timeout(15)
-                    ->post($baseUrl . '/v2/' . $request->order_id . '/approve');
-
+                $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/v2/' . $request->order_id . '/approve');
                 return response()->json(['success' => true, 'data' => $response->json()]);
-            } catch (\Exception $e) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()]);
-            }
+            } catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()]); }
         }
     }
 
     public function cancelTransactionAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $validator = Validator::make($request->all(), [
-                'order_id' => 'required|string',
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            }
-
+            $validator = Validator::make($request->all(), ['order_id' => 'required|string']);
+            if ($validator->fails()) return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
             $config  = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
-            $baseUrl = $config->environment === 'production'
-                ? 'https://api.midtrans.com'
-                : 'https://api.sandbox.midtrans.com';
-
+            $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
             try {
-                $response = Http::withBasicAuth($config->server_key, '')
-                    ->timeout(15)
-                    ->post($baseUrl . '/v2/' . $request->order_id . '/cancel');
-
+                $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/v2/' . $request->order_id . '/cancel');
                 return response()->json(['success' => true, 'data' => $response->json()]);
-            } catch (\Exception $e) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()]);
-            }
+            } catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()]); }
         }
     }
 
     public function refundTransactionAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $validator = Validator::make($request->all(), [
-                'order_id' => 'required|string',
-                'amount'   => 'required|numeric|min:1',
-                'reason'   => 'required|string|max:255',
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            }
-
+            $validator = Validator::make($request->all(), ['order_id' => 'required|string', 'amount' => 'required|numeric|min:1', 'reason' => 'required|string|max:255']);
+            if ($validator->fails()) return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
             $config  = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
-            $baseUrl = $config->environment === 'production'
-                ? 'https://api.midtrans.com'
-                : 'https://api.sandbox.midtrans.com';
-
+            $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
             try {
-                $response = Http::withBasicAuth($config->server_key, '')
-                    ->timeout(15)
-                    ->post($baseUrl . '/v2/' . $request->order_id . '/refund', [
-                        'amount' => (int) $request->amount,
-                        'reason' => $request->reason,
-                    ]);
-
+                $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/v2/' . $request->order_id . '/refund', ['amount' => (int) $request->amount, 'reason' => $request->reason]);
                 return response()->json(['success' => true, 'data' => $response->json()]);
-            } catch (\Exception $e) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()]);
-            }
+            } catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()]); }
         }
     }
 
     public function expireTransactionAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $validator = Validator::make($request->all(), [
-                'order_id' => 'required|string',
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            }
-
+            $validator = Validator::make($request->all(), ['order_id' => 'required|string']);
+            if ($validator->fails()) return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
             $config  = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
-            $baseUrl = $config->environment === 'production'
-                ? 'https://api.midtrans.com'
-                : 'https://api.sandbox.midtrans.com';
-
+            $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
             try {
-                $response = Http::withBasicAuth($config->server_key, '')
-                    ->timeout(15)
-                    ->post($baseUrl . '/v2/' . $request->order_id . '/expire');
-
+                $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/v2/' . $request->order_id . '/expire');
                 return response()->json(['success' => true, 'data' => $response->json()]);
-            } catch (\Exception $e) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()]);
-            }
+            } catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()]); }
         }
     }
 
@@ -316,56 +218,24 @@ class MidtransConfigController extends Controller
     {
         if ($request->session()->has('id')) {
             $validator = Validator::make($request->all(), [
-                'order_id'   => 'required|string',
-                'amount'     => 'required|numeric|min:1',
-                'first_name' => 'required|string|max:100',
-                'last_name'  => 'nullable|string|max:100',
-                'email'      => 'required|email|max:255',
-                'phone'      => 'required|string|max:20',
+                'order_id' => 'required|string', 'amount' => 'required|numeric|min:1',
+                'first_name' => 'required|string|max:100', 'last_name' => 'nullable|string|max:100',
+                'email' => 'required|email|max:255', 'phone' => 'required|string|max:20',
             ]);
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            }
-
+            if ($validator->fails()) return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
             $config = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
-            if (!$config || empty($config->server_key)) {
-                return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
-            }
-
-            $baseUrl = $config->environment === 'production'
-                ? 'https://app.midtrans.com'
-                : 'https://app.sandbox.midtrans.com';
-
-            $selectedTypes = json_decode($config->payment_types, true) ?? [];
-
+            if (!$config || empty($config->server_key)) return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
+            $baseUrl = $config->environment === 'production' ? 'https://app.midtrans.com' : 'https://app.sandbox.midtrans.com';
             $payload = [
-                'transaction_details' => [
-                    'order_id'     => $request->order_id,
-                    'gross_amount' => (int) $request->amount,
-                ],
-                'customer_details' => [
-                    'first_name' => $request->first_name,
-                    'last_name'  => $request->last_name ?? '',
-                    'email'      => $request->email,
-                    'phone'      => $request->phone,
-                ],
-                'enabled_payments' => $selectedTypes,
-                'callbacks' => [
-                    'finish'   => $config->finish_redirect_url   ?: url('/'),
-                    'unfinish' => $config->unfinish_redirect_url ?: url('/'),
-                    'error'    => $config->error_redirect_url    ?: url('/'),
-                ],
+                'transaction_details' => ['order_id' => $request->order_id, 'gross_amount' => (int) $request->amount],
+                'customer_details'    => ['first_name' => $request->first_name, 'last_name' => $request->last_name ?? '', 'email' => $request->email, 'phone' => $request->phone],
+                'enabled_payments'    => json_decode($config->payment_types, true) ?? [],
+                'callbacks'           => ['finish' => $config->finish_redirect_url ?: url('/'), 'unfinish' => $config->unfinish_redirect_url ?: url('/'), 'error' => $config->error_redirect_url ?: url('/')],
             ];
-
             try {
-                $response = Http::withBasicAuth($config->server_key, '')
-                    ->timeout(15)
-                    ->post($baseUrl . '/snap/v1/transactions', $payload);
-
+                $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/snap/v1/transactions', $payload);
                 return response()->json(['success' => true, 'data' => $response->json()]);
-            } catch (\Exception $e) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()]);
-            }
+            } catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()]); }
         }
     }
 
@@ -373,52 +243,26 @@ class MidtransConfigController extends Controller
     {
         if ($request->session()->has('id')) {
             $validator = Validator::make($request->all(), [
-                'payment_type' => 'required|string',
-                'order_id'     => 'required|string',
-                'amount'       => 'required|numeric|min:1',
-                'first_name'   => 'required|string|max:100',
-                'email'        => 'required|email|max:255',
-                'phone'        => 'required|string|max:20',
+                'payment_type' => 'required|string', 'order_id' => 'required|string',
+                'amount' => 'required|numeric|min:1', 'first_name' => 'required|string|max:100',
+                'email' => 'required|email|max:255', 'phone' => 'required|string|max:20',
             ]);
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            }
-
+            if ($validator->fails()) return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
             $config = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
-            if (!$config || empty($config->server_key)) {
-                return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
-            }
-
-            $baseUrl = $config->environment === 'production'
-                ? 'https://api.midtrans.com'
-                : 'https://api.sandbox.midtrans.com';
-
+            if (!$config || empty($config->server_key)) return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
+            $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
             $payload = [
-                'payment_type' => $request->payment_type,
-                'transaction_details' => [
-                    'order_id'     => $request->order_id,
-                    'gross_amount' => (int) $request->amount,
-                ],
-                'customer_details' => [
-                    'first_name' => $request->first_name,
-                    'email'      => $request->email,
-                    'phone'      => $request->phone,
-                ],
+                'payment_type'        => $request->payment_type,
+                'transaction_details' => ['order_id' => $request->order_id, 'gross_amount' => (int) $request->amount],
+                'customer_details'    => ['first_name' => $request->first_name, 'email' => $request->email, 'phone' => $request->phone],
             ];
-
-            if (in_array($request->payment_type, ['bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'])) {
+            if (in_array($request->payment_type, ['bca_va','bni_va','bri_va','permata_va','other_va'])) {
                 $payload['bank_transfer'] = ['bank' => str_replace('_va', '', $request->payment_type)];
             }
-
             try {
-                $response = Http::withBasicAuth($config->server_key, '')
-                    ->timeout(15)
-                    ->post($baseUrl . '/v2/charge', $payload);
-
+                $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/v2/charge', $payload);
                 return response()->json(['success' => true, 'data' => $response->json()]);
-            } catch (\Exception $e) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()]);
-            }
+            } catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()]); }
         }
     }
 }

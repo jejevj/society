@@ -84,17 +84,7 @@ class EventController extends Controller
                         SELECT COUNT(*)
                         FROM t_event_kolaborasi d
                         WHERE d.event_kode_kolaborasi = a.kode_event
-                    ) as total_kolaborasi,
-                    (
-                        SELECT COUNT(*)
-                        FROM t_event_timeline e
-                        WHERE e.kode_event = a.kode_event
-                    ) as total_timeline,
-                    (
-                        SELECT COUNT(*)
-                        FROM event_addon ea
-                        WHERE ea.kode_event = a.kode_event
-                    ) as total_addon
+                    ) as total_kolaborasi
                 ");
                 
                 if ($request->filled('nama')) {
@@ -106,14 +96,10 @@ class EventController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()  
                 ->addColumn('action', function ($row) use ($cek) {
-                    $editUrl     = route('editEvent',     $row->kode_event);
-                    $timelineUrl = route('timelineEvent', $row->kode_event);
-                    $addonUrl    = route('addonEvent',    $row->kode_event);
+                    $editUrl = route('editEvent', $row->kode_event);
                     $btn = '';
                     if ($cek['u']) {
                         $btn .= '<a href="' . $editUrl . '" class="btn btn-light-warning btn-sm me-1" title="Edit Event"><span class="fa fa-pencil"></span></a>';
-                        $btn .= '<a href="' . $timelineUrl . '" class="btn btn-light-info btn-sm me-1" title="Timeline"><span class="fa fa-calendar"></span></a>';
-                        $btn .= '<a href="' . $addonUrl . '" class="btn btn-light-success btn-sm me-1" title="Add-On (' . $row->total_addon . ')"><span class="fa fa-puzzle-piece"></span></a>';
                     }
                     if ($cek['d']) {
                         $btn .= '<button title="Delete" class="btn btn-danger btn-delete-event btn-sm" data-id="' . $row->kode_event . '"><span class="fa fa-trash"></span></button>';
@@ -371,8 +357,6 @@ class EventController extends Controller
                 DB::table('t_event_paket_detail')->where('event_kode', $id)->delete();
                 DB::table('t_event_program')->where('event_kode', $id)->delete();
                 DB::table('t_event_program_detail')->where('event_kode', $id)->delete();
-                DB::table('t_event_timeline')->where('kode_event', $id)->delete();
-                DB::table('event_addon')->where('kode_event', $id)->delete();
 
                 $this->dataService->createLog($request,'deleteEventAction' ,'Successfully deleted event data','',json_encode($dt_exist));
                 return response()->json(['success' => true, 'message' => 'Successfully deleted event data']);
@@ -904,202 +888,6 @@ class EventController extends Controller
                     'message' => 'Failed to add program event data'
                 ]);
             }
-        }
-    }
-
-    // ============================================================
-    // TIMELINE EVENT
-    // ============================================================
-
-    public function timelineEvent($kode_event, Request $request)
-    {
-        $menu_aktif = 'event||';
-        if (!$request->session()->has('id')) {
-            $prefix = trim(env('APP_ROUTE'), '/');
-            return Redirect::to(($prefix ? '/' . $prefix : '') . '/login-backend');
-        }
-        $cek    = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
-        $navbar = $this->dataService->getMenuHTML($menu_aktif, Session::getFacadeRoot());
-
-        $detail = DB::table('t_event')->where('kode_event', $kode_event)->first();
-
-        $data = [
-            'menu'       => 'Timeline Event',
-            'menu_aktif' => $menu_aktif,
-            'navbar'     => $navbar,
-            'cek_permit' => $cek,
-            'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-                                <li class="breadcrumb-item fw-bold lh-1"><span class="text-hover-primary"><i class="ki-outline ki-home fs-3"></i></span></li>
-                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4 mx-n1"></i></li>
-                                <li class="breadcrumb-item fw-bold lh-1">Events</li>
-                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4 mx-n1"></i></li>
-                                <li class="breadcrumb-item fw-bold lh-1">Timeline Event</li>
-                            </ul>',
-            'kode_event' => $kode_event,
-            'detail'     => $detail,
-        ];
-
-        if (!$cek['u']) {
-            return view('admin-panel.error_page.403-page', $data);
-        }
-
-        return view('admin-panel.event.timeline.main', $data);
-    }
-
-    public function getTableTimeline(Request $request)
-    {
-        if ($request->session()->has('id')) {
-            $menu_aktif = 'event||';
-            $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
-
-            $query = DB::table('t_event_timeline as tl')
-                ->select('tl.*');
-
-            if ($request->filled('key')) {
-                $query->where('tl.kode_event', $request->input('key'));
-            }
-
-            $query->orderBy('tl.tanggal_timeline')->orderBy('tl.jam_mulai');
-
-            return DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) use ($cek) {
-                    $deskripsi = htmlspecialchars($row->deskripsi_sesi ?? '', ENT_QUOTES);
-                    $judul     = htmlspecialchars($row->judul_sesi, ENT_QUOTES);
-                    $btn = '';
-                    if ($cek['u']) {
-                        $btn .= '<button class="btn btn-light-warning btn-sm btn-edit-timeline"'
-                            . ' data-kode="'    . $row->kode_timeline                      . '"'
-                            . ' data-hari="'    . $row->hari_ke                            . '"'
-                            . ' data-tanggal="' . $row->tanggal_timeline                   . '"'
-                            . ' data-mulai="'   . substr($row->jam_mulai, 0, 5)            . '"'
-                            . ' data-selesai="' . substr($row->jam_selesai, 0, 5)          . '"'
-                            . ' data-judul="'   . $judul                                   . '"'
-                            . ' data-deskripsi="' . $deskripsi                             . '"'
-                            . ' data-status="'  . $row->status_timeline                   . '">'
-                            . '<span class="fa fa-pencil"></span>'
-                            . '</button> ';
-                    }
-                    if ($cek['d']) {
-                        $btn .= '<button class="btn btn-danger btn-sm btn-delete-timeline" data-kode="' . $row->kode_timeline . '"><span class="fa fa-trash"></span></button>';
-                    }
-                    return $btn;
-                })
-                ->addColumn('waktu', function ($row) {
-                    return substr($row->jam_mulai, 0, 5) . ' - ' . substr($row->jam_selesai, 0, 5);
-                })
-                ->addColumn('hari_label', function ($row) {
-                    return 'Hari ke-' . $row->hari_ke;
-                })
-                ->addColumn('tanggal_label', function ($row) {
-                    return $row->tanggal_timeline ? date('d M Y', strtotime($row->tanggal_timeline)) : '-';
-                })
-                ->addColumn('status_label', function ($row) {
-                    return $row->status_timeline === 'Y'
-                        ? '<span class="badge bg-success">Aktif</span>'
-                        : '<span class="badge bg-secondary">Nonaktif</span>';
-                })
-                ->rawColumns(['action', 'status_label'])
-                ->make(true);
-        }
-    }
-
-    public function addTimelineAction(Request $request)
-    {
-        if ($request->session()->has('id')) {
-            $menu_aktif = 'event||';
-            $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
-            if (!$cek['c']) {
-                return response()->json(['success' => false, 'message' => 'Access denied'], 422);
-            }
-
-            $validator = Validator::make($request->all(), [
-                'key'              => 'required',
-                'hari_ke'          => 'required|integer|min:1',
-                'tanggal_timeline' => 'required|date',
-                'jam_mulai'        => 'required',
-                'jam_selesai'      => 'required',
-                'judul_sesi'       => 'required|string|max:255',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            }
-
-            $kode = 'TL-' . strtoupper(substr($request->key, 0, 8)) . '-' . date('YmdHis');
-
-            DB::table('t_event_timeline')->insert([
-                'kode_timeline'       => $kode,
-                'kode_event'          => $request->key,
-                'hari_ke'             => $request->hari_ke,
-                'tanggal_timeline'    => $request->tanggal_timeline,
-                'jam_mulai'           => $request->jam_mulai,
-                'jam_selesai'         => $request->jam_selesai,
-                'judul_sesi'          => $request->judul_sesi,
-                'deskripsi_sesi'      => $request->deskripsi_sesi,
-                'status_timeline'     => $request->status_timeline ?? 'Y',
-                'created_by_timeline' => session('nama') ?? 'admin',
-                'created_at'          => now(),
-                'updated_at'          => now(),
-            ]);
-
-            return response()->json(['success' => true, 'message' => 'Sesi timeline berhasil ditambahkan.']);
-        }
-    }
-
-    public function updateTimelineAction(Request $request)
-    {
-        if ($request->session()->has('id')) {
-            $menu_aktif = 'event||';
-            $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
-            if (!$cek['u']) {
-                return response()->json(['success' => false, 'message' => 'Access denied'], 422);
-            }
-
-            $validator = Validator::make($request->all(), [
-                'kode_timeline'    => 'required',
-                'hari_ke'          => 'required|integer|min:1',
-                'tanggal_timeline' => 'required|date',
-                'jam_mulai'        => 'required',
-                'jam_selesai'      => 'required',
-                'judul_sesi'       => 'required|string|max:255',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            }
-
-            DB::table('t_event_timeline')
-                ->where('kode_timeline', $request->kode_timeline)
-                ->update([
-                    'hari_ke'          => $request->hari_ke,
-                    'tanggal_timeline' => $request->tanggal_timeline,
-                    'jam_mulai'        => $request->jam_mulai,
-                    'jam_selesai'      => $request->jam_selesai,
-                    'judul_sesi'       => $request->judul_sesi,
-                    'deskripsi_sesi'   => $request->deskripsi_sesi,
-                    'status_timeline'  => $request->status_timeline ?? 'Y',
-                    'updated_at'       => now(),
-                ]);
-
-            return response()->json(['success' => true, 'message' => 'Sesi timeline berhasil diperbarui.']);
-        }
-    }
-
-    public function deleteTimelineAction(Request $request)
-    {
-        if ($request->session()->has('id')) {
-            $menu_aktif = 'event||';
-            $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
-            if (!$cek['d']) {
-                return response()->json(['success' => false, 'message' => 'Access denied'], 422);
-            }
-
-            DB::table('t_event_timeline')
-                ->where('kode_timeline', $request->kode_timeline)
-                ->delete();
-
-            return response()->json(['success' => true, 'message' => 'Sesi timeline berhasil dihapus.']);
         }
     }
 }

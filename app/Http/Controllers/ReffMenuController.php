@@ -84,7 +84,7 @@ class ReffMenuController extends Controller
                     'a.deskripsi_menu',
                     'a.created_at',
                     'a.updated_at',
-                    'b.nama_status'
+                    'b.keterangan_status'
                 );
                 
             if ($request->filled('nama')) {

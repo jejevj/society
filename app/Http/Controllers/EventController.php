@@ -100,14 +100,16 @@ class EventController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()  
-                ->addColumn('action', function ($row)  use ($cek) {
-                    $infoUrl = route('editEvent', $row->kode_event);
+                ->addColumn('action', function ($row) use ($cek) {
+                    $editUrl     = route('editEvent',     $row->kode_event);
+                    $timelineUrl = route('timelineEvent', $row->kode_event);
                     $btn = '';
-                    if($cek['u']){
-                        $btn .= '<a href=' . $infoUrl . ' class="btn btn-light-warning btn-sm"><span class="fa fa-pencil"></span></a> ';
+                    if ($cek['u']) {
+                        $btn .= '<a href="' . $editUrl . '" class="btn btn-light-warning btn-sm" title="Edit"><span class="fa fa-pencil"></span></a> ';
+                        $btn .= '<a href="' . $timelineUrl . '" class="btn btn-light-info btn-sm" title="Timeline"><span class="fa fa-calendar"></span></a> ';
                     }
-                    if($cek['d']){
-                        $btn .= '<button title="HAPUS" class="btn btn-danger btn-delete-event btn-sm" data-id="' . $row->kode_event . '"><span class="fa fa-trash"></span></button> ';
+                    if ($cek['d']) {
+                        $btn .= '<button title="Delete" class="btn btn-danger btn-delete-event btn-sm" data-id="' . $row->kode_event . '"><span class="fa fa-trash"></span></button> ';
                     }
                     return $btn;
                 })
@@ -116,21 +118,17 @@ class EventController extends Controller
                     $paketUrl       = route('paketEvent',     $row->kode_event);
                     $programUrl     = route('programEvent',   $row->kode_event);
                     $kolaborasiUrl  = route('kolaborasiEvent',$row->kode_event);
-                    $timelineUrl    = route('timelineEvent',  $row->kode_event);
                     $btn = '
                         <a class="text-dark fs-6" href="' . $paketUrl . '"><i class="fa fa-edit text-dark"></i> Packages: '. $row->total_paket .'</a><br>
                         <a class="text-dark fs-6" href="' . $programUrl . '"><i class="fa fa-edit text-dark"></i> Programs: '. $row->total_program .'</a><br>
-                        <a class="text-dark fs-6" href="' . $kolaborasiUrl . '"><i class="fa fa-edit text-dark"></i> Collaborators: '. $row->total_kolaborasi .'</a><br>
-                        <a class="text-info fs-6 fw-bold" href="' . $timelineUrl . '"><i class="fa fa-calendar text-info"></i> Timeline: '. $row->total_timeline .'</a>
+                        <a class="text-dark fs-6" href="' . $kolaborasiUrl . '"><i class="fa fa-edit text-dark"></i> Collaborators: '. $row->total_kolaborasi .'</a>
                     ';
                     return $btn;
                 })
 
                 ->addColumn('info2', function ($row) {
-
-                        $tglAwal = Carbon::parse($row->tanggal_awal_event)->translatedFormat('j F Y');
+                        $tglAwal  = Carbon::parse($row->tanggal_awal_event)->translatedFormat('j F Y');
                         $tglAkhir = Carbon::parse($row->tanggal_akhir_event)->translatedFormat('j F Y');
-
                         return '
                             <span class="text-dark fs-6">Date: '.$tglAwal.' - '.$tglAkhir.'</span><br>
                             <span class="text-dark fs-6">Location: '.$row->lokasi_event.'</span><br>

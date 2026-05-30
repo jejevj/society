@@ -14,18 +14,20 @@
     <div id="kt_app_content" class="app-content flex-column-fluid">
         <div id="kt_app_content_container" class="app-container container-xxl">
 
-            {{-- ALERT STATUS --}}
             @if($config && $config->is_active == 'Y')
             <div class="alert alert-success d-flex align-items-center mb-6">
                 <i class="fa fa-check-circle fs-2 me-3 text-success"></i>
                 <div>
-                    <strong>Midtrans Active</strong> — Environment: <span class="badge badge-{{ $config->environment == 'production' ? 'danger' : 'warning' }}">{{ strtoupper($config->environment) }}</span>
+                    <strong>Midtrans Active</strong> &mdash; Environment:
+                    <span class="badge badge-{{ $config->environment == 'production' ? 'danger' : 'warning' }}">
+                        {{ strtoupper($config->environment) }}
+                    </span>
                 </div>
             </div>
             @else
             <div class="alert alert-warning d-flex align-items-center mb-6">
                 <i class="fa fa-exclamation-triangle fs-2 me-3 text-warning"></i>
-                <div><strong>Midtrans Not Active</strong> — Please configure and activate below.</div>
+                <div><strong>Midtrans Not Active</strong> &mdash; Please configure and activate below.</div>
             </div>
             @endif
 
@@ -39,75 +41,108 @@
                         <div class="card-body">
                             <form id="formMidtransConfig">
                                 @csrf
-                                <div class="row mb-4">
-                                    <div class="col-md-12 mb-4">
+                                <div class="row">
+                                    {{-- Environment --}}
+                                    <div class="col-md-12 mb-5">
                                         <label class="form-label required fw-bold">Environment</label>
                                         <div class="d-flex gap-4">
                                             <div class="form-check form-check-custom form-check-solid">
-                                                <input class="form-check-input" type="radio" name="environment" id="env_sandbox" value="sandbox" {{ (!$config || $config->environment == 'sandbox') ? 'checked' : '' }}>
+                                                <input class="form-check-input" type="radio" name="environment" id="env_sandbox" value="sandbox"
+                                                    {{ (!$config || $config->environment == 'sandbox') ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="env_sandbox">
-                                                    <span class="badge badge-warning fs-7 px-3 py-2"><i class="fa fa-flask me-1"></i> Sandbox (Testing)</span>
+                                                    <span class="badge badge-warning fs-7 px-3 py-2">
+                                                        <i class="fa fa-flask me-1"></i> Sandbox (Testing)
+                                                    </span>
                                                 </label>
                                             </div>
                                             <div class="form-check form-check-custom form-check-solid">
-                                                <input class="form-check-input" type="radio" name="environment" id="env_production" value="production" {{ ($config && $config->environment == 'production') ? 'checked' : '' }}>
+                                                <input class="form-check-input" type="radio" name="environment" id="env_production" value="production"
+                                                    {{ ($config && $config->environment == 'production') ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="env_production">
-                                                    <span class="badge badge-danger fs-7 px-3 py-2"><i class="fa fa-rocket me-1"></i> Production (Live)</span>
+                                                    <span class="badge badge-danger fs-7 px-3 py-2">
+                                                        <i class="fa fa-rocket me-1"></i> Production (Live)
+                                                    </span>
                                                 </label>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 mb-4">
+
+                                    {{-- Server Key --}}
+                                    <div class="col-md-6 mb-5">
                                         <label class="form-label required fw-bold">Server Key</label>
                                         <div class="input-group">
-                                            <input type="password" class="form-control" id="server_key" name="server_key" placeholder="SB-Mid-server-xxxxx or Mid-server-xxxxx" value="{{ $config->server_key ?? '' }}">
-                                            <button class="btn btn-light-secondary" type="button" onclick="toggleVisibility('server_key', this)"><i class="fa fa-eye"></i></button>
+                                            <input type="password" class="form-control" id="server_key" name="server_key"
+                                                placeholder="SB-Mid-server-xxxxx" value="{{ $config->server_key ?? '' }}">
+                                            <button class="btn btn-light-secondary" type="button" onclick="toggleVisibility('server_key', this)">
+                                                <i class="fa fa-eye"></i>
+                                            </button>
                                         </div>
                                         <span class="text-muted fs-7">From Midtrans Dashboard &gt; Access Keys</span>
                                     </div>
-                                    <div class="col-md-6 mb-4">
+
+                                    {{-- Client Key --}}
+                                    <div class="col-md-6 mb-5">
                                         <label class="form-label required fw-bold">Client Key</label>
                                         <div class="input-group">
-                                            <input type="password" class="form-control" id="client_key" name="client_key" placeholder="SB-Mid-client-xxxxx or Mid-client-xxxxx" value="{{ $config->client_key ?? '' }}">
-                                            <button class="btn btn-light-secondary" type="button" onclick="toggleVisibility('client_key', this)"><i class="fa fa-eye"></i></button>
+                                            <input type="password" class="form-control" id="client_key" name="client_key"
+                                                placeholder="SB-Mid-client-xxxxx" value="{{ $config->client_key ?? '' }}">
+                                            <button class="btn btn-light-secondary" type="button" onclick="toggleVisibility('client_key', this)">
+                                                <i class="fa fa-eye"></i>
+                                            </button>
                                         </div>
                                         <span class="text-muted fs-7">Used on frontend Snap.js</span>
                                     </div>
-                                    <div class="col-md-12 mb-4">
+
+                                    {{-- Merchant ID --}}
+                                    <div class="col-md-12 mb-5">
                                         <label class="form-label fw-bold">Merchant ID <span class="text-muted">(optional)</span></label>
-                                        <input type="text" class="form-control" name="merchant_id" placeholder="e.g. G123456789" value="{{ $config->merchant_id ?? '' }}">
+                                        <input type="text" class="form-control" name="merchant_id"
+                                            placeholder="e.g. G123456789" value="{{ $config->merchant_id ?? '' }}">
                                     </div>
-                                    <div class="col-md-12 mb-4">
+
+                                    {{-- Webhook URL --}}
+                                    <div class="col-md-12 mb-5">
                                         <label class="form-label fw-bold">Webhook / Notification URL <span class="text-muted">(optional)</span></label>
-                                        <input type="url" class="form-control" name="webhook_url" placeholder="https://yourdomain.com/midtrans/webhook" value="{{ $config->webhook_url ?? '' }}">
+                                        <input type="url" class="form-control" name="webhook_url"
+                                            placeholder="https://yourdomain.com/midtrans/webhook" value="{{ $config->webhook_url ?? '' }}">
                                         <span class="text-muted fs-7">Set this URL in Midtrans Dashboard &gt; Settings &gt; Payment &gt; Notification URL</span>
                                     </div>
-                                    <div class="col-md-4 mb-4">
+
+                                    {{-- Redirect URLs --}}
+                                    <div class="col-md-4 mb-5">
                                         <label class="form-label fw-bold">Finish Redirect URL</label>
-                                        <input type="url" class="form-control" name="finish_redirect_url" placeholder="https://..." value="{{ $config->finish_redirect_url ?? '' }}">
+                                        <input type="url" class="form-control" name="finish_redirect_url"
+                                            placeholder="https://..." value="{{ $config->finish_redirect_url ?? '' }}">
                                     </div>
-                                    <div class="col-md-4 mb-4">
+                                    <div class="col-md-4 mb-5">
                                         <label class="form-label fw-bold">Unfinish Redirect URL</label>
-                                        <input type="url" class="form-control" name="unfinish_redirect_url" placeholder="https://..." value="{{ $config->unfinish_redirect_url ?? '' }}">
+                                        <input type="url" class="form-control" name="unfinish_redirect_url"
+                                            placeholder="https://..." value="{{ $config->unfinish_redirect_url ?? '' }}">
                                     </div>
-                                    <div class="col-md-4 mb-4">
+                                    <div class="col-md-4 mb-5">
                                         <label class="form-label fw-bold">Error Redirect URL</label>
-                                        <input type="url" class="form-control" name="error_redirect_url" placeholder="https://..." value="{{ $config->error_redirect_url ?? '' }}">
+                                        <input type="url" class="form-control" name="error_redirect_url"
+                                            placeholder="https://..." value="{{ $config->error_redirect_url ?? '' }}">
                                     </div>
-                                    <div class="col-md-12 mb-4">
+
+                                    {{-- Status --}}
+                                    <div class="col-md-12 mb-5">
                                         <label class="form-label required fw-bold">Status</label>
                                         <div class="d-flex gap-4">
                                             <div class="form-check form-check-custom form-check-solid">
-                                                <input class="form-check-input" type="radio" name="is_active" id="status_active" value="Y" {{ ($config && $config->is_active == 'Y') ? 'checked' : '' }}>
+                                                <input class="form-check-input" type="radio" name="is_active" id="status_active" value="Y"
+                                                    {{ ($config && $config->is_active == 'Y') ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="status_active">Active</label>
                                             </div>
                                             <div class="form-check form-check-custom form-check-solid">
-                                                <input class="form-check-input" type="radio" name="is_active" id="status_inactive" value="N" {{ (!$config || $config->is_active == 'N') ? 'checked' : '' }}>
+                                                <input class="form-check-input" type="radio" name="is_active" id="status_inactive" value="N"
+                                                    {{ (!$config || $config->is_active == 'N') ? 'checked' : '' }}>
                                                 <label class="form-check-label" for="status_inactive">Inactive</label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
                                 @if($cek['u'])
                                 <div class="d-flex gap-3">
                                     <button type="submit" class="btn btn-primary">
@@ -139,8 +174,10 @@
                                 @foreach($allPaymentTypes as $typeKey => $typeLabel)
                                 <div class="col-12">
                                     <label class="d-flex align-items-center cursor-pointer border rounded px-4 py-3 payment-type-item {{ in_array($typeKey, $selectedTypes) ? 'border-primary bg-light-primary' : 'border-gray-200' }}">
-                                        <input type="checkbox" class="form-check-input me-3 payment-type-checkbox" name="payment_types_check[]"
-                                            data-key="{{ $typeKey }}" value="{{ $typeKey }}"
+                                        <input type="checkbox"
+                                            class="form-check-input me-3 payment-type-checkbox"
+                                            data-key="{{ $typeKey }}"
+                                            value="{{ $typeKey }}"
                                             {{ in_array($typeKey, $selectedTypes) ? 'checked' : '' }}>
                                         <span class="fs-6">{{ $typeLabel }}</span>
                                     </label>
@@ -154,6 +191,7 @@
 
             {{-- ============ TRANSACTION TOOLS ============ --}}
             <div class="row g-6 mt-2">
+
                 {{-- Get Status --}}
                 <div class="col-xl-6">
                     <div class="card card-flush">
@@ -296,14 +334,11 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
+            </div>
         </div>
     </div>
 </div>
-
-{{-- Hidden payment_types input (auto-populated by JS) --}}
-<div id="paymentTypesHidden"></div>
 
 @push('scripts')
 <script>
@@ -414,7 +449,13 @@ document.getElementById('btnApprove').addEventListener('click', function () {
 document.getElementById('btnCancel').addEventListener('click', function () {
     const orderId = document.getElementById('action_order_id').value.trim();
     if (!orderId) { Swal.fire('Warning', 'Order ID required', 'warning'); return; }
-    Swal.fire({ title: 'Cancel Transaction?', text: 'Order: ' + orderId, icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, Cancel' }).then(r => {
+    Swal.fire({
+        title: 'Cancel Transaction?',
+        text: 'Order: ' + orderId,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Cancel'
+    }).then(r => {
         if (r.isConfirmed) {
             $.post('{{ route("cancelMidtransAction") }}', { _token: '{{ csrf_token() }}', order_id: orderId },
                 function (res) { showResult('actionResult', res.data ?? res, res.success); }

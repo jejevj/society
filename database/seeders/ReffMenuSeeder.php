@@ -14,33 +14,38 @@ class ReffMenuSeeder extends Seeder
             // =====================
             // Single Menu
             // =====================
-            ['id_menu' => 1,  'nama_menu' => 'Dashboards',                  'jenis_menu' => 'S', 'kode_menu' => 'dashboard',          'icon_menu' => 'fa fa-dashboard', 'parent_menu' => 0,  'urutan_menu' => 1,  'deskripsi_menu' => 'menu dashboard', 'created_at' => '2025-08-28 08:29:05', 'updated_at' => null],
+            ['id_menu' => 1,  'nama_menu' => 'Dashboards',               'jenis_menu' => 'S', 'kode_menu' => 'dashboard',        'icon_menu' => 'fa fa-dashboard', 'parent_menu' => 0,  'urutan_menu' => 1, 'deskripsi_menu' => 'menu dashboard', 'created_at' => '2025-08-28 08:29:05', 'updated_at' => null],
 
             // =====================
             // Reference Master Menu
             // =====================
-            ['id_menu' => 8,  'nama_menu' => 'Reference',                   'jenis_menu' => 'M', 'kode_menu' => 'referensi',          'icon_menu' => null,    'parent_menu' => 0,  'urutan_menu' => 5,  'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:29:54', 'updated_at' => null],
-            ['id_menu' => 9,  'nama_menu' => 'Roles',                       'jenis_menu' => 'D', 'kode_menu' => 'ref-role',           'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 0,  'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
-            ['id_menu' => 10, 'nama_menu' => 'Users',                       'jenis_menu' => 'D', 'kode_menu' => 'ref-pengguna',       'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 1,  'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
-            ['id_menu' => 11, 'nama_menu' => 'Menus',                       'jenis_menu' => 'D', 'kode_menu' => 'ref-menu',           'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 2,  'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
-            ['id_menu' => 13, 'nama_menu' => 'Tags',                        'jenis_menu' => 'D', 'kode_menu' => 'ref-topik',          'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 3,  'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
-            ['id_menu' => 26, 'nama_menu' => 'Sponsor',                     'jenis_menu' => 'D', 'kode_menu' => 'ref-sponsor',        'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 4,  'deskripsi_menu' => null, 'created_at' => null,                  'updated_at' => null],
+            ['id_menu' => 8,  'nama_menu' => 'Reference',                'jenis_menu' => 'M', 'kode_menu' => 'referensi',        'icon_menu' => null,    'parent_menu' => 0,  'urutan_menu' => 5, 'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:29:54', 'updated_at' => null],
+            ['id_menu' => 9,  'nama_menu' => 'Roles',                    'jenis_menu' => 'D', 'kode_menu' => 'ref-role',         'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 0, 'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
+            ['id_menu' => 10, 'nama_menu' => 'Users',                    'jenis_menu' => 'D', 'kode_menu' => 'ref-pengguna',     'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 1, 'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
+            ['id_menu' => 11, 'nama_menu' => 'Menus',                    'jenis_menu' => 'D', 'kode_menu' => 'ref-menu',         'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 2, 'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
+            ['id_menu' => 13, 'nama_menu' => 'Tags',                     'jenis_menu' => 'D', 'kode_menu' => 'ref-topik',        'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 3, 'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
+            ['id_menu' => 26, 'nama_menu' => 'Sponsor',                  'jenis_menu' => 'D', 'kode_menu' => 'ref-sponsor',      'icon_menu' => 'bullet','parent_menu' => 8,  'urutan_menu' => 4, 'deskripsi_menu' => null, 'created_at' => null,                  'updated_at' => null],
 
             // =====================
             // Content Web Master Menu
             // =====================
-            ['id_menu' => 16, 'nama_menu' => 'Content Web',                 'jenis_menu' => 'M', 'kode_menu' => 'konten',             'icon_menu' => null,    'parent_menu' => 0,  'urutan_menu' => 8,  'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:29:54', 'updated_at' => null],
-            ['id_menu' => 17, 'nama_menu' => 'Settings',                    'jenis_menu' => 'D', 'kode_menu' => 'setting',            'icon_menu' => 'bullet','parent_menu' => 16, 'urutan_menu' => 1,  'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
-            ['id_menu' => 18, 'nama_menu' => 'Link',                        'jenis_menu' => 'D', 'kode_menu' => 'tautan',             'icon_menu' => 'bullet','parent_menu' => 16, 'urutan_menu' => 2,  'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
-            ['id_menu' => 31, 'nama_menu' => 'Midtrans Configurations',     'jenis_menu' => 'D', 'kode_menu' => 'midtrans-config',    'icon_menu' => 'bullet','parent_menu' => 16, 'urutan_menu' => 3,  'deskripsi_menu' => 'Konfigurasi Midtrans Payment Gateway', 'created_at' => '2026-05-31 00:00:00', 'updated_at' => null],
+            ['id_menu' => 16, 'nama_menu' => 'Content Web',              'jenis_menu' => 'M', 'kode_menu' => 'konten',           'icon_menu' => null,    'parent_menu' => 0,  'urutan_menu' => 7, 'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:29:54', 'updated_at' => null],
+            ['id_menu' => 18, 'nama_menu' => 'Link',                     'jenis_menu' => 'D', 'kode_menu' => 'tautan',           'icon_menu' => 'bullet','parent_menu' => 16, 'urutan_menu' => 1, 'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
+
+            // =====================
+            // Settings Master Menu (sub dari navbar, bukan child Content Web)
+            // =====================
+            ['id_menu' => 32, 'nama_menu' => 'Settings',                 'jenis_menu' => 'M', 'kode_menu' => 'setting-group',    'icon_menu' => null,    'parent_menu' => 0,  'urutan_menu' => 8, 'deskripsi_menu' => null, 'created_at' => '2026-05-31 00:00:00', 'updated_at' => null],
+            ['id_menu' => 17, 'nama_menu' => 'General Settings',         'jenis_menu' => 'D', 'kode_menu' => 'setting',          'icon_menu' => 'bullet','parent_menu' => 32, 'urutan_menu' => 1, 'deskripsi_menu' => null, 'created_at' => '2025-08-28 08:30:51', 'updated_at' => null],
+            ['id_menu' => 31, 'nama_menu' => 'Midtrans Configurations',  'jenis_menu' => 'D', 'kode_menu' => 'midtrans-config',  'icon_menu' => 'bullet','parent_menu' => 32, 'urutan_menu' => 2, 'deskripsi_menu' => 'Konfigurasi Midtrans Payment Gateway', 'created_at' => '2026-05-31 00:00:00', 'updated_at' => null],
 
             // =====================
             // Event Master Menu
             // =====================
-            ['id_menu' => 27, 'nama_menu' => 'Event',                       'jenis_menu' => 'M', 'kode_menu' => 'event-menu',         'icon_menu' => null,    'parent_menu' => 0,  'urutan_menu' => 6,  'deskripsi_menu' => null, 'created_at' => '2026-05-29 00:00:00', 'updated_at' => null],
-            ['id_menu' => 28, 'nama_menu' => 'Event List',                  'jenis_menu' => 'D', 'kode_menu' => 'event',              'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 1,  'deskripsi_menu' => null, 'created_at' => '2026-05-29 00:00:00', 'updated_at' => null],
-            ['id_menu' => 29, 'nama_menu' => 'Participant Registration',    'jenis_menu' => 'D', 'kode_menu' => 'event-registrasi',   'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 2,  'deskripsi_menu' => null, 'created_at' => '2026-05-30 00:00:00', 'updated_at' => null],
-            ['id_menu' => 30, 'nama_menu' => 'Paper',                       'jenis_menu' => 'D', 'kode_menu' => 'event-paper',        'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 3,  'deskripsi_menu' => null, 'created_at' => '2026-05-30 00:00:00', 'updated_at' => null],
+            ['id_menu' => 27, 'nama_menu' => 'Event',                    'jenis_menu' => 'M', 'kode_menu' => 'event-menu',       'icon_menu' => null,    'parent_menu' => 0,  'urutan_menu' => 6, 'deskripsi_menu' => null, 'created_at' => '2026-05-29 00:00:00', 'updated_at' => null],
+            ['id_menu' => 28, 'nama_menu' => 'Event List',               'jenis_menu' => 'D', 'kode_menu' => 'event',            'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 1, 'deskripsi_menu' => null, 'created_at' => '2026-05-29 00:00:00', 'updated_at' => null],
+            ['id_menu' => 29, 'nama_menu' => 'Participant Registration', 'jenis_menu' => 'D', 'kode_menu' => 'event-registrasi', 'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 2, 'deskripsi_menu' => null, 'created_at' => '2026-05-30 00:00:00', 'updated_at' => null],
+            ['id_menu' => 30, 'nama_menu' => 'Paper',                    'jenis_menu' => 'D', 'kode_menu' => 'event-paper',      'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 3, 'deskripsi_menu' => null, 'created_at' => '2026-05-30 00:00:00', 'updated_at' => null],
         ]);
     }
 }

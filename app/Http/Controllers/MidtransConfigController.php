@@ -6,7 +6,6 @@ use App\Services\DataService;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Http;
@@ -22,7 +21,7 @@ class MidtransConfigController extends Controller
 
     public function index(Request $request)
     {
-        $menu_aktif = 'midtrans-config||konten';
+        $menu_aktif = 'midtrans-config||setting-group';
         if (!$request->session()->has('id')) {
             $prefix = trim(env('APP_ROUTE'), '/');
             return Redirect::to(($prefix ? '/' . $prefix : '') . '/login-backend');
@@ -53,20 +52,24 @@ class MidtransConfigController extends Controller
         }
 
         $data = [
-            'menu'             => 'Midtrans Configurations',
-            'menu_aktif'       => $menu_aktif,
-            'navbar'           => $navbar,
-            'cek_permit'       => $cek,
-            'config'           => $config,
-            'allPaymentTypes'  => $allPaymentTypes,
-            'selectedTypes'    => $selectedTypes,
-            'breadcrumb'       => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-                                        <li class="breadcrumb-item fw-bold lh-1"><span class="text-hover-primary"><i class="ki-outline ki-home fs-3"></i></span></li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4 mx-n1"></i></li>
-                                        <li class="breadcrumb-item fw-bold lh-1">Content Web</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4 mx-n1"></i></li>
-                                        <li class="breadcrumb-item fw-bold lh-1">Midtrans Configurations</li>
-                                   </ul>',
+            'menu'            => 'Midtrans Configurations',
+            'menu_aktif'      => $menu_aktif,
+            'navbar'          => $navbar,
+            'cek'             => $cek,
+            'config'          => $config,
+            'allPaymentTypes' => $allPaymentTypes,
+            'selectedTypes'   => $selectedTypes,
+            'breadcrumb'      => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
+                                    <li class="breadcrumb-item text-white fw-bold lh-1">
+                                        <a class="text-white text-hover-primary">
+                                            <i class="ki-outline ki-home text-white fs-3"></i>
+                                        </a>
+                                    </li>
+                                    <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4 text-white mx-n1"></i></li>
+                                    <li class="breadcrumb-item text-white fw-bold lh-1">Settings</li>
+                                    <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4 text-white mx-n1"></i></li>
+                                    <li class="breadcrumb-item text-white fw-bold lh-1">Midtrans Configurations</li>
+                                  </ul>',
         ];
 
         if (!$cek['r']) {
@@ -78,7 +81,7 @@ class MidtransConfigController extends Controller
     public function updateMidtransConfigAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $menu_aktif = 'midtrans-config||konten';
+            $menu_aktif = 'midtrans-config||setting-group';
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             if (!$cek['u']) {
                 return response()->json(['success' => false, 'message' => 'Access denied'], 422);
@@ -189,10 +192,7 @@ class MidtransConfigController extends Controller
                     ->timeout(15)
                     ->get($baseUrl . '/v2/' . $request->order_id . '/status');
 
-                return response()->json([
-                    'success' => true,
-                    'data'    => $response->json(),
-                ]);
+                return response()->json(['success' => true, 'data' => $response->json()]);
             } catch (\Exception $e) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()]);
             }
@@ -316,12 +316,12 @@ class MidtransConfigController extends Controller
     {
         if ($request->session()->has('id')) {
             $validator = Validator::make($request->all(), [
-                'order_id'    => 'required|string',
-                'amount'      => 'required|numeric|min:1',
-                'first_name'  => 'required|string|max:100',
-                'last_name'   => 'nullable|string|max:100',
-                'email'       => 'required|email|max:255',
-                'phone'       => 'required|string|max:20',
+                'order_id'   => 'required|string',
+                'amount'     => 'required|numeric|min:1',
+                'first_name' => 'required|string|max:100',
+                'last_name'  => 'nullable|string|max:100',
+                'email'      => 'required|email|max:255',
+                'phone'      => 'required|string|max:20',
             ]);
             if ($validator->fails()) {
                 return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
@@ -351,9 +351,9 @@ class MidtransConfigController extends Controller
                 ],
                 'enabled_payments' => $selectedTypes,
                 'callbacks' => [
-                    'finish'    => $config->finish_redirect_url    ?: url('/'),
-                    'unfinish'  => $config->unfinish_redirect_url  ?: url('/'),
-                    'error'     => $config->error_redirect_url     ?: url('/'),
+                    'finish'   => $config->finish_redirect_url   ?: url('/'),
+                    'unfinish' => $config->unfinish_redirect_url ?: url('/'),
+                    'error'    => $config->error_redirect_url    ?: url('/'),
                 ],
             ];
 
@@ -373,12 +373,12 @@ class MidtransConfigController extends Controller
     {
         if ($request->session()->has('id')) {
             $validator = Validator::make($request->all(), [
-                'payment_type'  => 'required|string',
-                'order_id'      => 'required|string',
-                'amount'        => 'required|numeric|min:1',
-                'first_name'    => 'required|string|max:100',
-                'email'         => 'required|email|max:255',
-                'phone'         => 'required|string|max:20',
+                'payment_type' => 'required|string',
+                'order_id'     => 'required|string',
+                'amount'       => 'required|numeric|min:1',
+                'first_name'   => 'required|string|max:100',
+                'email'        => 'required|email|max:255',
+                'phone'        => 'required|string|max:20',
             ]);
             if ($validator->fails()) {
                 return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
@@ -406,7 +406,7 @@ class MidtransConfigController extends Controller
                 ],
             ];
 
-            if (in_array($request->payment_type, ['bca_va','bni_va','bri_va','permata_va','other_va'])) {
+            if (in_array($request->payment_type, ['bca_va', 'bni_va', 'bri_va', 'permata_va', 'other_va'])) {
                 $payload['bank_transfer'] = ['bank' => str_replace('_va', '', $request->payment_type)];
             }
 

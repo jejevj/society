@@ -6,8 +6,8 @@ use App\Services\DataService;
 use Illuminate\Support\Facades\Redirect;
 use App\Models\ReffOrganisasi;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;       
-use Illuminate\Support\Facades\Crypt;   
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Crypt;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -28,8 +28,9 @@ class SettingController extends Controller
 
     public function index(Request $request)
     {
-        
-        $menu_aktif = 'setting||konten';
+        // menu_aktif format: 'kode_menu||kode_parent_menu'
+        // setting sekarang berada di bawah group 'setting-group'
+        $menu_aktif = 'setting||setting-group';
         if (!$request->session()->has('id')) {
             $prefix = trim(env('APP_ROUTE'), '/');
             return Redirect::to(($prefix ? '/' . $prefix : '') . '/login-backend');
@@ -42,6 +43,7 @@ class SettingController extends Controller
             'menu_aktif' => $menu_aktif,
             'navbar' => $navbar,
             'cek_permit' => $cek,
+            'cek'        => $cek,
             'breadcrumb' => '
                             <ul class="breadcrumb breadcrumb-separatorless fw-semibold">
 										<li class="breadcrumb-item text-white fw-bold lh-1">
@@ -52,11 +54,11 @@ class SettingController extends Controller
 										<li class="breadcrumb-item">
 											<i class="ki-outline ki-right fs-4 text-white mx-n1"></i>
 										</li>
-										<li class="breadcrumb-item text-white fw-bold lh-1">Konten Web</li>
+										<li class="breadcrumb-item text-white fw-bold lh-1">Settings</li>
 										<li class="breadcrumb-item">
 											<i class="ki-outline ki-right fs-4 text-white mx-n1"></i>
 										</li>
-										<li class="breadcrumb-item text-white fw-bold lh-1">Pengaturan Umum</li>
+										<li class="breadcrumb-item text-white fw-bold lh-1">General Settings</li>
 									</ul>',
             'organisasi' => ReffOrganisasi::latest()->get(),
             'detail' =>  DB::table('app_setting')->where('id_setting', 1)->first()
@@ -72,7 +74,7 @@ class SettingController extends Controller
     public function getTableSlider(Request $request)
     {
         if ($request->session()->has('id')) {
-            $menu_aktif = 'setting||konten';
+            $menu_aktif = 'setting||setting-group';
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             
             $query = DB::table('app_slider as a')
@@ -124,7 +126,7 @@ class SettingController extends Controller
     public function getTableSliderText(Request $request)
     {
         if ($request->session()->has('id')) {
-            $menu_aktif = 'setting||konten';
+            $menu_aktif = 'setting||setting-group';
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             
             $query = DB::table('app_slider as a')
@@ -167,7 +169,7 @@ class SettingController extends Controller
 
     public function editSlider($id_slider, Request $request)
     {
-        $menu_aktif = 'setting||konten';
+        $menu_aktif = 'setting||setting-group';
         if (!$request->session()->has('id')) {
             $prefix = trim(env('APP_ROUTE'), '/');
             return Redirect::to(($prefix ? '/' . $prefix : '') . '/login-backend');
@@ -190,11 +192,11 @@ class SettingController extends Controller
 										<li class="breadcrumb-item">
 											<i class="ki-outline ki-right fs-4 text-white mx-n1"></i>
 										</li>
-										<li class="breadcrumb-item text-white fw-bold lh-1">Konten Web</li>
+										<li class="breadcrumb-item text-white fw-bold lh-1">Settings</li>
 										<li class="breadcrumb-item">
 											<i class="ki-outline ki-right fs-4 text-white mx-n1"></i>
 										</li>
-										<li class="breadcrumb-item text-white fw-bold lh-1">Pengaturan Umum</li>
+										<li class="breadcrumb-item text-white fw-bold lh-1">General Settings</li>
                                         <li class="breadcrumb-item">
 											<i class="ki-outline ki-right fs-4 text-white mx-n1"></i>
 										</li>
@@ -214,7 +216,7 @@ class SettingController extends Controller
     {
         if ($request->session()->has('id')) {
 
-            $menu_aktif = 'setting||konten';
+            $menu_aktif = 'setting||setting-group';
 
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
 
@@ -315,7 +317,7 @@ class SettingController extends Controller
     public function deleteSliderAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $menu_aktif = 'setting||konten';
+            $menu_aktif = 'setting||setting-group';
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             if(!$cek['d']){
                 return response()->json([
@@ -349,7 +351,7 @@ class SettingController extends Controller
     public function addSliderAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $menu_aktif = 'setting||konten';
+            $menu_aktif = 'setting||setting-group';
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             if(!$cek['c']){
                 return response()->json([
@@ -403,7 +405,7 @@ class SettingController extends Controller
     public function addSliderTextAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $menu_aktif = 'setting||konten';
+            $menu_aktif = 'setting||setting-group';
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             if(!$cek['c']){
                 return response()->json([
@@ -453,7 +455,7 @@ class SettingController extends Controller
     public function updateSettingAction(Request $request)
     {
         if ($request->session()->has('id')) {
-            $menu_aktif = 'setting||konten';
+            $menu_aktif = 'setting||setting-group';
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             if(!$cek['u']){
                 return response()->json([

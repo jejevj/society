@@ -40,6 +40,7 @@ class ReffMenuSeeder extends Seeder
             ['id_menu' => 28, 'nama_menu' => 'Event List',         'jenis_menu' => 'D', 'kode_menu' => 'event',            'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 1,  'deskripsi_menu' => null, 'created_at' => '2026-05-29 00:00:00', 'updated_at' => null],
             ['id_menu' => 29, 'nama_menu' => 'Registrasi Peserta', 'jenis_menu' => 'D', 'kode_menu' => 'event-registrasi', 'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 2,  'deskripsi_menu' => null, 'created_at' => '2026-05-30 00:00:00', 'updated_at' => null],
             ['id_menu' => 30, 'nama_menu' => 'Paper',              'jenis_menu' => 'D', 'kode_menu' => 'event-paper',      'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 3,  'deskripsi_menu' => null, 'created_at' => '2026-05-30 00:00:00', 'updated_at' => null],
+            ['id_menu' => 31, 'nama_menu' => 'Timeline',           'jenis_menu' => 'D', 'kode_menu' => 'event-timeline',   'icon_menu' => 'bullet','parent_menu' => 27, 'urutan_menu' => 4,  'deskripsi_menu' => null, 'created_at' => '2026-05-30 00:00:00', 'updated_at' => null],
         ]);
     }
 }

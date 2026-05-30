@@ -89,7 +89,12 @@ class EventController extends Controller
                         SELECT COUNT(*)
                         FROM t_event_timeline e
                         WHERE e.kode_event = a.kode_event
-                    ) as total_timeline
+                    ) as total_timeline,
+                    (
+                        SELECT COUNT(*)
+                        FROM event_addon ea
+                        WHERE ea.kode_event = a.kode_event
+                    ) as total_addon
                 ");
                 
                 if ($request->filled('nama')) {
@@ -103,13 +108,15 @@ class EventController extends Controller
                 ->addColumn('action', function ($row) use ($cek) {
                     $editUrl     = route('editEvent',     $row->kode_event);
                     $timelineUrl = route('timelineEvent', $row->kode_event);
+                    $addonUrl    = route('addonEvent',    $row->kode_event);
                     $btn = '';
                     if ($cek['u']) {
-                        $btn .= '<a href="' . $editUrl . '" class="btn btn-light-warning btn-sm" title="Edit"><span class="fa fa-pencil"></span></a> ';
-                        $btn .= '<a href="' . $timelineUrl . '" class="btn btn-light-info btn-sm" title="Timeline"><span class="fa fa-calendar"></span></a> ';
+                        $btn .= '<a href="' . $editUrl . '" class="btn btn-light-warning btn-sm me-1" title="Edit Event"><span class="fa fa-pencil"></span></a>';
+                        $btn .= '<a href="' . $timelineUrl . '" class="btn btn-light-info btn-sm me-1" title="Timeline"><span class="fa fa-calendar"></span></a>';
+                        $btn .= '<a href="' . $addonUrl . '" class="btn btn-light-success btn-sm me-1" title="Add-On (' . $row->total_addon . ')"><span class="fa fa-puzzle-piece"></span></a>';
                     }
                     if ($cek['d']) {
-                        $btn .= '<button title="Delete" class="btn btn-danger btn-delete-event btn-sm" data-id="' . $row->kode_event . '"><span class="fa fa-trash"></span></button> ';
+                        $btn .= '<button title="Delete" class="btn btn-danger btn-delete-event btn-sm" data-id="' . $row->kode_event . '"><span class="fa fa-trash"></span></button>';
                     }
                     return $btn;
                 })
@@ -365,6 +372,7 @@ class EventController extends Controller
                 DB::table('t_event_program')->where('event_kode', $id)->delete();
                 DB::table('t_event_program_detail')->where('event_kode', $id)->delete();
                 DB::table('t_event_timeline')->where('kode_event', $id)->delete();
+                DB::table('event_addon')->where('kode_event', $id)->delete();
 
                 $this->dataService->createLog($request,'deleteEventAction' ,'Successfully deleted event data','',json_encode($dt_exist));
                 return response()->json(['success' => true, 'message' => 'Successfully deleted event data']);

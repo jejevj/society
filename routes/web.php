@@ -10,6 +10,12 @@ Route::prefix('society-event')->group(function () {
     Route::get('/about', [App\Http\Controllers\WebHomeController::class, 'index'])->name('about');
     Route::get('/home', [App\Http\Controllers\WebHomeController::class, 'index'])->name('home');
 
+
+
+
+
+
+    
     Route::get('/countDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getCountData'])->name('countDataDashboard');
     Route::get('/listDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getListData'])->name('listDataDashboard');
     Route::get('/topikDashboard', [App\Http\Controllers\WebDashboardController::class, 'getTopik'])->name('topikDashboard');
@@ -77,6 +83,7 @@ Route::prefix('society-event')->group(function () {
     // end front end 
 
     Route::get('admin-panel', [App\Http\Controllers\DashboardController::class, 'index'])->name('admin-panel');
+    // route menu  referensi dashboard
     Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('ref-sponsor', [App\Http\Controllers\ReffSponsorController::class, 'index'])->name('ref-sponsor');

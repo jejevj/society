@@ -1,5 +1,20 @@
 <!DOCTYPE html>
 <html lang="id">
+	<head>
+		<base href="../../../" />
+		<title><?= env('APP_NAME', 'Society Event - Science Bank'); ?></title>
+		<meta charset="utf-8" />
+		<meta name="description" content="=" />
+		<meta name="keywords" content="" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content="Satu Data Pertahanan - Kementrian Pertahanan" />
+		<meta name="csrf-token" content="{{ csrf_token() }}">
+		<meta property="og:site_name" content="Satu Data Pertahanan" />
+		<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+		<link rel="shortcut icon" href="{{ asset('images/logo.png') }}" />
+		<link href="{{ asset('assets/css/min/font.min.css') }}" rel="stylesheet" type="text/css" />
 
 <head>
 	<base href="../../../" />
@@ -38,6 +53,7 @@
 							id="kt_app_header_menu_toggle">
 							<i class="ki-outline ki-abstract-14 fs-2"></i>
 						</div>
+<<<<<<< HEAD
 					</div>
 					<div class="d-flex align-items-center flex-grow-1 flex-lg-grow-0 me-lg-15">
 						<a href="{{ env('APP_ROUTE') }}" class="d-flex align-items-center">
@@ -80,6 +96,67 @@
                 hover:text-maroon-active transition-colors">
 												About
 											</span>
+=======
+						<div class="d-flex align-items-center flex-grow-1 flex-lg-grow-0 me-lg-15">
+                            <a href="{{ env('APP_ROUTE') }}" class="d-flex align-items-center">
+                                <img alt="Logo" src="{{ asset('images/logo.png') }}" class="h-70px d-lg-none my-5" />
+                                <img alt="Logo" src="{{ asset('images/logo.png') }}" class="h-70px d-none d-lg-inline app-sidebar-logo-default theme-light-show" />
+                                <div class="ms-3 d-flex flex-column">
+									<span class="fw-bold text-white fs-4 d-none d-md-block">
+										Society Event
+									</span>
+									<span class="fw-bold text-white fs-4 d-block d-md-none">
+										Society Event
+									</span>
+									<span class="fw-bold text-white fs-6 d-none d-md-block">
+										Science Bank
+									</span>
+									<span class="fw-bold text-white fs-6 d-block d-md-none">
+										Science Bank
+									</span>
+
+								</div>
+                            </a>
+                        </div>
+						<div class="d-flex align-items-stretch justify-content-end flex-lg-grow-1" id="kt_app_header_wrapper">
+							<div class="app-header-menu app-header-mobile-drawer align-items-stretch" data-kt-drawer="true" data-kt-drawer-name="app-header-menu" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="350px" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_app_header_menu_toggle" data-kt-swapper="true" data-kt-swapper-mode="{default: 'append', lg: 'prepend'}" data-kt-swapper-parent="{default: '#kt_app_body', lg: '#kt_app_header_wrapper'}">
+								<div class="menu menu-rounded menu-active-bg menu-state-primary menu-column menu-lg-row menu-title-gray-700 menu-icon-gray-500 menu-arrow-gray-500 menu-bullet-gray-500 my-5 my-lg-0 align-items-stretch fw-semibold px-2 px-lg-0 justify-content-end w-100" id="kt_app_header_menu" data-kt-menu="true">
+									<div class="menu-item me-0 me-lg-2">
+                                        <a href="{{ route('about') }}" class="menu-link">
+                                            <span class="menu-title fs-5 " >
+												<span class="<?php if($menu_aktif == 'about'){ echo 'text-maroon-active' ;}else{ echo 'text-white';}?> fw-bold text-white">About</span>
+											</span>
+                                        </a>
+                                    </div>
+									<div class="menu-item me-0 me-lg-2">
+                                        <a href="{{ route('about') }}" class="menu-link">
+                                            <span class="menu-title fs-5 " >
+												<span class="<?php if($menu_aktif == 'event'){ echo 'text-maroon-active' ;}else{ echo 'text-white';}?> fw-bold text-white">Event</span>
+											</span>
+                                        </a>
+                                    </div>
+									<div class="menu-item me-0 me-lg-2">
+                                        <a href="{{ route('about') }}" class="menu-link">
+                                            <span class="menu-title fs-5 " >
+												<span class="<?php if($menu_aktif == 'paper'){ echo 'text-maroon-active' ;}else{ echo 'text-white';}?> fw-bold text-white">Paper</span>
+											</span>
+                                        </a>
+                                    </div>
+									
+									
+
+									<?php if(empty(session('id_user'))){?>
+									<div class="menu-item me-0">
+										<a href="{{ route('login') }}" class="btn btn-login">
+											<i class="fa-solid fa-circle-user me-2 text-white"></i> Login / Register
+										</a>
+									</div>
+									<?php }else {?>
+									<div data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-placement="bottom-start" class="menu-item menu-lg-down-accordion menu-sub-lg-down-indention me-0 me-lg-2">
+										<span class="menu-link bg-warning">
+											<span class="menu-title text-white"> <i class="fa fa-user px-2 py-4 text-white"> </i> Hallo, {{ session('nama_user')}}</span>
+											<span class="menu-arrow d-lg-none"></span>
+>>>>>>> ca08a53154cfa3ebb8add7a988d3c119976d658d
 										</span>
 									</a>
 								</div>

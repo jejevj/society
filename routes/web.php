@@ -15,7 +15,7 @@ Route::prefix('society-event')->group(function () {
 
 
 
-    
+
     Route::get('/countDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getCountData'])->name('countDataDashboard');
     Route::get('/listDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getListData'])->name('listDataDashboard');
     Route::get('/topikDashboard', [App\Http\Controllers\WebDashboardController::class, 'getTopik'])->name('topikDashboard');
@@ -160,4 +160,30 @@ Route::prefix('society-event')->group(function () {
     Route::post('updateProfilAction', [App\Http\Controllers\ProfilController::class, 'updateProfilAction'])->name('updateProfilAction');
     Route::post('updatePasswordAction', [App\Http\Controllers\ProfilController::class, 'updatePasswordAction'])->name('updatePasswordAction');
     Route::get('ganti-password', [App\Http\Controllers\ProfilController::class, 'gantiPassword'])->name('ganti-password');
+
+    // route menu event 
+    Route::get('event', [App\Http\Controllers\EventController::class, 'index'])->name('event');
+    Route::get('/getTableEvent', [App\Http\Controllers\EventController::class, 'getTableEvent'])->name('getTableEvent');
+    Route::get('tambah-event', [App\Http\Controllers\EventController::class, 'tambah'])->name('tambah-event');
+    Route::get('/editEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'editEvent'])->name('editEvent');
+    Route::post('/addEventAction', [App\Http\Controllers\EventController::class, 'addEventAction'])->name('addEventAction');
+    Route::post('/updateEventAction', [App\Http\Controllers\EventController::class, 'updateEventAction'])->name('updateEventAction');
+    Route::post('/deleteEventAction', [App\Http\Controllers\EventController::class, 'deleteEventAction'])->name('deleteEventAction');
+    Route::get('/paketEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'paketEvent'])->name('paketEvent');
+    Route::get('/programEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'programEvent'])->name('programEvent');
+    Route::get('/kolaborasiEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'kolaborasiEvent'])->name('kolaborasiEvent');
+    
+    Route::get('/getTablePaketEvent', [App\Http\Controllers\EventController::class, 'getTablePaketEvent'])->name('getTablePaketEvent');
+    Route::get('/tambahPaketEvent/{kode_paket}', [App\Http\Controllers\EventController::class, 'tambahPaketEvent'])->name('tambahPaketEvent');
+    Route::get('/editPaketEvent/{kode_paket}', [App\Http\Controllers\EventController::class, 'editPaketEvent'])->name('editPaketEvent');
+    Route::post('/addPaketEventAction', [App\Http\Controllers\EventController::class, 'addPaketEventAction'])->name('addPaketEventAction');
+    Route::post('/editPaketEventAction', [App\Http\Controllers\EventController::class, 'editPaketEventAction'])->name('editPaketEventAction');
+    Route::post('/deletePaketEventAction', [App\Http\Controllers\EventController::class, 'deletePaketEventAction'])->name('deletePaketEventAction');
+    
+    Route::get('/getTableProgramEvent', [App\Http\Controllers\EventController::class, 'getTableProgramEvent'])->name('getTableProgramEvent');
+    Route::get('/tambahProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'tambahProgramEvent'])->name('tambahProgramEvent');
+    Route::get('/editProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'editProgramEvent'])->name('editProgramEvent');
+    Route::post('/addProgramEventAction', [App\Http\Controllers\EventController::class, 'addProgramEventAction'])->name('addProgramEventAction');
+    
 });
+

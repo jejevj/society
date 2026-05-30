@@ -26,6 +26,8 @@ class ReffAksesMenuSeeder extends Seeder
             ['id_akses_menu' => 10, 'role_id' => 1, 'menu_id' => 18, 'permit_r' => 1, 'permit_c' => 1, 'permit_u' => 1, 'permit_d' => 1, 'created_at' => '2025-08-29 09:12:02', 'updated_at' => null], // tautan
             ['id_akses_menu' => 11, 'role_id' => 1, 'menu_id' => 27, 'permit_r' => 1, 'permit_c' => 1, 'permit_u' => 1, 'permit_d' => 1, 'created_at' => '2026-05-29 00:00:00', 'updated_at' => null], // event (master)
             ['id_akses_menu' => 12, 'role_id' => 1, 'menu_id' => 28, 'permit_r' => 1, 'permit_c' => 1, 'permit_u' => 1, 'permit_d' => 1, 'created_at' => '2026-05-29 00:00:00', 'updated_at' => null], // event list
+            ['id_akses_menu' => 13, 'role_id' => 1, 'menu_id' => 29, 'permit_r' => 1, 'permit_c' => 1, 'permit_u' => 1, 'permit_d' => 1, 'created_at' => '2026-05-30 00:00:00', 'updated_at' => null], // event-registrasi
+            ['id_akses_menu' => 14, 'role_id' => 1, 'menu_id' => 30, 'permit_r' => 1, 'permit_c' => 1, 'permit_u' => 1, 'permit_d' => 1, 'created_at' => '2026-05-30 00:00:00', 'updated_at' => null], // event-paper
         ]);
     }
 }

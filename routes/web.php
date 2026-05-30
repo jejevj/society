@@ -184,6 +184,21 @@ Route::prefix('society-event')->group(function () {
     Route::get('/tambahProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'tambahProgramEvent'])->name('tambahProgramEvent');
     Route::get('/editProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'editProgramEvent'])->name('editProgramEvent');
     Route::post('/addProgramEventAction', [App\Http\Controllers\EventController::class, 'addProgramEventAction'])->name('addProgramEventAction');
-    
-});
 
+    // route menu event registrasi peserta
+    Route::get('event-registrasi', [App\Http\Controllers\EventRegistrasiController::class, 'index'])->name('event-registrasi');
+    Route::get('/getTableRegistrasi', [App\Http\Controllers\EventRegistrasiController::class, 'getTableRegistrasi'])->name('getTableRegistrasi');
+    Route::post('/updateStatusRegistrasiAction', [App\Http\Controllers\EventRegistrasiController::class, 'updateStatusRegistrasiAction'])->name('updateStatusRegistrasiAction');
+    Route::post('/deleteRegistrasiAction', [App\Http\Controllers\EventRegistrasiController::class, 'deleteRegistrasiAction'])->name('deleteRegistrasiAction');
+    Route::get('/detailPaperRegistrasi/{id_registrasi}', [App\Http\Controllers\EventRegistrasiController::class, 'detailPaperRegistrasi'])->name('detailPaperRegistrasi');
+
+    // route menu event paper
+    Route::get('event-paper', [App\Http\Controllers\EventPaperController::class, 'index'])->name('event-paper');
+    Route::get('/getTablePaper', [App\Http\Controllers\EventPaperController::class, 'getTablePaper'])->name('getTablePaper');
+    Route::get('/getTablePaperByRegistrasi', [App\Http\Controllers\EventPaperController::class, 'getTablePaperByRegistrasi'])->name('getTablePaperByRegistrasi');
+    Route::get('/editPaper/{id_paper}', [App\Http\Controllers\EventPaperController::class, 'editPaper'])->name('editPaper');
+    Route::post('/updatePaperAction', [App\Http\Controllers\EventPaperController::class, 'updatePaperAction'])->name('updatePaperAction');
+    Route::post('/updateStatusPaperAction', [App\Http\Controllers\EventPaperController::class, 'updateStatusPaperAction'])->name('updateStatusPaperAction');
+    Route::post('/deletePaperAction', [App\Http\Controllers\EventPaperController::class, 'deletePaperAction'])->name('deletePaperAction');
+
+});

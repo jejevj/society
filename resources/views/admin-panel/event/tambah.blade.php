@@ -1,19 +1,18 @@
-
 @include('admin-panel.layouts.header')
 				<div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
 					<div id="kt_app_toolbar" class="app-toolbar py-6">
 						<div id="kt_app_toolbar_container" class="app-container container-xxl d-flex align-items-start">
 							<div class="d-flex flex-column flex-row-fluid">
 								<div class="d-flex align-items-center pt-1">
-									{!! $breadcrumb !!}
+									@include('admin-panel.layouts._breadcrumb', ['items' => [
+										['label' => 'Events', 'url' => route('event')],
+										['label' => 'Add Event', 'url' => null],
+									]])
 								</div>
 								<div class="d-flex flex-stack flex-wrap flex-lg-nowrap gap-4 gap-lg-10 pt-6 pb-18 py-lg-13">
 									<div class="page-title d-flex align-items-center me-3">
-										<h1 class="page-heading d-flex fw-bolder fs-2 flex-column justify-content-center my-0">{{ $menu }}
-										<span class="page-desc opacity-50 fs-6 fw-bold pt-4"></span>
-										</h1>
+										<h1 class="page-heading d-flex fw-bolder fs-2 flex-column justify-content-center my-0">{{$menu}}</h1>
 									</div>
-									
 								</div>
 							</div>
 						</div>
@@ -22,117 +21,82 @@
 						<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
 							<div class="d-flex flex-column flex-column-fluid">
 								<div id="kt_app_content" class="app-content">
-									<div class="mb-4">
-										<div class="d-flex justify-content-end">
-											<a class="btn btn-warning btn-sm" href="{{ route('event') }}">
-												<i class="fa fa-backward"></i> back
-											</a>
-										</div>
-									</div>
 									<div class="card card-flush">
 										<div class="card-body">
-											<form id="actForm" class="mb-4" enctype="multipart/form-data">
+											<form id="formTambahEvent" enctype="multipart/form-data">
 												@csrf
 												<div class="row">
-													<div class="col-md-6">
-														<label class="fs-4 opacity-75 mb-4">Title:</label>
-														<input type="text" class="form-control py-4" name="judul" placeholder="Title" >
+													<div class="col-md-6 mb-3">
+														<label class="form-label required">Title</label>
+														<input type="text" name="judul" class="form-control" placeholder="Event title" required>
 													</div>
-													<div class="col-md-6">
-														<label class="fs-4 opacity-75 mb-4">Sub Title:</label>
-														<input type="text" class="form-control py-4" name="sub_judul" placeholder="Sub Title" >
+													<div class="col-md-6 mb-3">
+														<label class="form-label required">Sub Title</label>
+														<input type="text" name="sub_judul" class="form-control" placeholder="Sub title" required>
 													</div>
-                                                    <div class="col-md-6 mt-4">
-														<label class="fs-4 opacity-75 mb-4">Start Date:</label>
-														<input type="date" class="form-control py-4" name="awal" placeholder="Start Date" >
+													<div class="col-md-6 mb-3">
+														<label class="form-label required">Start Date</label>
+														<input type="date" name="awal" class="form-control" required>
 													</div>
-                                                    <div class="col-md-6 mt-4">
-														<label class="fs-4 opacity-75 mb-4">End Date:</label>
-														<input type="date" class="form-control py-4" name="akhir" placeholder="End Date" >
+													<div class="col-md-6 mb-3">
+														<label class="form-label required">End Date</label>
+														<input type="date" name="akhir" class="form-control" required>
 													</div>
-                                                    <div class="col-md-6 mt-4">
-														<label class="fs-4 opacity-75 mb-4">Location:</label>
-														<input type="text" class="form-control py-4" name="lokasi" placeholder="Location" >
+													<div class="col-md-12 mb-3">
+														<label class="form-label required">Location</label>
+														<input type="text" name="lokasi" class="form-control" placeholder="Location" required>
 													</div>
-                                                    <div class="col-md-6 mt-4">
-														<label class="fs-4 opacity-75 mb-4">Background Images:</label>
-														<input type="file" class="form-control py-4" name="gambar" placeholder="Background Images" accept=".jpg,.jpeg,.png" >
+													<div class="col-md-12 mb-3">
+														<label class="form-label required">Description</label>
+														<textarea name="keterangan" class="form-control" rows="4" placeholder="Description" required></textarea>
 													</div>
-                                                    <div class="col-md-6 mt-4">
-														<label class="fs-4 opacity-75 mb-4">Description:</label>
-                                                        <textarea name="keterangan" class="form-control py-4" rows="3"></textarea>
+													<div class="col-md-12 mb-3">
+														<label class="form-label required">Background Image</label>
+														<input type="file" name="gambar" class="form-control" accept="image/jpg,image/jpeg,image/png" required>
+														<small class="text-muted">Max 5MB. Format: jpg, jpeg, png</small>
 													</div>
-																								
-												</div>
-												<div class="row">													
 													<div class="col-md-12 mt-4">
-														<button type="submit" id="btn-save" class="btn btn-marron-submit w-100"><i class="fa fa-save text-white"></i>Save</button>
+														<button type="submit" class="btn btn-marron-submit"><i class="fa fa-save text-white"></i> Save</button>
+														<a href="{{ route('event') }}" class="btn btn-secondary ms-2">Cancel</a>
 													</div>
 												</div>
 											</form>
 										</div>
 									</div>
-									
 								</div>
-							</div>							
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
+		<!--end::App-->
 		<script>
-			$.ajaxSetup({
-				headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
-			});
-
-			$('#btn-save').on('click', function (e) {
-				e.preventDefault();
-
-				let formData = new FormData($('#actForm')[0]);
-				formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-
-				$.ajax({
-					url: "{{ route('addEventAction') }}",
-					type: 'POST',
-					data: formData,
-					contentType: false,
-					processData: false,
-					beforeSend: function () {
-                        Swal.fire({
-                            title: 'Loading...',
-                            text: 'Is saving data',
-                            allowOutsideClick: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
-                    },
-					success: function (response) {
-						Swal.fire({
-							icon: 'success',
-							title: 'Success',
-							text: response.message
-						}).then(() => {
-							window.location.href = "{{ route('event') }}";
-						});
-					},
-					error: function (xhr) {
-						let message = 'Terjadi kesalahan.';
-						if (xhr.responseJSON && xhr.responseJSON.message) {
-							message = xhr.responseJSON.message;
+			$(document).ready(function () {
+				$('#formTambahEvent').on('submit', function(e) {
+					e.preventDefault();
+					var formData = new FormData(this);
+					$.ajax({
+						url: "{{ route('addEventAction') }}",
+						type: 'POST',
+						data: formData,
+						processData: false,
+						contentType: false,
+						success: function(response) {
+							if (response.success) {
+								Swal.fire('Success', response.message, 'success').then(function() {
+									window.location.href = "{{ route('event') }}";
+								});
+							} else {
+								Swal.fire('Error', response.message, 'error');
+							}
+						},
+						error: function(xhr) {
+							var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to save data';
+							Swal.fire('Error', msg, 'error');
 						}
-
-						Swal.fire({
-							icon: 'error',
-							title: 'Failed',
-							text: message
-						});
-					}
+					});
 				});
 			});
-
-
-			
 		</script>
-
 @include('admin-panel.layouts.footer')

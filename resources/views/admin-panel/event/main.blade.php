@@ -1,18 +1,18 @@
-
 @include('admin-panel.layouts.header')
 				<div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
 					<div id="kt_app_toolbar" class="app-toolbar py-6">
 						<div id="kt_app_toolbar_container" class="app-container container-xxl d-flex align-items-start">
 							<div class="d-flex flex-column flex-row-fluid">
 								<div class="d-flex align-items-center pt-1">
-									{!! $breadcrumb !!}
+									@include('admin-panel.layouts._breadcrumb', ['items' => [
+										['label' => 'Events', 'url' => null],
+									]])
 								</div>
 								<div class="d-flex flex-stack flex-wrap flex-lg-nowrap gap-4 gap-lg-10 pt-6 pb-18 py-lg-13">
 									<div class="page-title d-flex align-items-center me-3">
 										<h1 class="page-heading d-flex fw-bolder fs-2 flex-column justify-content-center my-0">{{$menu}}
 										<span class="page-desc opacity-50 fs-6 fw-bold pt-4"></span>
 									</div>
-									
 								</div>
 							</div>
 						</div>
@@ -59,7 +59,6 @@
 														<th class="text-center min-w-70px">Actions</th>
 													</tr>
 												</thead>
-												
 											</table>
 										</div>
 									</div>

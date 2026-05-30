@@ -30,7 +30,6 @@ class DatabaseSeeder extends Seeder
 
             // Event
             TEventSeeder::class,
-            TEventTimelineSeeder::class,
             TEventKolaborasiSeeder::class,
             TEventPaketSeeder::class,
             TEventPaketDetailSeeder::class,
@@ -39,9 +38,6 @@ class DatabaseSeeder extends Seeder
 
             // Peserta & Registrasi
             PesertaSeeder::class,
-
-            // Add-On (fitur baru)
-            EventAddonSeeder::class,
         ]);
     }
 }

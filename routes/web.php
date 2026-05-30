@@ -154,7 +154,7 @@ Route::prefix('society-event')->group(function () {
     Route::post('updatePasswordAction', [App\Http\Controllers\ProfilController::class, 'updatePasswordAction'])->name('updatePasswordAction');
     Route::get('ganti-password', [App\Http\Controllers\ProfilController::class, 'gantiPassword'])->name('ganti-password');
 
-    // route menu event 
+    // route menu event
     Route::get('event', [App\Http\Controllers\EventController::class, 'index'])->name('event');
     Route::get('/getTableEvent', [App\Http\Controllers\EventController::class, 'getTableEvent'])->name('getTableEvent');
     Route::get('tambah-event', [App\Http\Controllers\EventController::class, 'tambah'])->name('tambah-event');
@@ -166,13 +166,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/programEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'programEvent'])->name('programEvent');
     Route::get('/kolaborasiEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'kolaborasiEvent'])->name('kolaborasiEvent');
 
-    // timeline sebagai sub-page dari event list (bukan menu tersendiri)
-    Route::get('/timelineEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'timelineEvent'])->name('timelineEvent');
-    Route::get('/getTableTimeline', [App\Http\Controllers\EventController::class, 'getTableTimeline'])->name('getTableTimeline');
-    Route::post('/addTimelineAction', [App\Http\Controllers\EventController::class, 'addTimelineAction'])->name('addTimelineAction');
-    Route::post('/updateTimelineAction', [App\Http\Controllers\EventController::class, 'updateTimelineAction'])->name('updateTimelineAction');
-    Route::post('/deleteTimelineAction', [App\Http\Controllers\EventController::class, 'deleteTimelineAction'])->name('deleteTimelineAction');
-    
     Route::get('/getTablePaketEvent', [App\Http\Controllers\EventController::class, 'getTablePaketEvent'])->name('getTablePaketEvent');
     Route::get('/tambahPaketEvent/{kode_paket}', [App\Http\Controllers\EventController::class, 'tambahPaketEvent'])->name('tambahPaketEvent');
     Route::get('/editPaketEvent/{kode_paket}', [App\Http\Controllers\EventController::class, 'editPaketEvent'])->name('editPaketEvent');
@@ -200,17 +193,5 @@ Route::prefix('society-event')->group(function () {
     Route::post('/updatePaperAction', [App\Http\Controllers\EventPaperController::class, 'updatePaperAction'])->name('updatePaperAction');
     Route::post('/updateStatusPaperAction', [App\Http\Controllers\EventPaperController::class, 'updateStatusPaperAction'])->name('updateStatusPaperAction');
     Route::post('/deletePaperAction', [App\Http\Controllers\EventPaperController::class, 'deletePaperAction'])->name('deletePaperAction');
-
-    // route menu event add-on
-    Route::get('/addonEvent/{kode_event}', [App\Http\Controllers\EventAddonController::class, 'index'])->name('addonEvent');
-    Route::get('/getTableAddonEvent', [App\Http\Controllers\EventAddonController::class, 'getTableAddon'])->name('getTableAddonEvent');
-    Route::get('/tambahAddonEvent/{kode_event}', [App\Http\Controllers\EventAddonController::class, 'tambah'])->name('tambahAddonEvent');
-    Route::get('/editAddonEvent/{kode_addon}', [App\Http\Controllers\EventAddonController::class, 'edit'])->name('editAddonEvent');
-    Route::post('/addAddonEventAction', [App\Http\Controllers\EventAddonController::class, 'addAddonAction'])->name('addAddonEventAction');
-    Route::post('/updateAddonEventAction', [App\Http\Controllers\EventAddonController::class, 'updateAddonAction'])->name('updateAddonEventAction');
-    Route::post('/deleteAddonEventAction', [App\Http\Controllers\EventAddonController::class, 'deleteAddonAction'])->name('deleteAddonEventAction');
-    Route::get('/addonEventRegistrasi/{kode_event}', [App\Http\Controllers\EventAddonController::class, 'addonRegistrasi'])->name('addonEventRegistrasi');
-    Route::get('/getTableAddonEventRegistrasi', [App\Http\Controllers\EventAddonController::class, 'getTableAddonRegistrasi'])->name('getTableAddonEventRegistrasi');
-    Route::post('/updateStatusAddonRegistrasiAction', [App\Http\Controllers\EventAddonController::class, 'updateStatusAddonRegistrasiAction'])->name('updateStatusAddonRegistrasiAction');
 
 });

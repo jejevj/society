@@ -14,78 +14,87 @@
 
         html, body {
             height: 100%;
+            width: 100%;
+            overflow: hidden;
             font-family: 'Inter', sans-serif;
-            background: #f4f6fb;
         }
 
         .login-wrap {
             display: flex;
-            min-height: 100vh;
+            width: 100vw;
+            height: 100vh;
         }
 
+        /* ── Col kiri: gambar full ── */
         .login-img {
             flex: 0 0 66.6667%;
-            max-width: 66.6667%;
+            width: 66.6667%;
+            height: 100vh;
             position: relative;
             overflow: hidden;
         }
 
         .login-img img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
             display: block;
         }
 
         .login-img-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(180,20,20,0.55) 0%, rgba(20,20,60,0.45) 100%);
+            background: linear-gradient(135deg, rgba(180,20,20,0.58) 0%, rgba(20,20,60,0.48) 100%);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            padding: 48px;
+            padding: 52px;
+            z-index: 1;
         }
 
         .login-img-overlay .brand {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         .login-img-overlay .brand img {
-            height: 56px;
+            height: 60px;
             width: auto;
             object-fit: contain;
         }
 
         .login-img-overlay p {
-            color: rgba(255,255,255,0.82);
-            font-size: 0.95rem;
+            color: rgba(255,255,255,0.85);
+            font-size: 1rem;
             line-height: 1.75;
-            max-width: 480px;
+            max-width: 500px;
         }
 
+        /* ── Col kanan: form ── */
         .login-form-col {
             flex: 0 0 33.3333%;
-            max-width: 33.3333%;
+            width: 33.3333%;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             background: #fff;
             padding: 48px 36px;
-            box-shadow: -4px 0 24px rgba(0,0,0,0.07);
+            box-shadow: -4px 0 24px rgba(0,0,0,0.08);
+            overflow-y: auto;
         }
 
         .login-form-inner {
             width: 100%;
-            max-width: 360px;
+            max-width: 340px;
         }
 
         .login-form-inner .logo-sm {
             height: 48px;
             margin-bottom: 24px;
+            display: block;
         }
 
         .login-form-inner h2 {
@@ -101,7 +110,7 @@
             margin-bottom: 32px;
         }
 
-        .form-label {
+        .form-label-custom {
             font-weight: 600;
             font-size: 0.84rem;
             color: #333;
@@ -118,6 +127,7 @@
             transition: border-color 0.2s, box-shadow 0.2s;
             outline: none;
             background: #fafafa;
+            margin-bottom: 16px;
         }
 
         .form-control-login:focus {
@@ -141,7 +151,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            margin-top: 8px;
+            margin-top: 4px;
         }
 
         .btn-submit:hover { background: #c41a1a; }
@@ -154,9 +164,10 @@
         }
 
         @media (max-width: 768px) {
-            .login-wrap { flex-direction: column; }
+            body { overflow: auto; }
+            .login-wrap { flex-direction: column; height: auto; }
             .login-img { display: none; }
-            .login-form-col { flex: 1; max-width: 100%; padding: 40px 24px; box-shadow: none; }
+            .login-form-col { flex: 1; width: 100%; height: auto; min-height: 100vh; box-shadow: none; }
         }
     </style>
 </head>
@@ -164,7 +175,7 @@
 
 <div class="login-wrap">
 
-    {{-- Col kiri: background image --}}
+    {{-- Col kiri: background image fullscreen --}}
     <div class="login-img">
         <img src="/ldt-asset/images/1780075229_bg-scbank.jpeg" alt="Background Society Event">
         <div class="login-img-overlay">
@@ -184,12 +195,12 @@
 
             <form id="actForm">
                 @csrf
-                <div class="mb-4">
-                    <label class="form-label">Username / Email</label>
+                <div class="mb-1">
+                    <label class="form-label-custom">Username / Email</label>
                     <input type="text" name="username" class="form-control-login" placeholder="Masukkan username atau email">
                 </div>
-                <div class="mb-4">
-                    <label class="form-label">Password</label>
+                <div class="mb-1">
+                    <label class="form-label-custom">Password</label>
                     <input type="password" name="password" class="form-control-login" placeholder="Masukkan password">
                 </div>
                 <button type="submit" class="btn-submit" id="btn-save">

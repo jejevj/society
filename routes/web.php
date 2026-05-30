@@ -201,4 +201,16 @@ Route::prefix('society-event')->group(function () {
     Route::post('/updateStatusPaperAction', [App\Http\Controllers\EventPaperController::class, 'updateStatusPaperAction'])->name('updateStatusPaperAction');
     Route::post('/deletePaperAction', [App\Http\Controllers\EventPaperController::class, 'deletePaperAction'])->name('deletePaperAction');
 
+    // route menu event add-on
+    Route::get('/addonEvent/{kode_event}', [App\Http\Controllers\EventAddonController::class, 'index'])->name('addonEvent');
+    Route::get('/getTableAddonEvent', [App\Http\Controllers\EventAddonController::class, 'getTableAddon'])->name('getTableAddonEvent');
+    Route::get('/tambahAddonEvent/{kode_event}', [App\Http\Controllers\EventAddonController::class, 'tambah'])->name('tambahAddonEvent');
+    Route::get('/editAddonEvent/{kode_addon}', [App\Http\Controllers\EventAddonController::class, 'edit'])->name('editAddonEvent');
+    Route::post('/addAddonEventAction', [App\Http\Controllers\EventAddonController::class, 'addAddonAction'])->name('addAddonEventAction');
+    Route::post('/updateAddonEventAction', [App\Http\Controllers\EventAddonController::class, 'updateAddonAction'])->name('updateAddonEventAction');
+    Route::post('/deleteAddonEventAction', [App\Http\Controllers\EventAddonController::class, 'deleteAddonAction'])->name('deleteAddonEventAction');
+    Route::get('/addonEventRegistrasi/{kode_event}', [App\Http\Controllers\EventAddonController::class, 'addonRegistrasi'])->name('addonEventRegistrasi');
+    Route::get('/getTableAddonEventRegistrasi', [App\Http\Controllers\EventAddonController::class, 'getTableAddonRegistrasi'])->name('getTableAddonEventRegistrasi');
+    Route::post('/updateStatusAddonRegistrasiAction', [App\Http\Controllers\EventAddonController::class, 'updateStatusAddonRegistrasiAction'])->name('updateStatusAddonRegistrasiAction');
+
 });

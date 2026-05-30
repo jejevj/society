@@ -1,5 +1,5 @@
 # Society Event - ScienceBank Platform
-> Project Summary generated: 2026-05-29
+> Project Summary diperbarui: 2026-05-31 | Base commit: b5d16303
 
 ---
 
@@ -13,12 +13,12 @@ Aplikasi ini adalah platform manajemen event berbasis Laravel untuk **ScienceBan
 
 | Layer | Teknologi |
 |---|---|
-| Backend | PHP / Laravel |
+| Backend | PHP 8.x / Laravel 10.x |
 | Database | MySQL 8.0.30 |
-| Frontend | Blade Template, jQuery, SweetAlert2, DataTables |
-| Container | Docker (Dockerfile + docker-compose.prod.yml) |
+| Frontend | Blade Template, jQuery, SweetAlert2, DataTables (Yajra) |
+| Container | Docker (`Dockerfile` + `docker-compose.yml` + `docker-compose.prod.yml`) |
 | Email | SMTP Gmail (configurable via admin panel) |
-| Auth | OTP-based login, bcrypt password |
+| Auth | Session-based login + OTP, bcrypt password |
 
 ---
 
@@ -53,8 +53,8 @@ Aplikasi ini adalah platform manajemen event berbasis Laravel untuk **ScienceBan
 | `app_user` | User aplikasi (admin + publik) | 3 user (2 Super Admin, 1 ex-Organisasi) |
 | `app_email` | Konfigurasi SMTP | 1 konfigurasi Gmail |
 | `app_setting` | Pengaturan tampilan website | 1 record (social media, gambar, deskripsi) |
-| `app_slider` | Slider halaman web | Kosong (struktur minimal) |
-| `app_log_aktivitas` | Log semua aksi admin | 37 log entries |
+| `app_slider` | Slider halaman web | Kosong (struktur minimal, perlu ALTER TABLE) |
+| `app_log_aktivitas` | Log semua aksi admin | 37+ log entries |
 | `t_sponsor` | Sponsor event | 2 sponsor: INTELLEGENT SCIENCE, BioNexus |
 
 ### Tabel Event (Inti)
@@ -67,6 +67,10 @@ Aplikasi ini adalah platform manajemen event berbasis Laravel untuk **ScienceBan
 | `t_event_paket_detail` | Detail item per paket | Kosong |
 | `t_event_program` | Program/jadwal per hari | Kosong |
 | `t_event_program_detail` | Detail sesi per program | Kosong |
+| `t_event_paper` | Paper/submission peserta | Kosong (tabel sudah ada) |
+| `t_event_registrasi` | Registrasi peserta event | Kosong (tabel sudah ada) |
+| `t_event_timeline` | Timeline/milestone event | Kosong (tabel sudah ada) |
+| `t_event_addon` | Add-on/tambahan event | Kosong (tabel sudah ada) |
 
 ---
 
@@ -92,30 +96,35 @@ Aplikasi ini adalah platform manajemen event berbasis Laravel untuk **ScienceBan
 
 ### Admin Panel Controllers
 
-| Controller | Fungsi |
-|---|---|
-| `LoginController` | Login/OTP admin panel |
-| `DashboardController` | Halaman dashboard admin |
-| `ProfilController` | Update profil & ganti password admin |
-| `ReffUserController` | CRUD manajemen user |
-| `ReffRoleController` | CRUD role dan hak akses menu |
-| `ReffMenuController` | CRUD menu admin panel |
-| `ReffTopikController` | CRUD tags/topik |
-| `ReffSponsorController` | CRUD sponsor event |
-| `SettingController` | Pengaturan tampilan website |
-| `TautanController` | Manajemen link/tautan |
-| `LogController` | Lihat log aktivitas |
+| Controller | File | Fungsi |
+|---|---|---|
+| `LoginController` | `LoginController.php` | Login/OTP admin panel |
+| `DashboardController` | `DashboardController.php` | Halaman dashboard admin |
+| `ProfilController` | `ProfilController.php` | Update profil & ganti password admin |
+| `ReffUserController` | `ReffUserController.php` | CRUD manajemen user |
+| `ReffRoleController` | `ReffRoleController.php` | CRUD role dan hak akses menu |
+| `ReffMenuController` | `ReffMenuController.php` | CRUD menu admin panel |
+| `ReffTopikController` | `ReffTopikController.php` | CRUD tags/topik |
+| `ReffSponsorController` | `ReffSponsorController.php` | CRUD sponsor event |
+| `SettingController` | `SettingController.php` | Pengaturan tampilan website |
+| `TautanController` | `TautanController.php` | Manajemen link/tautan |
+| `LogController` | `LogController.php` | Lihat log aktivitas |
+| `EventController` | `EventController.php` | CRUD event utama (50KB - lengkap) |
+| `EventAddonController` | `EventAddonController.php` | CRUD add-on event |
+| `EventPaperController` | `EventPaperController.php` | CRUD paper/submission event |
+| `EventRegistrasiController` | `EventRegistrasiController.php` | CRUD registrasi peserta event |
+| `EventTimelineController` | `EventTimelineController.php` | CRUD timeline event |
 
 ### Web Publik Controllers
 
-| Controller | Fungsi |
-|---|---|
-| `WebHomeController` | Halaman utama publik |
-| `WebLoginController` | Login/Register/OTP user publik |
-| `WebDashboardController_` | Dashboard user publik (in-progress) |
-| `WebDataController` | Tampil data/konten |
-| `WebTopikController` | Filter topik di web |
-| `WebProfilController` | Profil user publik |
+| Controller | File | Fungsi |
+|---|---|---|
+| `WebHomeController` | `WebHomeController.php` | Halaman utama publik |
+| `WebLoginController` | `WebLoginController.php` | Login/Register/OTP user publik |
+| `WebDashboardController_` | `WebDashboardController_.php` | Dashboard user publik **(draft - nama file ada underscore)** |
+| `WebDataController` | `WebDataController.php` | Tampil data/konten |
+| `WebTopikController` | `WebTopikController.php` | Filter topik di web |
+| `WebProfilController` | `WebProfilController.php` | Profil user publik |
 
 ---
 
@@ -125,11 +134,22 @@ Aplikasi ini adalah platform manajemen event berbasis Laravel untuk **ScienceBan
 Dashboards (Single)
 Reference (Master)
   - Users
+  - Role & Akses Menu
+  - Menu
+  - Topik
   - Sponsor
-  - Tags
+Event Management
+  - Event (CRUD)
+  - Registrasi Peserta
+  - Paper Submission
+  - Add-on
+  - Timeline
 Content Web (Master)
   - Settings
-  - Link
+  - Slider
+  - Tautan/Link
+Logs
+  - Log Aktivitas
 ```
 
 ---
@@ -145,30 +165,30 @@ Content Web (Master)
 
 ---
 
-## 8. Gap Analysis - Fitur Belum Ada
-
-Berdasarkan tabel yang sudah dibuat di DB vs controller yang ada:
+## 8. Gap Analysis - Fitur Belum / Perlu Diperbaiki
 
 | Fitur | Tabel DB | Controller | Status |
 |---|---|---|---|
-| CRUD Event | `t_event` | BELUM ADA | **Perlu dibuat** |
-| CRUD Paket Event | `t_event_paket` | BELUM ADA | **Perlu dibuat** |
-| CRUD Program/Jadwal | `t_event_program` | BELUM ADA | **Perlu dibuat** |
-| CRUD Kolaborasi | `t_event_kolaborasi` | BELUM ADA | **Perlu dibuat** |
-| Registrasi Peserta | Tabel belum ada | BELUM ADA | **Perlu tabel + controller** |
-| Submission Paper | Tabel belum ada | BELUM ADA | **Perlu tabel + controller** |
-| Halaman Event Publik | - | Partial (WebHomeController) | **Perlu dikembangkan** |
-| Halaman Paper Publik | - | BELUM ADA | **Perlu dibuat** |
+| CRUD Paket Event | `t_event_paket` | Ada di `EventController.php` | **Cek apakah sudah terhubung ke route** |
+| CRUD Program/Jadwal | `t_event_program` | Ada di `EventController.php` | **Cek apakah sudah terhubung ke route** |
+| CRUD Kolaborasi | `t_event_kolaborasi` | Ada di `EventController.php` | **Cek apakah sudah terhubung ke route** |
+| Registrasi Peserta | `t_event_registrasi` | `EventRegistrasiController.php` | **Tabel + Controller SUDAH ADA** |
+| Paper Submission | `t_event_paper` | `EventPaperController.php` | **Tabel + Controller SUDAH ADA** |
+| Slider Web | `app_slider` | `SettingController.php` | **Perlu ALTER TABLE tambah kolom konten** |
+| `WebDashboardController_` | - | `WebDashboardController_.php` | **Nama file perlu rename (hapus underscore)** |
+| Halaman Paper Publik | - | Parsial di `WebDataController` | **Perlu dikembangkan lebih lanjut** |
+| Data konten real | - | - | **Event masih pakai Lorem Ipsum** |
+| App setting | `app_setting` | `SettingController.php` | **Masih ada konten "Satu Data Pertahanan"** |
 
 ---
 
-## 9. Halaman Web Publik (dari header-v2)
+## 9. Halaman Web Publik
 
 Navigasi yang sudah ada di header:
 - **About** - route `about`
-- **Event** - route perlu diperbaiki
-- **Paper** - route perlu diperbaiki
-- **Login / Register**
+- **Event** - route `events` (terhubung ke `WebHomeController`)
+- **Paper** - route perlu dipastikan
+- **Login / Register** - route `web-login`, `web-register`
 - **User Dropdown:** Riwayat Permohonan, Profil Saya, Ganti Password
 
 ---
@@ -176,8 +196,10 @@ Navigasi yang sudah ada di header:
 ## 10. Catatan Penting
 
 1. **SMTP credentials** tersimpan plaintext di DB (`app_email`) - pertimbangkan enkripsi.
-2. `app_slider` hanya punya kolom `id_slider` - belum ada kolom konten (perlu ALTER TABLE).
+2. `app_slider` hanya punya kolom `id_slider` - belum ada kolom konten (**perlu ALTER TABLE**).
 3. `t_event_program` dan `t_event_program_detail` sudah ada strukturnya tapi **belum ada data** - siap diisi.
-4. `WebDashboardController_.php` punya underscore di nama file - kemungkinan masih draft/belum aktif di routing.
+4. `WebDashboardController_.php` punya **underscore di nama file** - class tidak dapat di-autoload oleh Laravel. Perlu rename ke `WebDashboardController.php`.
 5. Event data masih pakai **Lorem Ipsum** sebagai deskripsi - perlu diganti konten real.
 6. `app_setting` masih menyimpan konten lama **"Satu Data Pertahanan"** - perlu di-update ke ScienceBank Society.
+7. `EventController.php` berukuran **50KB** - sangat besar, pertimbangkan dipecah per domain (Paket, Program, Kolaborasi) agar maintainable.
+8. Database dump tersedia di **`society_event_db.sql`** di root project - gunakan untuk setup fresh install.

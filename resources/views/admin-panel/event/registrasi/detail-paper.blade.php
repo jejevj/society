@@ -6,8 +6,8 @@
 								<div class="d-flex align-items-center pt-1">
 									@include('admin-panel.layouts._breadcrumb', ['items' => [
 										['label' => 'Event', 'url' => null],
-										['label' => 'Registrasi Peserta', 'url' => route('event-registrasi')],
-										['label' => 'Detail Paper', 'url' => null],
+										['label' => 'Participant Registration', 'url' => route('event-registrasi')],
+										['label' => 'Paper Detail', 'url' => null],
 									]])
 								</div>
 								<div class="d-flex flex-stack flex-wrap flex-lg-nowrap gap-4 gap-lg-10 pt-6 pb-18 py-lg-13">
@@ -25,27 +25,27 @@
 							<div class="d-flex flex-column flex-column-fluid">
 								<div id="kt_app_content" class="app-content">
 
-									{{-- Info Peserta --}}
+									{{-- Participant Info --}}
 									<div class="card card-flush mb-4">
 										<div class="card-header align-items-center py-5">
-											<div class="card-title"><span class="fs-5 fw-bold">Informasi Peserta</span></div>
+											<div class="card-title"><span class="fs-5 fw-bold">Participant Information</span></div>
 											<div class="card-toolbar">
-												<a href="{{ route('event-registrasi') }}" class="btn btn-sm btn-light"><i class="fa fa-arrow-left"></i> Kembali</a>
+												<a href="{{ route('event-registrasi') }}" class="btn btn-sm btn-light"><i class="fa fa-arrow-left"></i> Back</a>
 											</div>
 										</div>
 										<div class="card-body pt-0">
 											<div class="row">
 												<div class="col-md-6">
 													<table class="table table-borderless">
-														<tr><td class="fw-bold w-150px">Kode Registrasi</td><td>: {{$registrasi->kode_registrasi ?? '-'}}</td></tr>
-														<tr><td class="fw-bold">Nama</td><td>: {{$registrasi->nama_peserta ?? '-'}}</td></tr>
+														<tr><td class="fw-bold w-150px">Registration Code</td><td>: {{$registrasi->kode_registrasi ?? '-'}}</td></tr>
+														<tr><td class="fw-bold">Name</td><td>: {{$registrasi->nama_peserta ?? '-'}}</td></tr>
 														<tr><td class="fw-bold">Email</td><td>: {{$registrasi->email_peserta ?? '-'}}</td></tr>
-														<tr><td class="fw-bold">No HP</td><td>: {{$registrasi->no_hp_peserta ?? '-'}}</td></tr>
+														<tr><td class="fw-bold">Phone</td><td>: {{$registrasi->no_hp_peserta ?? '-'}}</td></tr>
 													</table>
 												</div>
 												<div class="col-md-6">
 													<table class="table table-borderless">
-														<tr><td class="fw-bold w-150px">Instansi</td><td>: {{$registrasi->instansi_peserta ?? '-'}}</td></tr>
+														<tr><td class="fw-bold w-150px">Institution</td><td>: {{$registrasi->instansi_peserta ?? '-'}}</td></tr>
 														<tr><td class="fw-bold">Event</td><td>: {{$registrasi->judul_event ?? '-'}}</td></tr>
 														<tr>
 															<td class="fw-bold">Status</td>
@@ -59,7 +59,7 @@
 																@endif
 															</td>
 														</tr>
-														<tr><td class="fw-bold">Terdaftar</td><td>: {{$registrasi->created_at ?? '-'}}</td></tr>
+														<tr><td class="fw-bold">Registered At</td><td>: {{$registrasi->created_at ?? '-'}}</td></tr>
 													</table>
 												</div>
 											</div>
@@ -69,18 +69,18 @@
 									{{-- Paper Table --}}
 									<div class="card card-flush">
 										<div class="card-header align-items-center py-5">
-											<div class="card-title"><span class="fs-5 fw-bold">Paper yang Disubmit</span></div>
+											<div class="card-title"><span class="fs-5 fw-bold">Submitted Papers</span></div>
 										</div>
 										<div class="card-body pt-0">
 											<table id="paperTable" class="display table align-middle table-row-dashed fs-6 gy-5">
 												<thead>
 													<tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
 														<th>No</th>
-														<th class="min-w-150px">Judul Paper</th>
-														<th class="min-w-150px">Deskripsi</th>
+														<th class="min-w-150px">Paper Title</th>
+														<th class="min-w-150px">Description</th>
 														<th class="min-w-80px">File</th>
 														<th class="min-w-80px">Status</th>
-														<th class="min-w-80px">Catatan</th>
+														<th class="min-w-80px">Notes</th>
 														<th class="text-center min-w-100px">Actions</th>
 													</tr>
 												</thead>
@@ -97,25 +97,25 @@
 		</div>
 		<!--end::App-->
 
-		{{-- Modal Status Paper --}}
+		{{-- Modal Paper Status --}}
 		<div class="modal fade" id="modalStatusPaper" tabindex="-1">
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title" id="modalStatusPaperLabel">Update Status Paper</h5>
+						<h5 class="modal-title" id="modalStatusPaperLabel">Update Paper Status</h5>
 						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 					</div>
 					<div class="modal-body">
 						<input type="hidden" id="modal-paper-key">
 						<input type="hidden" id="modal-paper-status">
 						<div class="mb-3">
-							<label class="form-label">Catatan (opsional)</label>
-							<textarea id="modal-paper-catatan" class="form-control" rows="3" placeholder="Tulis catatan untuk peserta..."></textarea>
+							<label class="form-label">Notes (optional)</label>
+							<textarea id="modal-paper-catatan" class="form-control" rows="3" placeholder="Write notes for participant..."></textarea>
 						</div>
 					</div>
 					<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-						<button type="button" class="btn btn-marron-submit" id="btnSubmitPaperStatus">Simpan</button>
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<button type="button" class="btn btn-marron-submit" id="btnSubmitPaperStatus">Save</button>
 					</div>
 				</div>
 			</div>
@@ -178,7 +178,7 @@
 							});
 						},
 						error: function (xhr) {
-							var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan';
+							var msg = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred';
 							Swal.fire('Error', msg, 'error');
 						}
 					});
@@ -187,7 +187,7 @@
 				$(document).on('click', '.btn-delete-paper', function () {
 					var keypost = $(this).data('id');
 					Swal.fire({
-						title: 'Confirm', text: 'Hapus paper ini?', icon: 'warning',
+						title: 'Confirm', text: 'Delete this paper?', icon: 'warning',
 						showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33',
 						confirmButtonText: 'Yes', cancelButtonText: 'Cancel'
 					}).then((result) => {
@@ -202,7 +202,7 @@
 									});
 								},
 								error: function () {
-									Swal.fire('Error', 'Gagal menghapus paper', 'error');
+									Swal.fire('Error', 'Failed to delete paper', 'error');
 								}
 							});
 						}

@@ -38,8 +38,8 @@
 													</select>
 												</div>
 												<div class="col-md-4">
-													<label class="fs-6 fw-semibold mb-2">Judul Paper</label>
-													<input type="text" id="filter-nama" class="form-control" placeholder="Judul paper...">
+													<label class="fs-6 fw-semibold mb-2">Paper Title</label>
+													<input type="text" id="filter-nama" class="form-control" placeholder="Paper title...">
 												</div>
 												<div class="col-md-4">
 													<label class="fs-6 fw-semibold mb-2">Status</label>
@@ -64,7 +64,7 @@
 									<div class="card card-flush mt-4">
 										<div class="card-header align-items-center py-5 gap-2 gap-md-5">
 											<div class="card-title">
-												<span class="fs-5 fw-bold">Daftar Paper Submitted</span>
+												<span class="fs-5 fw-bold">Submitted Papers List</span>
 											</div>
 										</div>
 										<div class="card-body pt-0">
@@ -72,8 +72,8 @@
 												<thead>
 													<tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
 														<th>No</th>
-														<th class="min-w-150px">Judul Paper</th>
-														<th class="min-w-150px">Peserta</th>
+														<th class="min-w-150px">Paper Title</th>
+														<th class="min-w-150px">Participant</th>
 														<th class="min-w-100px">Event</th>
 														<th class="min-w-80px">File</th>
 														<th class="min-w-80px">Status</th>
@@ -93,25 +93,25 @@
 		</div>
 		<!--end::App-->
 
-		{{-- Modal Status Paper --}}
+		{{-- Modal Paper Status --}}
 		<div class="modal fade" id="modalStatusPaper" tabindex="-1">
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title" id="modalStatusPaperLabel">Update Status Paper</h5>
+						<h5 class="modal-title" id="modalStatusPaperLabel">Update Paper Status</h5>
 						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 					</div>
 					<div class="modal-body">
 						<input type="hidden" id="modal-paper-key">
 						<input type="hidden" id="modal-paper-status">
 						<div class="mb-3">
-							<label class="form-label">Catatan (opsional)</label>
-							<textarea id="modal-paper-catatan" class="form-control" rows="3" placeholder="Tulis catatan untuk peserta..."></textarea>
+							<label class="form-label">Notes (optional)</label>
+							<textarea id="modal-paper-catatan" class="form-control" rows="3" placeholder="Write notes for participant..."></textarea>
 						</div>
 					</div>
 					<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-						<button type="button" class="btn btn-marron-submit" id="btnSubmitPaperStatus">Simpan</button>
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<button type="button" class="btn btn-marron-submit" id="btnSubmitPaperStatus">Save</button>
 					</div>
 				</div>
 			</div>
@@ -184,7 +184,7 @@
 							});
 						},
 						error: function (xhr) {
-							var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan';
+							var msg = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred';
 							Swal.fire('Error', msg, 'error');
 						}
 					});
@@ -193,7 +193,7 @@
 				$(document).on('click', '.btn-delete-paper', function () {
 					var keypost = $(this).data('id');
 					Swal.fire({
-						title: 'Confirm', text: 'Hapus paper ini? File terkait akan ikut terhapus.', icon: 'warning',
+						title: 'Confirm', text: 'Delete this paper? Related files will also be deleted.', icon: 'warning',
 						showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33',
 						confirmButtonText: 'Yes', cancelButtonText: 'Cancel'
 					}).then((result) => {
@@ -208,7 +208,7 @@
 									});
 								},
 								error: function () {
-									Swal.fire('Error', 'Gagal menghapus paper', 'error');
+									Swal.fire('Error', 'Failed to delete paper', 'error');
 								}
 							});
 						}

@@ -28,7 +28,7 @@
                                             <div class="mb-4">
                                                 <div class="d-flex justify-content-end">
                                                     <a class="btn btn-warning btn-sm" href="{{ route('paketEvent', $detail->kode_event) }}">
-                                                        <i class="fa fa-backward"></i> back
+                                                        <i class="fa fa-backward"></i> Back
                                                     </a>
                                                 </div>
                                             </div>
@@ -98,7 +98,7 @@
 					beforeSend: function () {
                         Swal.fire({
                             title: 'Loading...',
-                            text: 'Is saving data',
+                            text: 'Saving data',
                             allowOutsideClick: false,
                             didOpen: () => {
                                 Swal.showLoading();
@@ -115,7 +115,7 @@
 						});
 					},
 					error: function (xhr) {
-						let message = 'Terjadi kesalahan.';
+						let message = 'An error occurred.';
 						if (xhr.responseJSON && xhr.responseJSON.message) {
 							message = xhr.responseJSON.message;
 						}
@@ -128,9 +128,6 @@
 					}
 				});
 			});
-
-
-			
 		</script>
 
 @include('admin-panel.layouts.footer')

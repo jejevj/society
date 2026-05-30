@@ -28,12 +28,12 @@
 										<div class="card-header align-items-center py-5">
 											<div class="card-title"><span class="fs-5 fw-bold">Edit Paper</span></div>
 											<div class="card-toolbar">
-												<a href="{{ route('event-paper') }}" class="btn btn-sm btn-light"><i class="fa fa-arrow-left"></i> Kembali</a>
+												<a href="{{ route('event-paper') }}" class="btn btn-sm btn-light"><i class="fa fa-arrow-left"></i> Back</a>
 											</div>
 										</div>
 										<div class="card-body">
 
-											{{-- Info Peserta --}}
+											{{-- Participant Info --}}
 											<div class="alert alert-info d-flex align-items-center mb-5">
 												<i class="fa fa-user me-3"></i>
 												<div>
@@ -47,31 +47,31 @@
 											<div class="row">
 												<div class="col-md-8">
 													<div class="mb-5">
-														<label class="form-label required">Judul Paper</label>
-														<input type="text" id="input-judul" class="form-control" value="{{$detail->judul_paper ?? ''}}" placeholder="Judul paper">
+														<label class="form-label required">Paper Title</label>
+														<input type="text" id="input-judul" class="form-control" value="{{$detail->judul_paper ?? ''}}" placeholder="Paper title">
 													</div>
 													<div class="mb-5">
-														<label class="form-label required">Deskripsi / Abstrak</label>
-														<textarea id="input-deskripsi" class="form-control" rows="5" placeholder="Deskripsi atau abstrak paper...">{{$detail->deskripsi_paper ?? ''}}</textarea>
+														<label class="form-label required">Description / Abstract</label>
+														<textarea id="input-deskripsi" class="form-control" rows="5" placeholder="Paper description or abstract...">{{$detail->deskripsi_paper ?? ''}}</textarea>
 													</div>
 													<div class="mb-5">
-														<label class="form-label">Ganti File (PDF/PPT/PPTX) — <span class="text-muted">kosongkan jika tidak ingin ganti</span></label>
+														<label class="form-label">Replace File (PDF/PPT/PPTX) — <span class="text-muted">leave empty to keep current file</span></label>
 														<input type="file" id="input-file" class="form-control" accept=".pdf,.ppt,.pptx">
 													</div>
 												</div>
 												<div class="col-md-4">
 													<div class="mb-5">
-														<label class="form-label">File Saat Ini</label>
+														<label class="form-label">Current File</label>
 														@if($detail->file_paper)
 															<a href="{{ asset('storage/' . $detail->file_paper) }}" target="_blank" class="btn btn-light-primary btn-sm d-block mb-2">
-																<i class="fa fa-file"></i> Lihat File ({{ strtoupper($detail->tipe_file_paper) }})
+																<i class="fa fa-file"></i> View File ({{ strtoupper($detail->tipe_file_paper) }})
 															</a>
 														@else
-															<span class="text-muted">Tidak ada file</span>
+															<span class="text-muted">No file available</span>
 														@endif
 													</div>
 													<div class="mb-5">
-														<label class="form-label">Status Paper</label>
+														<label class="form-label">Paper Status</label>
 														<div>
 															@if($detail->status_paper == 'A')
 																<span class="badge bg-success fs-6">Approved</span>
@@ -84,7 +84,7 @@
 													</div>
 													@if($detail->catatan_paper)
 													<div class="mb-5">
-														<label class="form-label">Catatan Admin</label>
+														<label class="form-label">Admin Notes</label>
 														<div class="alert alert-warning">{{$detail->catatan_paper}}</div>
 													</div>
 													@endif
@@ -93,7 +93,7 @@
 
 											<div class="d-flex justify-content-end mt-4">
 												<button type="button" id="btnSimpan" class="btn btn-marron-submit">
-													<i class="fa fa-save"></i> Simpan Perubahan
+													<i class="fa fa-save"></i> Save Changes
 												</button>
 											</div>
 
@@ -131,7 +131,7 @@
 							});
 						},
 						error: function (xhr) {
-							var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Terjadi kesalahan';
+							var msg = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred';
 							Swal.fire('Error', msg, 'error');
 						}
 					});

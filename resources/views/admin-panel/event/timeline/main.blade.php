@@ -1,312 +1,289 @@
-@extends('admin-panel.layouts.main')
-
-@section('title', 'Timeline Event')
-
-@section('content')
-<div class="container-fluid">
-
-    {{-- Header --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h4 class="fw-bold mb-0">Timeline: {{ $detail->judul_event ?? '' }}</h4>
-            <small class="text-muted">Kelola jadwal sesi event ini</small>
-        </div>
-        <div>
-            <a href="{{ route('event') }}" class="btn btn-secondary btn-sm me-2">
-                <i class="fa fa-arrow-left me-1"></i> Kembali
-            </a>
-            @if($cek_permit['c'])
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahTimeline">
-                <i class="fa fa-plus me-1"></i> Tambah Sesi
-            </button>
-            @endif
-        </div>
-    </div>
-
-    {{-- Info Event --}}
-    <div class="card mb-3 shadow-sm border-0">
-        <div class="card-body py-2 px-3">
-            <div class="row">
-                <div class="col-md-6">
-                    <small class="text-muted">Kode Event</small>
-                    <div class="fw-semibold">{{ $kode_event }}</div>
+@include('admin-panel.layouts.header')
+<div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
+    <div id="kt_app_toolbar" class="app-toolbar py-6">
+        <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex align-items-start">
+            <div class="d-flex flex-column flex-row-fluid">
+                <div class="d-flex align-items-center pt-1">
+                    {!! $breadcrumb !!}
                 </div>
-                <div class="col-md-6">
-                    <small class="text-muted">Tanggal</small>
-                    <div class="fw-semibold">
-                        {{ $detail ? \Carbon\Carbon::parse($detail->tanggal_awal_event)->translatedFormat('j F Y') : '-' }}
-                        &mdash;
-                        {{ $detail ? \Carbon\Carbon::parse($detail->tanggal_akhir_event)->translatedFormat('j F Y') : '-' }}
+                <div class="d-flex flex-stack flex-wrap flex-lg-nowrap gap-4 gap-lg-10 pt-6 pb-18 py-lg-13">
+                    <div class="page-title d-flex align-items-center me-3">
+                        <h1 class="page-heading d-flex fw-bolder fs-2 flex-column justify-content-center my-0">{{ $menu }}
+                            <span class="page-desc opacity-50 fs-6 fw-bold pt-4">{{ $detail->judul_event ?? '' }}</span>
+                        </h1>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <div class="app-container container-xxl">
+        <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+            <div class="d-flex flex-column flex-column-fluid">
+                <div id="kt_app_content" class="app-content">
 
-    {{-- Table --}}
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <table id="tableTimeline" class="table table-bordered table-hover w-100">
-                <thead class="table-dark">
-                    <tr>
-                        <th width="40">No</th>
-                        <th width="80">Hari</th>
-                        <th width="110">Tanggal</th>
-                        <th width="120">Waktu</th>
-                        <th>Judul Sesi</th>
-                        <th>Deskripsi</th>
-                        <th width="80">Status</th>
-                        <th width="90">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+                    <div class="card card-flush mt-4">
+                        <div class="card-header align-items-center py-5 gap-2 gap-md-5">
+                            <div class="card-title">
+                                <a href="{{ route('event') }}" class="btn btn-light btn-sm"><i class="fa fa-arrow-left"></i> Back to Events</a>
+                            </div>
+                            <?php if($cek_permit['c']){ ?>
+                            <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
+                                <button class="btn btn-marron-submit" id="btnTambahTimeline"><i class="fa fa-plus text-white"></i> Add Session</button>
+                            </div>
+                            <?php } ?>
+                        </div>
+                        <div class="card-body pt-0">
+                            <table id="mainTable" class="display table align-middle table-row-dashed fs-6 gy-5">
+                                <thead>
+                                    <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                                        <th>No</th>
+                                        <th>Day</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Session Title</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
         </div>
     </div>
-
 </div>
 
-{{-- ===== MODAL TAMBAH ===== --}}
+{{-- Modal Tambah --}}
 <div class="modal fade" id="modalTambahTimeline" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <form id="formTambahTimeline">
-            @csrf
-            <input type="hidden" name="key" value="{{ $kode_event }}">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="fa fa-plus-circle me-2"></i>Tambah Sesi Timeline</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold">Hari ke- <span class="text-danger">*</span></label>
-                            <input type="number" name="hari_ke" class="form-control" min="1" max="30" placeholder="1" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Tanggal <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal_timeline" class="form-control" required>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label fw-semibold">Status</label>
-                            <select name="status_timeline" class="form-select">
-                                <option value="Y">Aktif</option>
-                                <option value="N">Nonaktif</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Jam Mulai <span class="text-danger">*</span></label>
-                            <input type="time" name="jam_mulai" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Jam Selesai <span class="text-danger">*</span></label>
-                            <input type="time" name="jam_selesai" class="form-control" required>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Judul Sesi <span class="text-danger">*</span></label>
-                            <input type="text" name="judul_sesi" class="form-control" placeholder="Contoh: Opening Ceremony" required>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Deskripsi</label>
-                            <textarea name="deskripsi_sesi" class="form-control" rows="3" placeholder="Detail sesi..."></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i>Simpan</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- ===== MODAL EDIT ===== --}}
-<div class="modal fade" id="modalEditTimeline" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <form id="formEditTimeline">
-            @csrf
-            <input type="hidden" name="kode_timeline" id="edit_kode_timeline">
-            <div class="modal-content">
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title"><i class="fa fa-edit me-2"></i>Edit Sesi Timeline</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold">Hari ke-</label>
-                            <input type="number" name="hari_ke" id="edit_hari_ke" class="form-control" min="1" max="30" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Tanggal</label>
-                            <input type="date" name="tanggal_timeline" id="edit_tanggal" class="form-control" required>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label fw-semibold">Status</label>
-                            <select name="status_timeline" id="edit_status" class="form-select">
-                                <option value="Y">Aktif</option>
-                                <option value="N">Nonaktif</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Jam Mulai</label>
-                            <input type="time" name="jam_mulai" id="edit_jam_mulai" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Jam Selesai</label>
-                            <input type="time" name="jam_selesai" id="edit_jam_selesai" class="form-control" required>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Judul Sesi</label>
-                            <input type="text" name="judul_sesi" id="edit_judul_sesi" class="form-control" required>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Deskripsi</label>
-                            <textarea name="deskripsi_sesi" id="edit_deskripsi" class="form-control" rows="3"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-warning"><i class="fa fa-save me-1"></i>Update</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- ===== MODAL HAPUS ===== --}}
-<div class="modal fade" id="modalHapusTimeline" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="fa fa-trash me-2"></i>Hapus Sesi</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title">Add Session Timeline</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Yakin ingin menghapus sesi <strong id="hapus_judul_sesi"></strong>?</p>
-                <p class="text-danger small">Data tidak dapat dikembalikan.</p>
+                <input type="hidden" id="add_kode_event" value="{{ $kode_event }}">
+                <div class="mb-3">
+                    <label class="form-label">Day ke-</label>
+                    <input type="number" id="add_hari_ke" class="form-control" min="1" placeholder="e.g. 1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="add_tanggal" class="form-control">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Start Time</label>
+                        <input type="time" id="add_mulai" class="form-control">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label">End Time</label>
+                        <input type="time" id="add_selesai" class="form-control">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Session Title</label>
+                    <input type="text" id="add_judul" class="form-control" placeholder="Session title">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description <span class="text-muted">(optional)</span></label>
+                    <textarea id="add_deskripsi" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select id="add_status" class="form-select">
+                        <option value="Y">Active</option>
+                        <option value="N">Inactive</option>
+                    </select>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" id="btnKonfirmasiHapus" class="btn btn-danger">Hapus</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-marron-submit" id="btnSimpanTimeline">Save</button>
             </div>
         </div>
     </div>
 </div>
-@endsection
 
-@push('scripts')
+{{-- Modal Edit --}}
+<div class="modal fade" id="modalEditTimeline" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Session Timeline</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit_kode_timeline">
+                <div class="mb-3">
+                    <label class="form-label">Day ke-</label>
+                    <input type="number" id="edit_hari_ke" class="form-control" min="1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="edit_tanggal" class="form-control">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Start Time</label>
+                        <input type="time" id="edit_mulai" class="form-control">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label">End Time</label>
+                        <input type="time" id="edit_selesai" class="form-control">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Session Title</label>
+                    <input type="text" id="edit_judul" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description <span class="text-muted">(optional)</span></label>
+                    <textarea id="edit_deskripsi" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select id="edit_status" class="form-select">
+                        <option value="Y">Active</option>
+                        <option value="N">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-marron-submit" id="btnUpdateTimeline">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 $(document).ready(function () {
+    var kodeEvent = $('#add_kode_event').val();
 
-    var kodeEvent = '{{ $kode_event }}';
-
-    var table = $('#tableTimeline').DataTable({
+    var table = $('#mainTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("getTableTimeline") }}',
+            url: "{{ route('getTableTimeline') }}",
             data: function (d) { d.key = kodeEvent; }
         },
         columns: [
-            { data: 'DT_RowIndex',   orderable: false },
-            { data: 'hari_label',    orderable: false },
+            { data: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'hari_label', orderable: false },
             { data: 'tanggal_label', orderable: false },
-            { data: 'waktu',         orderable: false },
-            { data: 'judul_sesi',    orderable: false },
-            { data: 'deskripsi_sesi',orderable: false, render: function(d){ return d ? (d.length > 60 ? d.substr(0,60)+'...' : d) : '-'; } },
-            { data: 'status_label',  orderable: false },
-            { data: 'action',        orderable: false },
-        ],
-        language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json' },
-        pageLength: 10,
+            { data: 'waktu', orderable: false },
+            { data: 'judul_sesi' },
+            { data: 'status_label', orderable: false },
+            { data: 'action', orderable: false, searchable: false, className: 'text-center' },
+        ]
     });
 
-    // TAMBAH
-    $('#formTambahTimeline').on('submit', function(e){
-        e.preventDefault();
+    // Tambah
+    $('#btnTambahTimeline').click(function () {
+        $('#modalTambahTimeline').modal('show');
+    });
+
+    $('#btnSimpanTimeline').click(function () {
         $.ajax({
-            url: '{{ route("addTimelineAction") }}',
-            method: 'POST',
-            data: $(this).serialize(),
-            success: function(res){
-                if(res.success){
+            url: "{{ route('addTimelineAction') }}",
+            type: 'POST',
+            data: {
+                _token: "{{ csrf_token() }}",
+                key: kodeEvent,
+                hari_ke: $('#add_hari_ke').val(),
+                tanggal_timeline: $('#add_tanggal').val(),
+                jam_mulai: $('#add_mulai').val(),
+                jam_selesai: $('#add_selesai').val(),
+                judul_sesi: $('#add_judul').val(),
+                deskripsi_sesi: $('#add_deskripsi').val(),
+                status_timeline: $('#add_status').val(),
+            },
+            success: function (res) {
+                if (res.success) {
                     $('#modalTambahTimeline').modal('hide');
-                    $('#formTambahTimeline')[0].reset();
-                    table.draw();
-                    Swal.fire('Berhasil', res.message, 'success');
+                    Swal.fire('Success', res.message, 'success').then(function () { table.ajax.reload(); });
+                } else {
+                    Swal.fire('Error', res.message, 'error');
                 }
             },
-            error: function(xhr){
-                Swal.fire('Gagal', xhr.responseJSON?.message ?? 'Terjadi kesalahan.', 'error');
+            error: function (xhr) {
+                var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to save';
+                Swal.fire('Error', msg, 'error');
             }
         });
     });
 
-    // BUKA MODAL EDIT
-    $(document).on('click', '.btn-edit-timeline', function(){
-        var btn = $(this);
-        $('#edit_kode_timeline').val(btn.data('kode'));
-        $('#edit_hari_ke').val(btn.data('hari'));
-        $('#edit_tanggal').val(btn.data('tanggal'));
-        $('#edit_jam_mulai').val(btn.data('mulai'));
-        $('#edit_jam_selesai').val(btn.data('selesai'));
-        $('#edit_judul_sesi').val(btn.data('judul'));
-        $('#edit_deskripsi').val(btn.data('deskripsi'));
-        $('#edit_status').val(btn.data('status'));
+    // Edit
+    $(document).on('click', '.btn-edit-timeline', function () {
+        $('#edit_kode_timeline').val($(this).data('kode'));
+        $('#edit_hari_ke').val($(this).data('hari'));
+        $('#edit_tanggal').val($(this).data('tanggal'));
+        $('#edit_mulai').val($(this).data('mulai'));
+        $('#edit_selesai').val($(this).data('selesai'));
+        $('#edit_judul').val($(this).data('judul'));
+        $('#edit_deskripsi').val($(this).data('deskripsi'));
+        $('#edit_status').val($(this).data('status'));
         $('#modalEditTimeline').modal('show');
     });
 
-    // UPDATE
-    $('#formEditTimeline').on('submit', function(e){
-        e.preventDefault();
+    $('#btnUpdateTimeline').click(function () {
         $.ajax({
-            url: '{{ route("updateTimelineAction") }}',
-            method: 'POST',
-            data: $(this).serialize(),
-            success: function(res){
-                if(res.success){
+            url: "{{ route('updateTimelineAction') }}",
+            type: 'POST',
+            data: {
+                _token: "{{ csrf_token() }}",
+                kode_timeline: $('#edit_kode_timeline').val(),
+                hari_ke: $('#edit_hari_ke').val(),
+                tanggal_timeline: $('#edit_tanggal').val(),
+                jam_mulai: $('#edit_mulai').val(),
+                jam_selesai: $('#edit_selesai').val(),
+                judul_sesi: $('#edit_judul').val(),
+                deskripsi_sesi: $('#edit_deskripsi').val(),
+                status_timeline: $('#edit_status').val(),
+            },
+            success: function (res) {
+                if (res.success) {
                     $('#modalEditTimeline').modal('hide');
-                    table.draw();
-                    Swal.fire('Berhasil', res.message, 'success');
+                    Swal.fire('Success', res.message, 'success').then(function () { table.ajax.reload(); });
+                } else {
+                    Swal.fire('Error', res.message, 'error');
                 }
             },
-            error: function(xhr){
-                Swal.fire('Gagal', xhr.responseJSON?.message ?? 'Terjadi kesalahan.', 'error');
+            error: function (xhr) {
+                var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to update';
+                Swal.fire('Error', msg, 'error');
             }
         });
     });
 
-    // BUKA MODAL HAPUS
-    var kodeHapus = '';
-    $(document).on('click', '.btn-delete-timeline', function(){
-        kodeHapus = $(this).data('kode');
-        var judul = $(this).closest('tr').find('td:eq(4)').text();
-        $('#hapus_judul_sesi').text(judul);
-        $('#modalHapusTimeline').modal('show');
-    });
-
-    // KONFIRMASI HAPUS
-    $('#btnKonfirmasiHapus').on('click', function(){
-        $.ajax({
-            url: '{{ route("deleteTimelineAction") }}',
-            method: 'POST',
-            data: { _token: '{{ csrf_token() }}', kode_timeline: kodeHapus },
-            success: function(res){
-                if(res.success){
-                    $('#modalHapusTimeline').modal('hide');
-                    table.draw();
-                    Swal.fire('Berhasil', res.message, 'success');
-                }
-            },
-            error: function(){
-                Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus.', 'error');
+    // Hapus
+    $(document).on('click', '.btn-delete-timeline', function () {
+        var kode = $(this).data('kode');
+        Swal.fire({
+            title: 'Confirm', text: 'Delete this session?', icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33', confirmButtonText: 'Yes', cancelButtonText: 'Cancel'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('deleteTimelineAction') }}",
+                    type: 'POST',
+                    data: { _token: "{{ csrf_token() }}", kode_timeline: kode },
+                    success: function (res) {
+                        if (res.success) {
+                            Swal.fire('Deleted', res.message, 'success').then(function () { table.ajax.reload(); });
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    }
+                });
             }
         });
     });
-
 });
 </script>
-@endpush
+
+@include('admin-panel.layouts.footer')

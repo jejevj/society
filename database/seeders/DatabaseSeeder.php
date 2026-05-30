@@ -11,20 +11,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ReffRoleSeeder::class,
             ReffMenuSeeder::class,
-            ReffStatusSeeder::class,
             ReffAksesMenuSeeder::class,
             AppUserSeeder::class,
-            AppEmailSeeder::class,
-            AppSettingSeeder::class,
-            AppSliderSeeder::class,
-            TSponsorSeeder::class,
-            TEventSeeder::class,
-            TEventKolaborasiSeeder::class,
-            TEventPaketSeeder::class,
-            TEventPaketDetailSeeder::class,
-            TEventProgramSeeder::class,
-            TEventProgramDetailSeeder::class,
-            ReffTopikSeeder::class,
+            TautanSeeder::class,
         ]);
     }
 }

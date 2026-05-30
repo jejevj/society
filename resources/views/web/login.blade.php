@@ -280,10 +280,10 @@
 
 <script>
     @if(session('success'))
-        Swal.fire({ icon: 'success', title: 'Berhasil', text: '{{ session('success') }}' });
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: "{{ session('success') }}" });
     @endif
     @if(session('error'))
-        Swal.fire({ icon: 'error', title: 'Gagal', text: '{{ session('error') }}' });
+        Swal.fire({ icon: 'error', title: 'Gagal', text: "{{ session('error') }}" });
     @endif
 
     $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });

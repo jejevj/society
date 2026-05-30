@@ -74,7 +74,7 @@ class ReffRoleController extends Controller
             $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
             
             $query = DB::table('reff_role as a')
-                ->selectRaw('A.*');
+                ->selectRaw('a.*');
                 
                 if ($request->filled('nama')) {
                     $query->where('a.nama_role', 'ILIKE', '%' . $request->input('nama') . '%');
@@ -519,15 +519,28 @@ class ReffRoleController extends Controller
             
             $id_role = Crypt::decrypt($request->input('key'));
             $query = DB::table('reff_akses_menu as a')
-                ->selectRaw('*')
+                ->select(
+                    'a.id_akses_menu',
+                    'a.role_id',
+                    'a.menu_id',
+                    'a.permit_r',
+                    'a.permit_c',
+                    'a.permit_u',
+                    'a.permit_d',
+                    'a.created_at',
+                    'a.updated_at',
+                    'b.nama_menu',
+                    'b.kode_menu',
+                    'b.jenis_menu'
+                )
                 ->leftJoin('reff_menu as b', 'b.id_menu', '=', 'a.menu_id')
                 ->where('a.role_id', $id_role);
                 
                 if ($request->filled('nama')) {
-                    $query->where('b.nama_menu', 'ILIKE', '%' . $request->input('nama') . '%');
+                    $query->where('b.nama_menu', 'like', '%' . $request->input('nama') . '%');
                 }
                 
-           $query->orderBy('a.id_akses_menu', 'asc')->get();
+           $query->orderBy('a.id_akses_menu', 'asc');
 
             return DataTables::of($query)
                 ->addIndexColumn()  

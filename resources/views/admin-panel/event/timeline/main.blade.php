@@ -1,6 +1,6 @@
-@extends('admin-panel.layouts.app')
+@extends('admin-panel.layouts.main')
 
-@section('title', 'Event Timeline')
+@section('title', 'Timeline Event')
 
 @section('content')
 <div class="container-fluid">
@@ -8,46 +8,36 @@
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h4 class="fw-bold mb-0">Event Timeline</h4>
-            <small class="text-muted">Kelola jadwal sesi untuk setiap event</small>
+            <h4 class="fw-bold mb-0">Timeline: {{ $detail->judul_event ?? '' }}</h4>
+            <small class="text-muted">Kelola jadwal sesi event ini</small>
         </div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambahTimeline">
-            <i class="fas fa-plus me-1"></i> Tambah Sesi
-        </button>
+        <div>
+            <a href="{{ route('event') }}" class="btn btn-secondary btn-sm me-2">
+                <i class="fa fa-arrow-left me-1"></i> Kembali
+            </a>
+            @if($cek_permit['c'])
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahTimeline">
+                <i class="fa fa-plus me-1"></i> Tambah Sesi
+            </button>
+            @endif
+        </div>
     </div>
 
-    {{-- Filter --}}
-    <div class="card mb-3 shadow-sm">
-        <div class="card-body">
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <select id="filterEvent" class="form-select form-select-sm">
-                        <option value="">-- Semua Event --</option>
-                        @foreach($events as $ev)
-                            <option value="{{ $ev->kode_event }}">{{ $ev->judul_event }}</option>
-                        @endforeach
-                    </select>
+    {{-- Info Event --}}
+    <div class="card mb-3 shadow-sm border-0">
+        <div class="card-body py-2 px-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">Kode Event</small>
+                    <div class="fw-semibold">{{ $kode_event }}</div>
                 </div>
-                <div class="col-md-2">
-                    <select id="filterHari" class="form-select form-select-sm">
-                        <option value="">-- Semua Hari --</option>
-                        @for($h = 1; $h <= 7; $h++)
-                            <option value="{{ $h }}">Hari ke-{{ $h }}</option>
-                        @endfor
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <input type="text" id="filterJudul" class="form-control form-control-sm" placeholder="Cari judul sesi...">
-                </div>
-                <div class="col-md-2">
-                    <select id="filterStatus" class="form-select form-select-sm">
-                        <option value="">-- Semua Status --</option>
-                        <option value="Y">Aktif</option>
-                        <option value="N">Nonaktif</option>
-                    </select>
-                </div>
-                <div class="col-md-1">
-                    <button id="btnReset" class="btn btn-secondary btn-sm w-100">Reset</button>
+                <div class="col-md-6">
+                    <small class="text-muted">Tanggal</small>
+                    <div class="fw-semibold">
+                        {{ $detail ? \Carbon\Carbon::parse($detail->tanggal_awal_event)->translatedFormat('j F Y') : '-' }}
+                        &mdash;
+                        {{ $detail ? \Carbon\Carbon::parse($detail->tanggal_akhir_event)->translatedFormat('j F Y') : '-' }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -60,7 +50,6 @@
                 <thead class="table-dark">
                     <tr>
                         <th width="40">No</th>
-                        <th>Event</th>
                         <th width="80">Hari</th>
                         <th width="110">Tanggal</th>
                         <th width="120">Waktu</th>
@@ -82,22 +71,14 @@
     <div class="modal-dialog modal-lg">
         <form id="formTambahTimeline">
             @csrf
+            <input type="hidden" name="key" value="{{ $kode_event }}">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Tambah Sesi Timeline</h5>
+                    <h5 class="modal-title"><i class="fa fa-plus-circle me-2"></i>Tambah Sesi Timeline</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Event <span class="text-danger">*</span></label>
-                            <select name="kode_event" class="form-select" required>
-                                <option value="">-- Pilih Event --</option>
-                                @foreach($events as $ev)
-                                    <option value="{{ $ev->kode_event }}">{{ $ev->judul_event }}</option>
-                                @endforeach
-                            </select>
-                        </div>
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Hari ke- <span class="text-danger">*</span></label>
                             <input type="number" name="hari_ke" class="form-control" min="1" max="30" placeholder="1" required>
@@ -127,13 +108,13 @@
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Deskripsi</label>
-                            <textarea name="deskripsi_sesi" class="form-control" rows="3" placeholder="Detail atau deskripsi sesi..."></textarea>
+                            <textarea name="deskripsi_sesi" class="form-control" rows="3" placeholder="Detail sesi..."></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Simpan</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i>Simpan</button>
                 </div>
             </div>
         </form>
@@ -148,20 +129,11 @@
             <input type="hidden" name="kode_timeline" id="edit_kode_timeline">
             <div class="modal-content">
                 <div class="modal-header bg-warning">
-                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Sesi Timeline</h5>
+                    <h5 class="modal-title"><i class="fa fa-edit me-2"></i>Edit Sesi Timeline</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Event <span class="text-danger">*</span></label>
-                            <select name="kode_event" id="edit_kode_event" class="form-select" required>
-                                <option value="">-- Pilih Event --</option>
-                                @foreach($events as $ev)
-                                    <option value="{{ $ev->kode_event }}">{{ $ev->judul_event }}</option>
-                                @endforeach
-                            </select>
-                        </div>
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">Hari ke-</label>
                             <input type="number" name="hari_ke" id="edit_hari_ke" class="form-control" min="1" max="30" required>
@@ -197,7 +169,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-warning"><i class="fas fa-save me-1"></i>Update</button>
+                    <button type="submit" class="btn btn-warning"><i class="fa fa-save me-1"></i>Update</button>
                 </div>
             </div>
         </form>
@@ -209,7 +181,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="fas fa-trash me-2"></i>Hapus Sesi</h5>
+                <h5 class="modal-title"><i class="fa fa-trash me-2"></i>Hapus Sesi</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -229,40 +201,27 @@
 <script>
 $(document).ready(function () {
 
+    var kodeEvent = '{{ $kode_event }}';
+
     var table = $('#tableTimeline').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
             url: '{{ route("getTableTimeline") }}',
-            data: function (d) {
-                d.kode_event  = $('#filterEvent').val();
-                d.hari_ke     = $('#filterHari').val();
-                d.judul_sesi  = $('#filterJudul').val();
-                d.status      = $('#filterStatus').val();
-            }
+            data: function (d) { d.key = kodeEvent; }
         },
         columns: [
-            { data: 'no',             orderable: false },
-            { data: 'judul_event',    orderable: false },
-            { data: 'hari_ke',        orderable: false },
-            { data: 'tanggal',        orderable: false },
-            { data: 'waktu',          orderable: false },
-            { data: 'judul_sesi',     orderable: false },
-            { data: 'deskripsi_sesi', orderable: false, render: function(d){ return d ? (d.length > 60 ? d.substr(0,60)+'...' : d) : '-'; } },
-            { data: 'status',         orderable: false },
-            { data: 'aksi',           orderable: false },
+            { data: 'DT_RowIndex',   orderable: false },
+            { data: 'hari_label',    orderable: false },
+            { data: 'tanggal_label', orderable: false },
+            { data: 'waktu',         orderable: false },
+            { data: 'judul_sesi',    orderable: false },
+            { data: 'deskripsi_sesi',orderable: false, render: function(d){ return d ? (d.length > 60 ? d.substr(0,60)+'...' : d) : '-'; } },
+            { data: 'status_label',  orderable: false },
+            { data: 'action',        orderable: false },
         ],
         language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json' },
         pageLength: 10,
-    });
-
-    // Filter
-    $('#filterEvent, #filterHari, #filterStatus').on('change', function(){ table.draw(); });
-    $('#filterJudul').on('keyup', function(){ table.draw(); });
-    $('#btnReset').on('click', function(){
-        $('#filterEvent, #filterHari, #filterStatus').val('');
-        $('#filterJudul').val('');
-        table.draw();
     });
 
     // TAMBAH
@@ -273,7 +232,7 @@ $(document).ready(function () {
             method: 'POST',
             data: $(this).serialize(),
             success: function(res){
-                if(res.status === 'success'){
+                if(res.success){
                     $('#modalTambahTimeline').modal('hide');
                     $('#formTambahTimeline')[0].reset();
                     table.draw();
@@ -290,7 +249,6 @@ $(document).ready(function () {
     $(document).on('click', '.btn-edit-timeline', function(){
         var btn = $(this);
         $('#edit_kode_timeline').val(btn.data('kode'));
-        $('#edit_kode_event').val(btn.data('event'));
         $('#edit_hari_ke').val(btn.data('hari'));
         $('#edit_tanggal').val(btn.data('tanggal'));
         $('#edit_jam_mulai').val(btn.data('mulai'));
@@ -309,7 +267,7 @@ $(document).ready(function () {
             method: 'POST',
             data: $(this).serialize(),
             success: function(res){
-                if(res.status === 'success'){
+                if(res.success){
                     $('#modalEditTimeline').modal('hide');
                     table.draw();
                     Swal.fire('Berhasil', res.message, 'success');
@@ -325,7 +283,7 @@ $(document).ready(function () {
     var kodeHapus = '';
     $(document).on('click', '.btn-delete-timeline', function(){
         kodeHapus = $(this).data('kode');
-        var judul = $(this).closest('tr').find('td:eq(5)').text();
+        var judul = $(this).closest('tr').find('td:eq(4)').text();
         $('#hapus_judul_sesi').text(judul);
         $('#modalHapusTimeline').modal('show');
     });
@@ -337,7 +295,7 @@ $(document).ready(function () {
             method: 'POST',
             data: { _token: '{{ csrf_token() }}', kode_timeline: kodeHapus },
             success: function(res){
-                if(res.status === 'success'){
+                if(res.success){
                     $('#modalHapusTimeline').modal('hide');
                     table.draw();
                     Swal.fire('Berhasil', res.message, 'success');

@@ -52,7 +52,7 @@
 														<textarea name="keterangan" class="form-control" rows="4" required>{{ $detail->keterangan_event ?? '' }}</textarea>
 													</div>
 													<div class="col-md-12 mb-3">
-														<label class="form-label">Background Image <small class="text-muted">(kosongkan jika tidak diganti)</small></label>
+														<label class="form-label">Background Image <small class="text-muted">(leave empty to keep current image)</small></label>
 														@if(!empty($detail->background_event))
 															<div class="mb-2">
 																<img src="{{ asset('storage/'.$detail->background_event) }}" width="120" class="img-thumbnail">

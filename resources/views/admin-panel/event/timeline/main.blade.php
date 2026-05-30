@@ -55,7 +55,7 @@
     </div>
 </div>
 
-{{-- Modal Tambah --}}
+{{-- Modal Add --}}
 <div class="modal fade" id="modalTambahTimeline" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -66,7 +66,7 @@
             <div class="modal-body">
                 <input type="hidden" id="add_kode_event" value="{{ $kode_event }}">
                 <div class="mb-3">
-                    <label class="form-label">Day ke-</label>
+                    <label class="form-label">Day</label>
                     <input type="number" id="add_hari_ke" class="form-control" min="1" placeholder="e.g. 1">
                 </div>
                 <div class="mb-3">
@@ -118,7 +118,7 @@
             <div class="modal-body">
                 <input type="hidden" id="edit_kode_timeline">
                 <div class="mb-3">
-                    <label class="form-label">Day ke-</label>
+                    <label class="form-label">Day</label>
                     <input type="number" id="edit_hari_ke" class="form-control" min="1">
                 </div>
                 <div class="mb-3">
@@ -181,7 +181,7 @@ $(document).ready(function () {
         ]
     });
 
-    // Tambah
+    // Add
     $('#btnTambahTimeline').click(function () {
         $('#modalTambahTimeline').modal('show');
     });
@@ -259,7 +259,7 @@ $(document).ready(function () {
         });
     });
 
-    // Hapus
+    // Delete
     $(document).on('click', '.btn-delete-timeline', function () {
         var kode = $(this).data('kode');
         Swal.fire({

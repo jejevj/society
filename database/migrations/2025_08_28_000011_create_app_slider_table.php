@@ -10,6 +10,12 @@ return new class extends Migration
     {
         Schema::create('app_slider', function (Blueprint $table) {
             $table->bigIncrements('id_slider');
+            $table->string('judul_slider', 255)->nullable();
+            $table->text('deskripsi_slider')->nullable();
+            $table->string('gambar_slider')->nullable();
+            $table->integer('urutan_slider')->nullable();
+            $table->string('jenis_slider', 20)->nullable()->comment('gambar / text');
+            $table->timestamps();
         });
     }
 

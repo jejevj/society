@@ -73,13 +73,25 @@ class ReffMenuController extends Controller
             
             $query = DB::table('reff_menu as a')
                 ->leftJoin('reff_status as b', 'a.jenis_menu', '=', 'b.kode_status')
-                ->selectRaw('*');
+                ->select(
+                    'a.id_menu',
+                    'a.nama_menu',
+                    'a.jenis_menu',
+                    'a.kode_menu',
+                    'a.icon_menu',
+                    'a.parent_menu',
+                    'a.urutan_menu',
+                    'a.deskripsi_menu',
+                    'a.created_at',
+                    'a.updated_at',
+                    'b.nama_status'
+                );
                 
-                if ($request->filled('nama')) {
-                    $query->where('a.nama_menu', 'ILIKE', '%' . $request->input('nama') . '%');
-                }
+            if ($request->filled('nama')) {
+                $query->where('a.nama_menu', 'like', '%' . $request->input('nama') . '%');
+            }
                 
-           $query->orderBy('a.id_menu', 'desc')->get();
+            $query->orderBy('a.id_menu', 'desc');
 
             return DataTables::of($query)
                 ->addIndexColumn()  
@@ -150,10 +162,9 @@ class ReffMenuController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'nama'       => 'required|string|max:255',
-                'kode'       => 'required|string|max:255',
-                'jenis'       => 'required|string|max:50',
+                'nama'  => 'required|string|max:255',
                 'kode'  => 'required|string|max:100',
+                'jenis' => 'required|string|max:50',
             ]);
 
             if ($validator->fails()) {
@@ -178,13 +189,13 @@ class ReffMenuController extends Controller
 
             $data = [
                 'nama_menu'      => $request->nama,
-                'jenis_menu'      => $request->jenis,
+                'jenis_menu'     => $request->jenis,
                 'kode_menu'      => $request->kode,
                 'icon_menu'      => $request->icon,
-                'parent_menu'      => $parent,
-                'urutan_menu'      => $request->urutan,
+                'parent_menu'    => $parent,
+                'urutan_menu'    => $request->urutan,
                 'deskripsi_menu' => $request->deskripsi,
-                'created_at'           => now(),
+                'created_at'     => now(),
             ];
 
             $insert = DB::table('reff_menu')->insert($data);
@@ -256,11 +267,10 @@ class ReffMenuController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'key'       => 'required',            
-                'nama'       => 'required|string|max:255',
-                'kode'       => 'required|string|max:255',
-                'jenis'       => 'required|string|max:50',
+                'key'   => 'required',            
+                'nama'  => 'required|string|max:255',
                 'kode'  => 'required|string|max:100',
+                'jenis' => 'required|string|max:50',
             ]);
 
             if ($validator->fails()) {
@@ -285,20 +295,18 @@ class ReffMenuController extends Controller
 
             $updateData = [
                 'nama_menu'      => $request->nama,
-                'jenis_menu'      => $request->jenis,
+                'jenis_menu'     => $request->jenis,
                 'kode_menu'      => $request->kode,
                 'icon_menu'      => $request->icon,
-                'parent_menu'      => $parent,
-                'urutan_menu'      => $request->urutan,
+                'parent_menu'    => $parent,
+                'urutan_menu'    => $request->urutan,
                 'deskripsi_menu' => $request->deskripsi,
-                'updated_at'            => now(),
+                'updated_at'     => now(),
             ];
 
-            
-            $id =  Crypt::decrypt($request->key);
+            $id = Crypt::decrypt($request->key);
             $dt_exist = DB::table('reff_menu')->where('id_menu', $id)->first();
             $update = DB::table('reff_menu')->where('id_menu', $id)->update($updateData);
-
 
             if($update){
                 $this->dataService->createLog($request,'updateMenuAction' ,'Berhasil ubah data menu',json_encode($updateData),json_encode($dt_exist));
@@ -330,7 +338,6 @@ class ReffMenuController extends Controller
             }
             $validator = Validator::make($request->all(), [
                 'key' => 'required',
-
             ]);
 
             if ($validator->fails()) {

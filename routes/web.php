@@ -10,12 +10,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/about', [App\Http\Controllers\WebHomeController::class, 'index'])->name('about');
     Route::get('/home', [App\Http\Controllers\WebHomeController::class, 'index'])->name('home');
 
-
-
-
-
-
-
     Route::get('/countDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getCountData'])->name('countDataDashboard');
     Route::get('/listDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getListData'])->name('listDataDashboard');
     Route::get('/topikDashboard', [App\Http\Controllers\WebDashboardController::class, 'getTopik'])->name('topikDashboard');
@@ -44,7 +38,6 @@ Route::prefix('society-event')->group(function () {
     Route::post('/ganitPasswordAction', [App\Http\Controllers\WebLoginController::class, 'ganitPasswordAction'])->name('ganitPasswordAction');
     Route::get('/otpLogin/{otp}', [App\Http\Controllers\WebLoginController::class, 'otpLogin'])->name('otpLogin');
     Route::post('/verifyOtpAction', [App\Http\Controllers\WebLoginController::class, 'verifyOtpAction'])->name('verifyOtpAction');
-
 
     Route::get('/list', [App\Http\Controllers\WebDataController::class, 'index'])->name('list');
     Route::get('/listData', [App\Http\Controllers\WebDataController::class, 'getDataList'])->name('listData');
@@ -172,6 +165,13 @@ Route::prefix('society-event')->group(function () {
     Route::get('/paketEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'paketEvent'])->name('paketEvent');
     Route::get('/programEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'programEvent'])->name('programEvent');
     Route::get('/kolaborasiEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'kolaborasiEvent'])->name('kolaborasiEvent');
+
+    // timeline sebagai sub-page dari event list (bukan menu tersendiri)
+    Route::get('/timelineEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'timelineEvent'])->name('timelineEvent');
+    Route::get('/getTableTimeline', [App\Http\Controllers\EventController::class, 'getTableTimeline'])->name('getTableTimeline');
+    Route::post('/addTimelineAction', [App\Http\Controllers\EventController::class, 'addTimelineAction'])->name('addTimelineAction');
+    Route::post('/updateTimelineAction', [App\Http\Controllers\EventController::class, 'updateTimelineAction'])->name('updateTimelineAction');
+    Route::post('/deleteTimelineAction', [App\Http\Controllers\EventController::class, 'deleteTimelineAction'])->name('deleteTimelineAction');
     
     Route::get('/getTablePaketEvent', [App\Http\Controllers\EventController::class, 'getTablePaketEvent'])->name('getTablePaketEvent');
     Route::get('/tambahPaketEvent/{kode_paket}', [App\Http\Controllers\EventController::class, 'tambahPaketEvent'])->name('tambahPaketEvent');
@@ -184,13 +184,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/tambahProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'tambahProgramEvent'])->name('tambahProgramEvent');
     Route::get('/editProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'editProgramEvent'])->name('editProgramEvent');
     Route::post('/addProgramEventAction', [App\Http\Controllers\EventController::class, 'addProgramEventAction'])->name('addProgramEventAction');
-
-    // route menu event timeline
-    Route::get('event-timeline', [App\Http\Controllers\EventTimelineController::class, 'index'])->name('event-timeline');
-    Route::get('/getTableTimeline', [App\Http\Controllers\EventTimelineController::class, 'getTableTimeline'])->name('getTableTimeline');
-    Route::post('/addTimelineAction', [App\Http\Controllers\EventTimelineController::class, 'addTimelineAction'])->name('addTimelineAction');
-    Route::post('/updateTimelineAction', [App\Http\Controllers\EventTimelineController::class, 'updateTimelineAction'])->name('updateTimelineAction');
-    Route::post('/deleteTimelineAction', [App\Http\Controllers\EventTimelineController::class, 'deleteTimelineAction'])->name('deleteTimelineAction');
 
     // route menu event registrasi peserta
     Route::get('event-registrasi', [App\Http\Controllers\EventRegistrasiController::class, 'index'])->name('event-registrasi');

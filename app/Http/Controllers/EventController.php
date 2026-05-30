@@ -364,7 +364,7 @@ class EventController extends Controller
                 DB::table('t_event_kolaborasi')->where('event_kode_kolaborasi', $id)->delete();
                 DB::table('t_event_paket')->where('event_kode_paket', $id)->delete();
                 DB::table('t_event_paket_detail')->where('event_kode', $id)->delete();
-                DB::table('t_event_program')->where('event_kode_program', $id)->delete();
+                DB::table('t_event_program')->where('event_kode', $id)->delete();
                 DB::table('t_event_program_detail')->where('event_kode', $id)->delete();
                 DB::table('t_event_timeline')->where('kode_event', $id)->delete();
 
@@ -958,19 +958,21 @@ class EventController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) use ($cek) {
+                    $deskripsi = htmlspecialchars($row->deskripsi_sesi ?? '', ENT_QUOTES);
+                    $judul     = htmlspecialchars($row->judul_sesi, ENT_QUOTES);
                     $btn = '';
                     if ($cek['u']) {
-                        $btn .= '<button class="btn btn-light-warning btn-sm btn-edit-timeline"
-                            data-kode="'    . $row->kode_timeline     . '"
-                            data-hari="'    . $row->hari_ke           . '"
-                            data-tanggal="' . $row->tanggal_timeline  . '"
-                            data-mulai="'   . substr($row->jam_mulai, 0, 5)   . '"
-                            data-selesai="' . substr($row->jam_selesai, 0, 5) . '"
-                            data-judul="'   . htmlspecialchars($row->judul_sesi, ENT_QUOTES) . '"
-                            data-deskripsi="' . htmlspecialchars($row->deskripsi_sesi ?? \'\', ENT_QUOTES) . '"
-                            data-status="'  . $row->status_timeline   . '">
-                            <span class="fa fa-pencil"></span>
-                        </button> ';
+                        $btn .= '<button class="btn btn-light-warning btn-sm btn-edit-timeline"'
+                            . ' data-kode="'    . $row->kode_timeline                      . '"'
+                            . ' data-hari="'    . $row->hari_ke                            . '"'
+                            . ' data-tanggal="' . $row->tanggal_timeline                   . '"'
+                            . ' data-mulai="'   . substr($row->jam_mulai, 0, 5)            . '"'
+                            . ' data-selesai="' . substr($row->jam_selesai, 0, 5)          . '"'
+                            . ' data-judul="'   . $judul                                   . '"'
+                            . ' data-deskripsi="' . $deskripsi                             . '"'
+                            . ' data-status="'  . $row->status_timeline                   . '">'
+                            . '<span class="fa fa-pencil"></span>'
+                            . '</button> ';
                     }
                     if ($cek['d']) {
                         $btn .= '<button class="btn btn-danger btn-sm btn-delete-timeline" data-kode="' . $row->kode_timeline . '"><span class="fa fa-trash"></span></button>';

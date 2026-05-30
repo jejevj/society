@@ -315,7 +315,7 @@ class EventAddonController extends Controller
 
             $query = DB::table('event_addon_registrasi as ear')
                 ->join('event_addon as ea', 'ea.kode_addon', '=', 'ear.kode_addon')
-                ->join('event_registrasi as er', 'er.kode_registrasi', '=', 'ear.kode_registrasi')
+                ->join('t_event_registrasi as er', 'er.kode_registrasi', '=', 'ear.kode_registrasi')
                 ->where('ea.kode_event', $kode_event)
                 ->when($nama, fn($q) => $q->where('er.nama_peserta', 'like', "%$nama%"))
                 ->when($status, fn($q) => $q->where('ear.status', $status))

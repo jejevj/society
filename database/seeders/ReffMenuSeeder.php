@@ -9,7 +9,8 @@ class ReffMenuSeeder extends Seeder
 {
     public function run(): void
     {
-        // Jenis menu: S = Single (standalone), M = Menu parent, D = Child/dropdown
+        // Kolom sesuai migration: id_menu, nama_menu, jenis_menu, kode_menu, icon_menu, parent_menu, urutan_menu, deskripsi_menu
+        // jenis_menu: S = Single standalone, M = Menu parent (dropdown header), D = Child dropdown
         $menus = [
             [
                 'id_menu'       => 1,
@@ -17,9 +18,9 @@ class ReffMenuSeeder extends Seeder
                 'nama_menu'     => 'Dashboard',
                 'icon_menu'     => 'ki-outline ki-home',
                 'jenis_menu'    => 'S',
-                'parent_menu'   => null,
+                'parent_menu'   => 0,
                 'urutan_menu'   => 1,
-                'status_menu'   => 'A',
+                'deskripsi_menu'=> 'Halaman dashboard',
             ],
             [
                 'id_menu'       => 2,
@@ -27,9 +28,9 @@ class ReffMenuSeeder extends Seeder
                 'nama_menu'     => 'Events',
                 'icon_menu'     => 'ki-outline ki-calendar',
                 'jenis_menu'    => 'S',
-                'parent_menu'   => null,
+                'parent_menu'   => 0,
                 'urutan_menu'   => 2,
-                'status_menu'   => 'A',
+                'deskripsi_menu'=> 'Manajemen event',
             ],
             [
                 'id_menu'       => 3,
@@ -37,9 +38,9 @@ class ReffMenuSeeder extends Seeder
                 'nama_menu'     => 'Sponsor',
                 'icon_menu'     => 'ki-outline ki-star',
                 'jenis_menu'    => 'S',
-                'parent_menu'   => null,
+                'parent_menu'   => 0,
                 'urutan_menu'   => 3,
-                'status_menu'   => 'A',
+                'deskripsi_menu'=> 'Manajemen sponsor',
             ],
             [
                 'id_menu'       => 4,
@@ -47,9 +48,9 @@ class ReffMenuSeeder extends Seeder
                 'nama_menu'     => 'Pengguna',
                 'icon_menu'     => 'ki-outline ki-people',
                 'jenis_menu'    => 'S',
-                'parent_menu'   => null,
+                'parent_menu'   => 0,
                 'urutan_menu'   => 4,
-                'status_menu'   => 'A',
+                'deskripsi_menu'=> 'Manajemen pengguna',
             ],
             [
                 'id_menu'       => 5,
@@ -57,9 +58,9 @@ class ReffMenuSeeder extends Seeder
                 'nama_menu'     => 'Role',
                 'icon_menu'     => 'ki-outline ki-shield',
                 'jenis_menu'    => 'S',
-                'parent_menu'   => null,
+                'parent_menu'   => 0,
                 'urutan_menu'   => 5,
-                'status_menu'   => 'A',
+                'deskripsi_menu'=> 'Manajemen role',
             ],
             [
                 'id_menu'       => 6,
@@ -67,9 +68,9 @@ class ReffMenuSeeder extends Seeder
                 'nama_menu'     => 'Menu',
                 'icon_menu'     => 'ki-outline ki-menu',
                 'jenis_menu'    => 'S',
-                'parent_menu'   => null,
+                'parent_menu'   => 0,
                 'urutan_menu'   => 6,
-                'status_menu'   => 'A',
+                'deskripsi_menu'=> 'Manajemen menu',
             ],
             [
                 'id_menu'       => 7,
@@ -77,9 +78,9 @@ class ReffMenuSeeder extends Seeder
                 'nama_menu'     => 'Setting',
                 'icon_menu'     => 'ki-outline ki-setting-2',
                 'jenis_menu'    => 'S',
-                'parent_menu'   => null,
+                'parent_menu'   => 0,
                 'urutan_menu'   => 7,
-                'status_menu'   => 'A',
+                'deskripsi_menu'=> 'Pengaturan aplikasi',
             ],
             [
                 'id_menu'       => 8,
@@ -87,14 +88,18 @@ class ReffMenuSeeder extends Seeder
                 'nama_menu'     => 'Tautan',
                 'icon_menu'     => 'ki-outline ki-link',
                 'jenis_menu'    => 'S',
-                'parent_menu'   => null,
+                'parent_menu'   => 0,
                 'urutan_menu'   => 8,
-                'status_menu'   => 'A',
+                'deskripsi_menu'=> 'Manajemen tautan',
             ],
         ];
 
         foreach ($menus as $menu) {
-            DB::table('reff_menu')->upsert($menu, ['id_menu'], array_keys($menu));
+            DB::table('reff_menu')->upsert(
+                $menu,
+                ['id_menu'],
+                ['kode_menu', 'nama_menu', 'icon_menu', 'jenis_menu', 'parent_menu', 'urutan_menu', 'deskripsi_menu']
+            );
         }
     }
 }

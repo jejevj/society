@@ -1,120 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Login &mdash; {{ env('APP_NAME', 'Society Event') }}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="{{ asset('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/min/style.bundle.min.css') }}" rel="stylesheet" />
+    <script src="{{ asset('assets/js/min/jquery.min.js') }}"></script>
+    <script src="{{ asset('assets/js/min/swal.min.js') }}"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-@include('admin-panel.layouts.header-login')
-				<div class="app-wrapper flex-column flex-row-fluid mt-100" id="kt_app_wrapper">
-					<div class="container-xxl">
-						<div class="d-flex flex-column flex-column-fluid align-items-center min-vh-100">
-							<div class="mw-480">
-								<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-									<div class="card-body p-8 bg-orange">
-										<div class="text-center mb-6">
-											<img src="{{ asset('images/logo-name.png') }}"
-												alt="Logo"
-												style="height:60px;" class="mb-3">
+        html, body {
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: #f4f6fb;
+        }
 
-											<h2 class="fw-bold text-white mb-1">
-												Application Login
-											</h2>
+        .login-wrap {
+            display: flex;
+            min-height: 100vh;
+        }
 
-											<div class="text-white fs-6">
-												Admin Panel
-											</div>
-										</div>
-										<hr>
-										<form id="actForm">
-											@csrf
-											<div class="mb-5">
-												<label class="form-label fw-semibold text-white">Username / Email</label>
-												<input type="text"
-													name="username"
-													class="form-control form-control-lg form-control-solid"
-													placeholder="Username / Email">
-											</div>
-											<div class="mb-6">
-												<label class="form-label fw-semibold text-white">Password</label>
-												<input type="password"
-													name="password"
-													class="form-control form-control-lg form-control-solid"
-													placeholder="Password">
-											</div>
-											<div class="d-grid mb-4">
-												<button class="btn btn-white-submit text-white btn-lg rounded-3 shadow-sm"
-														type="submit"
-														id="btn-save">
-													<i class="fa fa-sign-in-alt me-2 text-white"></i>
-													Login
-												</button>
-											</div>
-											<div class="text-center text-white fs-7">
-												© 2026 Society Event - Science Bank
-											</div>
+        /* ── Col kiri: gambar ── */
+        .login-img {
+            flex: 0 0 66.6667%;
+            max-width: 66.6667%;
+            position: relative;
+            overflow: hidden;
+        }
 
-										</form>
+        .login-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
 
-									</div>
-								</div>
+        .login-img-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(180,20,20,0.55) 0%, rgba(20,20,60,0.45) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 48px;
+        }
 
-							</div>
+        .login-img-overlay .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
 
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<script>
-			$(document).ready(function () {
-				$("#actForm").on("submit", function (e) {
-					e.preventDefault();
+        .login-img-overlay .brand img {
+            width: auto;
+            height: 52px;
+            object-fit: contain;
+        }
 
-					$.ajax({
-						url: "{{ route('login-backend-action') }}",
-						type: "POST",
-						data: $(this).serialize(),
-						beforeSend: function () {
-							Swal.fire({
-								title: "Being processed...",
-								text: "Please wait a moment",
-								allowOutsideClick: false,
-								didOpen: () => {
-									Swal.showLoading();
-								}
-							});
-						},
-						success: function (res) {
-							Swal.close();
+        .login-img-overlay .brand-text h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+        }
 
-							if (res.status) {
-								Swal.fire({
-									icon: "success",
-									title: "Success",
-									text: res.message,
-									timer: 1500,
-									showConfirmButton: false
-								}).then(() => {
-									if (res.redirect) {
-										window.location.href = res.redirect;
-									}
-								});
-							} else {
-								Swal.fire({
-									icon: "error",
-									title: "Login Failed",
-									text: res.message
-								});
-							}
-						},
-						error: function () {
-							Swal.close(); 
-							Swal.fire({
-								icon: "error",
-								title: "Oops...",
-								text: "An error occurred, please try again.."
-							});
-						}
-					});
-				});
-			});
+        .login-img-overlay .brand-text span {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.75);
+            font-weight: 400;
+        }
 
+        .login-img-overlay p {
+            color: rgba(255,255,255,0.82);
+            font-size: 0.95rem;
+            line-height: 1.75;
+            max-width: 480px;
+        }
 
-		</script>
+        /* ── Col kanan: form ── */
+        .login-form-col {
+            flex: 0 0 33.3333%;
+            max-width: 33.3333%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            padding: 48px 36px;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.07);
+        }
 
-@include('admin-panel.layouts.footer')
+        .login-form-inner {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .login-form-inner .logo-sm {
+            height: 44px;
+            margin-bottom: 24px;
+        }
+
+        .login-form-inner h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .login-form-inner .subtitle {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 32px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.84rem;
+            color: #333;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-control {
+            width: 100%;
+            border-radius: 10px;
+            border: 1.5px solid #e0e0e0;
+            padding: 11px 14px;
+            font-size: 0.93rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            background: #fafafa;
+        }
+
+        .form-control:focus {
+            border-color: #E62020;
+            box-shadow: 0 0 0 3px rgba(230,32,32,0.1);
+            background: #fff;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: #E62020;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 13px;
+            font-weight: 700;
+            font-size: 0.96rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .btn-submit:hover { background: #c41a1a; }
+
+        .login-footer-text {
+            text-align: center;
+            color: #bbb;
+            font-size: 0.76rem;
+            margin-top: 28px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .login-wrap { flex-direction: column; }
+            .login-img { display: none; }
+            .login-form-col { flex: 1; max-width: 100%; padding: 40px 24px; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+    {{-- Col kiri: gambar about --}}
+    <div class="login-img">
+        <img src="{{ asset('storage/' . ($set->gambar_about ?? $set->gambar_login ?? '')) }}" alt="Background">
+        <div class="login-img-overlay">
+            <div class="brand">
+                <img src="{{ asset('images/logo.png') }}" alt="Logo">
+                <div class="brand-text">
+                    <h1>{{ $set->nama_app ?? env('APP_NAME', 'Society Event') }}</h1>
+                    <span>Admin Panel</span>
+                </div>
+            </div>
+            <p>{{ $set->deskripsi_app ?? 'Kelola data, event, dan layanan secara mudah melalui panel administrasi terpusat.' }}</p>
+        </div>
+    </div>
+
+    {{-- Col kanan: form login --}}
+    <div class="login-form-col">
+        <div class="login-form-inner">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo-sm">
+            <h2>Masuk Admin</h2>
+            <div class="subtitle">Silakan masuk untuk mengelola sistem</div>
+
+            <form id="actForm">
+                @csrf
+                <div class="mb-4">
+                    <label class="form-label">Username / Email</label>
+                    <input type="text" name="username" class="form-control" placeholder="Masukkan username atau email">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Masukkan password">
+                </div>
+                <button type="submit" class="btn-submit" id="btn-save">
+                    <i class="fa fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+
+            <div class="login-footer-text">&copy; {{ date('Y') }} {{ $set->nama_app ?? env('APP_NAME') }}</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#actForm").on("submit", function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: "{{ route('login-backend-action') }}",
+                type: "POST",
+                data: $(this).serialize(),
+                beforeSend: function () {
+                    Swal.fire({
+                        title: "Memproses...",
+                        text: "Mohon tunggu sebentar",
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+                },
+                success: function (res) {
+                    Swal.close();
+                    if (res.status) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Berhasil",
+                            text: res.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            if (res.redirect) window.location.href = res.redirect;
+                        });
+                    } else {
+                        Swal.fire({ icon: "error", title: "Login Gagal", text: res.message });
+                    }
+                },
+                error: function () {
+                    Swal.close();
+                    Swal.fire({ icon: "error", title: "Oops...", text: "Terjadi kesalahan, coba lagi." });
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

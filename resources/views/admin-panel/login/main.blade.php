@@ -61,18 +61,6 @@
             object-fit: contain;
         }
 
-        .login-img-overlay .brand-text h1 {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #fff;
-            line-height: 1.2;
-        }
-
-        .login-img-overlay .brand-text span {
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.75);
-        }
-
         .login-img-overlay p {
             color: rgba(255,255,255,0.82);
             font-size: 0.95rem;
@@ -180,10 +168,10 @@
 
     {{-- Col kiri: background image --}}
     <div class="login-img">
-        <img src="{{ asset('ldt-asset/images/1780075229_bg-scbank.jpeg') }}" alt="Background Society Event">
+        <img src="/{{ ltrim(env('APP_ROUTE',''), '/') }}/images/1780075229_bg-scbank.jpeg" alt="Background Society Event">
         <div class="login-img-overlay">
             <div class="brand">
-                <img src="{{ asset('ldt-asset/images/logo-name.png') }}" alt="Logo Society Event">
+                <img src="/{{ ltrim(env('APP_ROUTE',''), '/') }}/images/logo-name.png" alt="Logo Society Event">
             </div>
             <p>{{ $set->deskripsi_app ?? 'Kelola data, event, dan layanan secara mudah melalui panel administrasi terpusat.' }}</p>
         </div>
@@ -192,7 +180,7 @@
     {{-- Col kanan: form login --}}
     <div class="login-form-col">
         <div class="login-form-inner">
-            <img src="{{ asset('ldt-asset/images/logo_.png') }}" alt="Logo" class="logo-sm">
+            <img src="/{{ ltrim(env('APP_ROUTE',''), '/') }}/images/logo_.png" alt="Logo" class="logo-sm">
             <h2>Masuk Admin</h2>
             <div class="subtitle">Silakan masuk untuk mengelola sistem</div>
 

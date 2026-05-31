@@ -25,15 +25,10 @@
 							<div class="d-flex flex-column flex-column-fluid">
 								<div id="kt_app_content" class="app-content pt-4 pb-6">
 
-									{{-- ============================================================ --}}
-									{{-- CARD UTAMA: satu card-header berisi title + badge + tab nav --}}
-									{{-- ============================================================ --}}
 									<div class="card card-flush shadow-sm">
 
-										{{-- SATU CARD HEADER: title, badge, dan tab nav dalam satu blok --}}
 										<div class="card-header card-header-stretch border-bottom border-gray-200 d-flex flex-column align-items-stretch pt-5 pb-0 gap-3">
 
-											{{-- Baris 1: Title + Badge --}}
 											<div class="d-flex align-items-center justify-content-between">
 												<h3 class="fw-bold text-gray-800 mb-0">
 													<i class="fa fa-credit-card text-primary me-2"></i> Midtrans Gateway
@@ -51,7 +46,6 @@
 												@endif
 											</div>
 
-											{{-- Baris 2: Tab Nav (menyatu dalam card-header) --}}
 											<ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold mb-0" id="midtransMainTab" role="tablist">
 												<li class="nav-item" role="presentation">
 													<a class="nav-link active text-active-primary pb-4"
@@ -91,12 +85,8 @@
 
 										</div>{{-- end single card-header --}}
 
-										{{-- CARD BODY — semua tab-content di sini --}}
 										<div class="card-body pt-6">
 
-											{{-- ============================================================ --}}
-											{{-- TAB CONTENT --}}
-											{{-- ============================================================ --}}
 											<div class="tab-content" id="midtransMainTabContent">
 
 												{{-- ======================================================== --}}
@@ -105,7 +95,6 @@
 												<div class="tab-pane fade show active" id="tab_konfigurasi" role="tabpanel">
 													<div class="row g-6">
 
-														{{-- CARD API CONFIG --}}
 														<div class="col-xl-7">
 															<div class="card card-flush h-100">
 																<div class="card-header">
@@ -199,7 +188,6 @@
 															</div>
 														</div>
 
-														{{-- CARD PAYMENT TYPES --}}
 														<div class="col-xl-5">
 															<div class="card card-flush h-100">
 																<div class="card-header">
@@ -225,7 +213,6 @@
 															</div>
 														</div>
 
-														{{-- TRANSACTION TOOLS --}}
 														<div class="col-xl-12 mt-4">
 															<div class="row g-6">
 																<div class="col-xl-6">
@@ -268,7 +255,7 @@
 																	</div>
 																</div>
 															</div>
-														</div>{{-- end col-xl-12 --}}
+														</div>
 
 													</div>{{-- end row g-6 --}}
 												</div>{{-- end tab_konfigurasi --}}
@@ -280,12 +267,12 @@
 													<div class="card card-flush">
 														<div class="card-header align-items-center py-5 gap-2">
 															<h3 class="card-title"><i class="fa fa-list text-primary me-2"></i> Riwayat Transaksi Midtrans</h3>
-															<div class="card-toolbar">
-																<button class="btn btn-sm btn-light-success" id="btnSyncAll"><i class="fa fa-sync-alt me-1"></i> Sync All</button>
+															<div class="card-toolbar gap-2">
+																<button class="btn btn-sm btn-light-primary" id="btnFetchFromMidtrans"><i class="fa fa-cloud-download-alt me-1"></i> Fetch from Midtrans</button>
+																<button class="btn btn-sm btn-light-success" id="btnSyncAll"><i class="fa fa-sync-alt me-1"></i> Sync All Status</button>
 															</div>
 														</div>
 														<div class="card-body pt-0">
-															{{-- Status Filter Pills --}}
 															<div class="d-flex flex-wrap gap-2 mb-5 mt-4">
 																<button class="btn btn-sm btn-primary filter-status active" data-status="all">
 																	All <span class="badge badge-light ms-1">{{ $tabCounts['all'] }}</span>
@@ -310,7 +297,22 @@
 																</button>
 															</div>
 
-															{{-- Datatable --}}
+															{{-- Fetch from Midtrans panel (hidden by default) --}}
+															<div id="fetchMidtransPanel" class="alert alert-primary d-none mb-4">
+																<div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+																	<div>
+																		<p class="mb-1 fw-bold"><i class="fa fa-info-circle me-1"></i> Fetch Status per Order ID dari Midtrans</p>
+																		<p class="mb-0 text-muted fs-7">Midtrans tidak menyediakan endpoint list semua transaksi. Masukkan Order ID spesifik untuk cek & simpan statusnya.</p>
+																	</div>
+																	<div class="d-flex gap-2">
+																		<input type="text" class="form-control form-control-sm" id="fetchOrderId" placeholder="Masukkan Order ID" style="min-width:200px">
+																		<button class="btn btn-sm btn-primary" id="btnDoFetch"><i class="fa fa-search me-1"></i> Fetch & Simpan</button>
+																		<button class="btn btn-sm btn-light-secondary" id="btnCloseFetchPanel"><i class="fa fa-times"></i></button>
+																	</div>
+																</div>
+																<div id="fetchResult" class="mt-2"></div>
+															</div>
+
 															<table id="dtTransaksi" class="table table-striped table-row-dashed table-row-gray-300 align-middle gs-0 gy-4 w-100">
 																<thead>
 																	<tr class="fw-bold text-muted bg-light">
@@ -336,7 +338,6 @@
 												<div class="tab-pane fade" id="tab_create_order" role="tabpanel">
 													<div class="row g-6">
 
-														{{-- SNAP TOKEN CARD --}}
 														<div class="col-xl-6">
 															<div class="card card-flush h-100">
 																<div class="card-header">
@@ -386,7 +387,6 @@
 															</div>
 														</div>
 
-														{{-- DIRECT CHARGE CARD --}}
 														<div class="col-xl-6">
 															<div class="card card-flush h-100">
 																<div class="card-header">
@@ -469,6 +469,17 @@
 {{-- ================================================================ --}}
 <script>
 (function () {
+
+    // ================================================================
+    // CSRF SETUP GLOBAL — semua AJAX otomatis kirim X-CSRF-TOKEN
+    // ================================================================
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    });
+
     window.addEventListener('load', function () {
         if (typeof KTMenu !== 'undefined') {
             KTMenu.init();
@@ -497,9 +508,9 @@
         });
     });
 
-    var dtTransaksi        = null;
-    var currentStatus      = 'all';
-    window._dtTransaksiLoaded = false;
+    var dtTransaksi            = null;
+    var currentStatus          = 'all';
+    window._dtTransaksiLoaded  = false;
 
     var routeTable  = '{{ route("getTableMidtransTransaksi") }}';
     var routeSync   = '{{ route("syncMidtransTransaksiAction") }}';
@@ -569,13 +580,50 @@
         }
     });
 
+    // ================================================================
+    // FETCH FROM MIDTRANS — cek & simpan status per order_id
+    // ================================================================
+    $('#btnFetchFromMidtrans').on('click', function () {
+        $('#fetchMidtransPanel').removeClass('d-none');
+        $('#fetchOrderId').focus();
+    });
+    $('#btnCloseFetchPanel').on('click', function () {
+        $('#fetchMidtransPanel').addClass('d-none');
+        $('#fetchResult').html('');
+    });
+    $('#btnDoFetch').on('click', function () {
+        var orderId = $('#fetchOrderId').val().trim();
+        if (!orderId) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Masukkan Order ID.' });
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Fetching...');
+        $.ajax({
+            url: '{{ route("getMidtransStatusAction") }}',
+            type: 'POST',
+            data: { order_id: orderId },
+            success: function (res) {
+                btn.prop('disabled', false).html('<i class="fa fa-search me-1"></i> Fetch & Simpan');
+                if (res.success) {
+                    $('#fetchResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check me-2"></i>Status berhasil diambil & disimpan. Order ID: <strong>' + orderId + '</strong> — Status: <strong>' + (res.data.transaction_status || '-') + '</strong></div>');
+                    if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
+                } else {
+                    $('#fetchResult').html('<div class="alert alert-danger mt-2">' + res.message + '</div>');
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="fa fa-search me-1"></i> Fetch & Simpan');
+                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan jaringan.';
+                $('#fetchResult').html('<div class="alert alert-danger mt-2">' + msg + '</div>');
+            }
+        });
+    });
+
     $(document).on('click', '.btn-sync-row', function () {
         var orderId = $(this).data('order');
         var btn     = $(this);
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
         $.ajax({
             url: routeSync, type: 'POST',
-            data: { _token: csrfToken, order_id: orderId },
+            data: { order_id: orderId },
             success: function (res) {
                 btn.prop('disabled', false).html('<i class="fa fa-sync-alt"></i>');
                 if (res.success) {
@@ -592,12 +640,11 @@
         });
     });
 
-    // Detail row
     $(document).on('click', '.btn-detail-row', function () {
         var orderId = $(this).data('order');
         $.ajax({
             url: '{{ route("getMidtransStatusAction") }}',
-            type: 'POST', data: { _token: csrfToken, order_id: orderId },
+            type: 'POST', data: { order_id: orderId },
             success: function (res) {
                 if (res.success) {
                     Swal.fire({
@@ -652,7 +699,7 @@
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-2"></i> Testing...');
         $.ajax({
             url: '{{ route("testMidtransConnectionAction") }}',
-            type: 'POST', data: { _token: csrfToken },
+            type: 'POST',
             success: function (res) {
                 btn.prop('disabled', false).html('<i class="fa fa-plug me-2"></i> Test Connection');
                 Swal.fire({ icon: res.success ? 'success' : 'error', title: res.success ? 'Connected!' : 'Failed', text: res.message });
@@ -669,7 +716,7 @@
         if (!orderId) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Masukkan Order ID.' });
         $.ajax({
             url: '{{ route("getMidtransStatusAction") }}',
-            type: 'POST', data: { _token: csrfToken, order_id: orderId },
+            type: 'POST', data: { order_id: orderId },
             success: function (res) {
                 if (res.success) {
                     $('#statusResult').html('<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:300px">' + JSON.stringify(res.data, null, 2) + '</pre>');
@@ -685,8 +732,7 @@
 
     function doTransactionAction(url, data, resultDiv) {
         $.ajax({
-            url: url, type: 'POST',
-            data: Object.assign({ _token: csrfToken }, data),
+            url: url, type: 'POST', data: data,
             success: function (res) {
                 if (res.success) {
                     $(resultDiv).html('<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:200px">' + JSON.stringify(res.data, null, 2) + '</pre>');
@@ -701,18 +747,15 @@
     }
 
     $('#btnApprove').on('click', function () {
-        var o = $('#action_order_id').val().trim();
-        if (!o) return;
+        var o = $('#action_order_id').val().trim(); if (!o) return;
         doTransactionAction('{{ route("approveMidtransAction") }}', { order_id: o }, '#actionResult');
     });
     $('#btnCancel').on('click', function () {
-        var o = $('#action_order_id').val().trim();
-        if (!o) return;
+        var o = $('#action_order_id').val().trim(); if (!o) return;
         doTransactionAction('{{ route("cancelMidtransAction") }}', { order_id: o }, '#actionResult');
     });
     $('#btnExpire').on('click', function () {
-        var o = $('#action_order_id').val().trim();
-        if (!o) return;
+        var o = $('#action_order_id').val().trim(); if (!o) return;
         doTransactionAction('{{ route("expireMidtransAction") }}', { order_id: o }, '#actionResult');
     });
     $('#btnRefund').on('click', function () {
@@ -723,15 +766,14 @@
         doTransactionAction('{{ route("refundMidtransAction") }}', { order_id: o, amount: amt, reason: rsn }, '#refundResult');
     });
 
-    // Sync All
     $('#btnSyncAll').on('click', function () {
         var btn = $(this);
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Syncing...');
         $.ajax({
             url: routeSync, type: 'POST',
-            data: { _token: csrfToken, sync_all: true },
+            data: { sync_all: true },
             success: function (res) {
-                btn.prop('disabled', false).html('<i class="fa fa-sync-alt me-1"></i> Sync All');
+                btn.prop('disabled', false).html('<i class="fa fa-sync-alt me-1"></i> Sync All Status');
                 if (res.success) {
                     Swal.fire({ icon: 'success', title: 'Synced!', text: res.message, timer: 1800, showConfirmButton: false });
                     if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
@@ -740,33 +782,24 @@
                 }
             },
             error: function () {
-                btn.prop('disabled', false).html('<i class="fa fa-sync-alt me-1"></i> Sync All');
+                btn.prop('disabled', false).html('<i class="fa fa-sync-alt me-1"></i> Sync All Status');
                 Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan jaringan.' });
             }
         });
     });
 
-    // ================================================================
-    // AUTO GENERATE ORDER ID
-    // ================================================================
     function generateOrderId() {
         var now = new Date();
         var pad = function(n){ return String(n).padStart(2,'0'); };
-        return 'ORD-' +
-            now.getFullYear() +
-            pad(now.getMonth() + 1) +
-            pad(now.getDate()) +
-            pad(now.getHours()) +
-            pad(now.getMinutes()) +
-            pad(now.getSeconds());
+        return 'ORD-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
     }
-
     $('#btnGenerateOrderId').on('click', function () {
         $('#snap_order_id').val(generateOrderId());
     });
 
     // ================================================================
     // CREATE SNAP TOKEN & OPEN PAYMENT POPUP
+    // window.snap.pay() — Midtrans SNAP JS API
     // ================================================================
     $('#btnCreateSnap').on('click', function () {
         var orderId   = $('#snap_order_id').val().trim();
@@ -782,12 +815,12 @@
 
         var btn = $(this);
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Generating...');
+        $('#snapResult').html('');
 
         $.ajax({
             url: '{{ route("createMidtransSnapTokenAction") }}',
             type: 'POST',
             data: {
-                _token:     csrfToken,
                 order_id:   orderId,
                 amount:     amount,
                 first_name: firstName,
@@ -797,36 +830,47 @@
             },
             success: function (res) {
                 btn.prop('disabled', false).html('<i class="fa fa-key me-1"></i> Generate Token &amp; Bayar');
+
                 if (res.success && res.data && res.data.token) {
-                    $('#snapResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check me-2"></i>Token berhasil dibuat. Membuka payment popup...</div>');
+                    $('#snapResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check me-2"></i>Token berhasil. Membuka payment popup...</div>');
+
                     loadSnapScript(function () {
+                        if (typeof window.snap === 'undefined' || typeof window.snap.pay !== 'function') {
+                            Swal.fire({ icon: 'error', title: 'Error', text: 'window.snap tidak tersedia. Pastikan client key sudah diisi di konfigurasi.' });
+                            return;
+                        }
                         window.snap.pay(res.data.token, {
                             onSuccess: function (result) {
                                 Swal.fire({ icon: 'success', title: 'Pembayaran Berhasil!', text: 'Order ID: ' + result.order_id });
-                                $('#snapResult').html('<div class="alert alert-success mt-2">Pembayaran berhasil! Order ID: ' + result.order_id + '</div>');
+                                $('#snapResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check-circle me-2"></i>Pembayaran berhasil! Order ID: <strong>' + result.order_id + '</strong></div>');
+                                if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
                             },
                             onPending: function (result) {
                                 Swal.fire({ icon: 'info', title: 'Menunggu Pembayaran', text: 'Order ID: ' + result.order_id });
-                                $('#snapResult').html('<div class="alert alert-warning mt-2">Pending. Order ID: ' + result.order_id + '</div>');
+                                $('#snapResult').html('<div class="alert alert-warning mt-2"><i class="fa fa-clock me-2"></i>Pending. Order ID: <strong>' + result.order_id + '</strong></div>');
                             },
                             onError: function (result) {
-                                Swal.fire({ icon: 'error', title: 'Pembayaran Gagal', text: result.status_message });
-                                $('#snapResult').html('<div class="alert alert-danger mt-2">Error: ' + result.status_message + '</div>');
+                                Swal.fire({ icon: 'error', title: 'Pembayaran Gagal', text: result.status_message || 'Error tidak diketahui.' });
+                                $('#snapResult').html('<div class="alert alert-danger mt-2"><i class="fa fa-times-circle me-2"></i>Error: ' + (result.status_message || '-') + '</div>');
                             },
                             onClose: function () {
-                                $('#snapResult').html('<div class="alert alert-secondary mt-2">Popup ditutup oleh user.</div>');
+                                $('#snapResult').html('<div class="alert alert-secondary mt-2"><i class="fa fa-times me-2"></i>Popup ditutup oleh user.</div>');
                             }
                         });
                     });
+
                 } else {
-                    var errMsg = (res.data && res.data.error_messages) ? res.data.error_messages.join(', ') : res.message;
+                    var errMsg = (res.data && res.data.error_messages)
+                        ? (Array.isArray(res.data.error_messages) ? res.data.error_messages.join(', ') : res.data.error_messages)
+                        : (res.message || 'Gagal mendapatkan token.');
                     $('#snapResult').html('<div class="alert alert-danger mt-2"><i class="fa fa-times me-2"></i>' + errMsg + '</div>');
                 }
             },
             error: function (xhr) {
                 btn.prop('disabled', false).html('<i class="fa fa-key me-1"></i> Generate Token &amp; Bayar');
                 var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan jaringan.';
-                $('#snapResult').html('<div class="alert alert-danger mt-2">' + msg + '</div>');
+                if (xhr.status === 419) msg = 'CSRF token mismatch. Coba refresh halaman.';
+                $('#snapResult').html('<div class="alert alert-danger mt-2"><i class="fa fa-times me-2"></i>' + msg + '</div>');
             }
         });
     });
@@ -853,7 +897,6 @@
             url: '{{ route("createMidtransChargeAction") }}',
             type: 'POST',
             data: {
-                _token:       csrfToken,
                 payment_type: paymentType,
                 order_id:     orderId,
                 amount:       amount,
@@ -865,6 +908,7 @@
                 btn.prop('disabled', false).html('<i class="fa fa-bolt me-1"></i> Create Charge');
                 if (res.success) {
                     $('#chargeResult').html('<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:300px">' + JSON.stringify(res.data, null, 2) + '</pre>');
+                    if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
                 } else {
                     $('#chargeResult').html('<div class="alert alert-danger mt-2">' + res.message + '</div>');
                 }
@@ -872,6 +916,7 @@
             error: function (xhr) {
                 btn.prop('disabled', false).html('<i class="fa fa-bolt me-1"></i> Create Charge');
                 var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan jaringan.';
+                if (xhr.status === 419) msg = 'CSRF token mismatch. Coba refresh halaman.';
                 $('#chargeResult').html('<div class="alert alert-danger mt-2">' + msg + '</div>');
             }
         });

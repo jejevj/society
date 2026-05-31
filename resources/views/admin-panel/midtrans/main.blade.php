@@ -302,11 +302,11 @@
 																<div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
 																	<div>
 																		<p class="mb-1 fw-bold"><i class="fa fa-info-circle me-1"></i> Fetch Status per Order ID dari Midtrans</p>
-																		<p class="mb-0 text-muted fs-7">Midtrans tidak menyediakan endpoint list semua transaksi. Masukkan Order ID spesifik untuk cek & simpan statusnya.</p>
+																		<p class="mb-0 text-muted fs-7">Midtrans tidak menyediakan endpoint list semua transaksi. Masukkan Order ID spesifik untuk cek &amp; simpan statusnya.</p>
 																	</div>
 																	<div class="d-flex gap-2">
 																		<input type="text" class="form-control form-control-sm" id="fetchOrderId" placeholder="Masukkan Order ID" style="min-width:200px">
-																		<button class="btn btn-sm btn-primary" id="btnDoFetch"><i class="fa fa-search me-1"></i> Fetch & Simpan</button>
+																		<button class="btn btn-sm btn-primary" id="btnDoFetch"><i class="fa fa-search me-1"></i> Fetch &amp; Simpan</button>
 																		<button class="btn btn-sm btn-light-secondary" id="btnCloseFetchPanel"><i class="fa fa-times"></i></button>
 																	</div>
 																</div>
@@ -475,7 +475,7 @@
     // ================================================================
     $.ajaxSetup({
         headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}',
             'X-Requested-With': 'XMLHttpRequest'
         }
     });
@@ -525,11 +525,14 @@
 
     // Lazy-load snap.js hanya saat dibutuhkan
     function loadSnapScript(callback) {
-        if (window.snap) { callback(); return; }
+        if (window.snap && typeof window.snap.pay === 'function') { callback(); return; }
         var s = document.createElement('script');
         s.src = snapScriptUrl;
         s.setAttribute('data-client-key', snapClientKey);
-        s.onload  = callback;
+        s.onload = function () {
+            // snap.js may load asynchronously; wait a tick before calling back
+            setTimeout(callback, 100);
+        };
         s.onerror = function () {
             Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal memuat Midtrans Snap.js. Periksa client key & koneksi.' });
         };
@@ -601,17 +604,18 @@
             type: 'POST',
             data: { order_id: orderId },
             success: function (res) {
-                btn.prop('disabled', false).html('<i class="fa fa-search me-1"></i> Fetch & Simpan');
+                btn.prop('disabled', false).html('<i class="fa fa-search me-1"></i> Fetch &amp; Simpan');
                 if (res.success) {
-                    $('#fetchResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check me-2"></i>Status berhasil diambil & disimpan. Order ID: <strong>' + orderId + '</strong> — Status: <strong>' + (res.data.transaction_status || '-') + '</strong></div>');
+                    $('#fetchResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check me-2"></i>Status berhasil diambil &amp; disimpan. Order ID: <strong>' + orderId + '</strong> &mdash; Status: <strong>' + (res.data.transaction_status || '-') + '</strong></div>');
                     if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
                 } else {
                     $('#fetchResult').html('<div class="alert alert-danger mt-2">' + res.message + '</div>');
                 }
             },
             error: function (xhr) {
-                btn.prop('disabled', false).html('<i class="fa fa-search me-1"></i> Fetch & Simpan');
+                btn.prop('disabled', false).html('<i class="fa fa-search me-1"></i> Fetch &amp; Simpan');
                 var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan jaringan.';
+                if (xhr.status === 419) msg = 'CSRF token mismatch. Coba refresh halaman.';
                 $('#fetchResult').html('<div class="alert alert-danger mt-2">' + msg + '</div>');
             }
         });
@@ -678,6 +682,7 @@
             },
             error: function (xhr) {
                 var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Validation error';
+                if (xhr.status === 419) msg = 'CSRF token mismatch. Coba refresh halaman.';
                 Swal.fire({ icon: 'error', title: 'Error', text: msg });
             }
         });
@@ -704,9 +709,11 @@
                 btn.prop('disabled', false).html('<i class="fa fa-plug me-2"></i> Test Connection');
                 Swal.fire({ icon: res.success ? 'success' : 'error', title: res.success ? 'Connected!' : 'Failed', text: res.message });
             },
-            error: function () {
+            error: function (xhr) {
                 btn.prop('disabled', false).html('<i class="fa fa-plug me-2"></i> Test Connection');
-                Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Network error.';
+                if (xhr.status === 419) msg = 'CSRF token mismatch. Coba refresh halaman.';
+                Swal.fire({ icon: 'error', title: 'Error', text: msg });
             }
         });
     });
@@ -799,7 +806,7 @@
 
     // ================================================================
     // CREATE SNAP TOKEN & OPEN PAYMENT POPUP
-    // window.snap.pay() — Midtrans SNAP JS API
+    // Uses window.snap.pay() — Midtrans SNAP JS API
     // ================================================================
     $('#btnCreateSnap').on('click', function () {
         var orderId   = $('#snap_order_id').val().trim();
@@ -832,14 +839,19 @@
                 btn.prop('disabled', false).html('<i class="fa fa-key me-1"></i> Generate Token &amp; Bayar');
 
                 if (res.success && res.data && res.data.token) {
-                    $('#snapResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check me-2"></i>Token berhasil. Membuka payment popup...</div>');
+                    var snapToken = res.data.token;
+                    $('#snapResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check me-2"></i>Token berhasil dibuat. Membuka payment popup...</div>');
 
                     loadSnapScript(function () {
                         if (typeof window.snap === 'undefined' || typeof window.snap.pay !== 'function') {
-                            Swal.fire({ icon: 'error', title: 'Error', text: 'window.snap tidak tersedia. Pastikan client key sudah diisi di konfigurasi.' });
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Snap tidak tersedia',
+                                text: 'window.snap.pay() tidak ditemukan. Pastikan Client Key sudah diisi di halaman Konfigurasi dan coba refresh halaman.'
+                            });
                             return;
                         }
-                        window.snap.pay(res.data.token, {
+                        window.snap.pay(snapToken, {
                             onSuccess: function (result) {
                                 Swal.fire({ icon: 'success', title: 'Pembayaran Berhasil!', text: 'Order ID: ' + result.order_id });
                                 $('#snapResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check-circle me-2"></i>Pembayaran berhasil! Order ID: <strong>' + result.order_id + '</strong></div>');

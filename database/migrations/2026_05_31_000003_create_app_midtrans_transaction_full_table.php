@@ -3,19 +3,22 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
+    /**
+     * Safely create or alter app_midtrans_transaction.
+     * - Creates the table from scratch if it does not exist.
+     * - Adds only missing columns if the table already exists (idempotent).
+     */
     public function up(): void
     {
-        // Jika tabel belum ada, buat dari awal
         if (!Schema::hasTable('app_midtrans_transaction')) {
             Schema::create('app_midtrans_transaction', function (Blueprint $table) {
                 $table->id();
                 $table->string('order_id')->unique();
                 $table->string('transaction_id')->nullable();
-                $table->string('transaction_status')->default('pending'); // pending, settlement, cancel, expire, deny, refund
+                $table->string('transaction_status')->default('pending');
                 $table->string('payment_type')->nullable();
                 $table->decimal('gross_amount', 15, 2)->default(0);
                 $table->string('currency', 10)->default('IDR');
@@ -24,7 +27,7 @@ return new class extends Migration
                 $table->string('email')->nullable();
                 $table->string('phone')->nullable();
                 $table->string('snap_token')->nullable();
-                $table->string('redirect_url')->nullable();
+                $table->string('redirect_url', 1000)->nullable();
                 $table->string('fraud_status')->nullable();
                 $table->string('bank')->nullable();
                 $table->string('va_number')->nullable();
@@ -38,7 +41,7 @@ return new class extends Migration
             return;
         }
 
-        // Tabel sudah ada — tambahkan kolom yang belum ada saja (safe alter)
+        // Table already exists — only add columns that are missing (safe alter)
         Schema::table('app_midtrans_transaction', function (Blueprint $table) {
             if (!Schema::hasColumn('app_midtrans_transaction', 'order_id')) {
                 $table->string('order_id')->unique()->after('id');
@@ -74,7 +77,7 @@ return new class extends Migration
                 $table->string('snap_token')->nullable()->after('phone');
             }
             if (!Schema::hasColumn('app_midtrans_transaction', 'redirect_url')) {
-                $table->string('redirect_url')->nullable()->after('snap_token');
+                $table->string('redirect_url', 1000)->nullable()->after('snap_token');
             }
             if (!Schema::hasColumn('app_midtrans_transaction', 'fraud_status')) {
                 $table->string('fraud_status')->nullable()->after('redirect_url');
@@ -96,6 +99,9 @@ return new class extends Migration
             }
             if (!Schema::hasColumn('app_midtrans_transaction', 'expiry_time')) {
                 $table->timestamp('expiry_time')->nullable()->after('settlement_time');
+            }
+            if (!Schema::hasColumn('app_midtrans_transaction', 'created_at')) {
+                $table->timestamps();
             }
             if (!Schema::hasColumn('app_midtrans_transaction', 'deleted_at')) {
                 $table->softDeletes();

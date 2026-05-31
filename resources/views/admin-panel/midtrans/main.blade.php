@@ -70,6 +70,17 @@
 												<span class="badge badge-light-primary ms-1">{{ $tabCounts['all'] }}</span>
 											</a>
 										</li>
+										<li class="nav-item" role="presentation">
+											<a class="nav-link text-active-primary pb-4"
+											   id="tab-create-order-link"
+											   data-bs-toggle="tab"
+											   href="#tab_create_order"
+											   role="tab"
+											   aria-controls="tab_create_order"
+											   aria-selected="false">
+												<i class="fa fa-shopping-cart me-2"></i> Create Order
+											</a>
+										</li>
 									</ul>
 
 									{{-- ============================================================ --}}
@@ -245,23 +256,6 @@
 																</div>
 															</div>
 														</div>
-														<div class="col-xl-6">
-															<div class="card card-flush">
-																<div class="card-header"><h3 class="card-title"><i class="fa fa-key text-primary me-2"></i> Create SNAP Token</h3></div>
-																<div class="card-body">
-																	<div class="row g-3">
-																		<div class="col-md-6"><label class="form-label fw-bold">Order ID</label><input type="text" class="form-control" id="snap_order_id" placeholder="order-001"></div>
-																		<div class="col-md-6"><label class="form-label fw-bold">Amount (IDR)</label><input type="number" class="form-control" id="snap_amount" placeholder="100000" min="1"></div>
-																		<div class="col-md-6"><label class="form-label fw-bold">First Name</label><input type="text" class="form-control" id="snap_first_name" placeholder="John"></div>
-																		<div class="col-md-6"><label class="form-label fw-bold">Last Name</label><input type="text" class="form-control" id="snap_last_name" placeholder="Doe"></div>
-																		<div class="col-md-6"><label class="form-label fw-bold">Email</label><input type="email" class="form-control" id="snap_email" placeholder="john@example.com"></div>
-																		<div class="col-md-6"><label class="form-label fw-bold">Phone</label><input type="text" class="form-control" id="snap_phone" placeholder="08xxxxxxxxxx"></div>
-																	</div>
-																	<button class="btn btn-primary mt-3" id="btnCreateSnap"><i class="fa fa-key me-1"></i> Generate Token</button>
-																	<div id="snapResult" class="mt-3"></div>
-																</div>
-															</div>
-														</div>
 													</div>
 												</div>{{-- end col-xl-12 --}}
 
@@ -325,6 +319,128 @@
 											</div>
 										</div>{{-- end tab_transaksi --}}
 
+										{{-- ======================================================== --}}
+										{{-- TAB 3: CREATE ORDER --}}
+										{{-- ======================================================== --}}
+										<div class="tab-pane fade pt-6" id="tab_create_order" role="tabpanel">
+											<div class="row g-6">
+
+												{{-- SNAP TOKEN CARD --}}
+												<div class="col-xl-6">
+													<div class="card card-flush h-100">
+														<div class="card-header">
+															<h3 class="card-title"><i class="fa fa-key text-primary me-2"></i> SNAP Token &amp; Payment Popup</h3>
+															<div class="card-toolbar">
+																<span class="badge badge-light-primary">via /snap/v1/transactions</span>
+															</div>
+														</div>
+														<div class="card-body">
+															<p class="text-muted fs-7 mb-5">Generate SNAP token lalu tampilkan payment popup Midtrans langsung di halaman ini.</p>
+															<div class="row g-3">
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">Order ID <span class="text-danger">*</span></label>
+																	<input type="text" class="form-control" id="snap_order_id" placeholder="order-{{ date('YmdHis') }}">
+																</div>
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">Amount (IDR) <span class="text-danger">*</span></label>
+																	<input type="number" class="form-control" id="snap_amount" placeholder="100000" min="1">
+																</div>
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
+																	<input type="text" class="form-control" id="snap_first_name" placeholder="John">
+																</div>
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">Last Name</label>
+																	<input type="text" class="form-control" id="snap_last_name" placeholder="Doe">
+																</div>
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+																	<input type="email" class="form-control" id="snap_email" placeholder="john@example.com">
+																</div>
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">Phone <span class="text-danger">*</span></label>
+																	<input type="text" class="form-control" id="snap_phone" placeholder="08xxxxxxxxxx">
+																</div>
+															</div>
+															<div class="d-flex gap-2 mt-4">
+																<button class="btn btn-primary" id="btnCreateSnap">
+																	<i class="fa fa-key me-1"></i> Generate Token &amp; Bayar
+																</button>
+																<button class="btn btn-light-secondary" id="btnGenerateOrderId" type="button">
+																	<i class="fa fa-random me-1"></i> Auto Order ID
+																</button>
+															</div>
+															<div id="snapResult" class="mt-3"></div>
+														</div>
+													</div>
+												</div>
+
+												{{-- DIRECT CHARGE CARD --}}
+												<div class="col-xl-6">
+													<div class="card card-flush h-100">
+														<div class="card-header">
+															<h3 class="card-title"><i class="fa fa-bolt text-warning me-2"></i> Direct Charge API</h3>
+															<div class="card-toolbar">
+																<span class="badge badge-light-warning">via /v2/charge</span>
+															</div>
+														</div>
+														<div class="card-body">
+															<p class="text-muted fs-7 mb-5">Buat charge langsung tanpa popup. Cocok untuk VA, QRIS, dan e-wallet via API.</p>
+															<div class="row g-3">
+																<div class="col-md-12">
+																	<label class="form-label fw-bold">Payment Type <span class="text-danger">*</span></label>
+																	<select class="form-select" id="charge_payment_type">
+																		<option value="">-- Pilih Metode Pembayaran --</option>
+																		<optgroup label="Bank Transfer">
+																			<option value="bca_va">BCA Virtual Account</option>
+																			<option value="bni_va">BNI Virtual Account</option>
+																			<option value="bri_va">BRI Virtual Account</option>
+																			<option value="permata_va">Permata Virtual Account</option>
+																			<option value="other_va">Other Virtual Account</option>
+																		</optgroup>
+																		<optgroup label="E-Wallet">
+																			<option value="gopay">GoPay</option>
+																			<option value="shopeepay">ShopeePay</option>
+																			<option value="qris">QRIS</option>
+																		</optgroup>
+																		<optgroup label="Convenience Store">
+																			<option value="indomaret">Indomaret</option>
+																			<option value="alfamart">Alfamart</option>
+																		</optgroup>
+																	</select>
+																</div>
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">Order ID <span class="text-danger">*</span></label>
+																	<input type="text" class="form-control" id="charge_order_id" placeholder="order-{{ date('YmdHis') }}">
+																</div>
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">Amount (IDR) <span class="text-danger">*</span></label>
+																	<input type="number" class="form-control" id="charge_amount" placeholder="100000" min="1">
+																</div>
+																<div class="col-md-12">
+																	<label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
+																	<input type="text" class="form-control" id="charge_first_name" placeholder="John">
+																</div>
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+																	<input type="email" class="form-control" id="charge_email" placeholder="john@example.com">
+																</div>
+																<div class="col-md-6">
+																	<label class="form-label fw-bold">Phone <span class="text-danger">*</span></label>
+																	<input type="text" class="form-control" id="charge_phone" placeholder="08xxxxxxxxxx">
+																</div>
+															</div>
+															<button class="btn btn-warning mt-4" id="btnCreateCharge">
+																<i class="fa fa-bolt me-1"></i> Create Charge
+															</button>
+															<div id="chargeResult" class="mt-3"></div>
+														</div>
+													</div>
+												</div>
+
+											</div>{{-- end row g-6 --}}
+										</div>{{-- end tab_create_order --}}
+
 									</div>{{-- end tab-content --}}
 
 								</div>{{-- end kt_app_content --}}
@@ -371,9 +487,29 @@
     var currentStatus      = 'all';
     window._dtTransaksiLoaded = false;
 
-    var routeTable = '{{ route("getTableMidtransTransaksi") }}';
-    var routeSync  = '{{ route("syncMidtransTransaksiAction") }}';
-    var csrfToken  = '{{ csrf_token() }}';
+    var routeTable  = '{{ route("getTableMidtransTransaksi") }}';
+    var routeSync   = '{{ route("syncMidtransTransaksiAction") }}';
+    var csrfToken   = '{{ csrf_token() }}';
+
+    // Snap environment for client-side popup
+    var snapClientKey = '{{ $config->client_key ?? "" }}';
+    var snapEnv       = '{{ $config->environment ?? "sandbox" }}';
+    var snapScriptUrl = snapEnv === 'production'
+        ? 'https://app.midtrans.com/snap/snap.js'
+        : 'https://app.sandbox.midtrans.com/snap/snap.js';
+
+    // Lazy-load snap.js hanya saat dibutuhkan
+    function loadSnapScript(callback) {
+        if (window.snap) { callback(); return; }
+        var s = document.createElement('script');
+        s.src = snapScriptUrl;
+        s.setAttribute('data-client-key', snapClientKey);
+        s.onload  = callback;
+        s.onerror = function () {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal memuat Midtrans Snap.js. Periksa client key & koneksi.' });
+        };
+        document.head.appendChild(s);
+    }
 
     function initDtTransaksi(status) {
         currentStatus = status || 'all';
@@ -442,6 +578,26 @@
         });
     });
 
+    // Detail row
+    $(document).on('click', '.btn-detail-row', function () {
+        var orderId = $(this).data('order');
+        $.ajax({
+            url: '{{ route("getMidtransStatusAction") }}',
+            type: 'POST', data: { _token: csrfToken, order_id: orderId },
+            success: function (res) {
+                if (res.success) {
+                    Swal.fire({
+                        title: 'Detail Transaksi: ' + orderId,
+                        html: '<pre style="text-align:left;font-size:12px;overflow:auto;max-height:400px">' + JSON.stringify(res.data, null, 2) + '</pre>',
+                        width: 700,
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
+                }
+            }
+        });
+    });
+
     $('#formMidtransConfig').on('submit', function (e) {
         e.preventDefault();
         var paymentTypes = [];
@@ -494,7 +650,6 @@
         });
     });
 
-    // Get Transaction Status - menggunakan route name yang benar: getMidtransStatusAction
     $('#btnGetStatus').on('click', function () {
         var orderId = $('#status_order_id').val().trim();
         if (!orderId) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Masukkan Order ID.' });
@@ -573,6 +728,151 @@
             error: function () {
                 btn.prop('disabled', false).html('<i class="fa fa-sync-alt me-1"></i> Sync All');
                 Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan jaringan.' });
+            }
+        });
+    });
+
+    // ================================================================
+    // AUTO GENERATE ORDER ID
+    // ================================================================
+    function generateOrderId() {
+        var now = new Date();
+        var pad = function(n){ return String(n).padStart(2,'0'); };
+        return 'ORD-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate())
+            + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+    }
+
+    $('#btnGenerateOrderId').on('click', function () {
+        $('#snap_order_id').val(generateOrderId());
+    });
+
+    // ================================================================
+    // CREATE SNAP TOKEN + OPEN PAYMENT POPUP
+    // ================================================================
+    $('#btnCreateSnap').on('click', function () {
+        var orderId   = $('#snap_order_id').val().trim();
+        var amount    = $('#snap_amount').val().trim();
+        var firstName = $('#snap_first_name').val().trim();
+        var lastName  = $('#snap_last_name').val().trim();
+        var email     = $('#snap_email').val().trim();
+        var phone     = $('#snap_phone').val().trim();
+
+        if (!orderId || !amount || !firstName || !email || !phone) {
+            return Swal.fire({ icon: 'warning', title: 'Validasi', text: 'Lengkapi semua field yang bertanda bintang (*).' });
+        }
+
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Membuat token...');
+        $('#snapResult').html('');
+
+        $.ajax({
+            url: '{{ route("createMidtransSnapTokenAction") }}',
+            type: 'POST',
+            data: {
+                _token:     csrfToken,
+                order_id:   orderId,
+                amount:     amount,
+                first_name: firstName,
+                last_name:  lastName,
+                email:      email,
+                phone:      phone,
+            },
+            success: function (res) {
+                btn.prop('disabled', false).html('<i class="fa fa-key me-1"></i> Generate Token &amp; Bayar');
+                if (res.success && res.data && res.data.token) {
+                    var token = res.data.token;
+                    $('#snapResult').html(
+                        '<div class="alert alert-success d-flex align-items-center gap-3 mt-2">' +
+                        '<i class="fa fa-check-circle fs-3 text-success"></i>' +
+                        '<div><strong>Token berhasil dibuat!</strong><br>' +
+                        '<small class="text-muted">Token: <code>' + token + '</code></small></div>' +
+                        '</div>'
+                    );
+                    // Buka Midtrans Snap popup
+                    loadSnapScript(function () {
+                        snap.pay(token, {
+                            onSuccess: function (result) {
+                                Swal.fire({ icon: 'success', title: 'Pembayaran Berhasil!', text: 'Order ID: ' + result.order_id + ' | Status: ' + result.transaction_status });
+                                if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
+                            },
+                            onPending: function (result) {
+                                Swal.fire({ icon: 'info', title: 'Pembayaran Pending', text: 'Order ID: ' + result.order_id + ' menunggu konfirmasi.' });
+                            },
+                            onError: function (result) {
+                                Swal.fire({ icon: 'error', title: 'Pembayaran Gagal', text: result.status_message || 'Terjadi kesalahan.' });
+                            },
+                            onClose: function () {
+                                Swal.fire({ icon: 'warning', title: 'Popup Ditutup', text: 'Anda menutup halaman pembayaran sebelum menyelesaikan transaksi.', timer: 2000, showConfirmButton: false });
+                            }
+                        });
+                    });
+                } else {
+                    var errMsg = (res.data && res.data.error_messages) ? res.data.error_messages.join(', ') : (res.message || 'Gagal membuat token.');
+                    $('#snapResult').html('<div class="alert alert-danger mt-2"><strong>Gagal:</strong> ' + errMsg + '</div>');
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="fa fa-key me-1"></i> Generate Token &amp; Bayar');
+                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan jaringan.';
+                $('#snapResult').html('<div class="alert alert-danger mt-2">' + msg + '</div>');
+            }
+        });
+    });
+
+    // ================================================================
+    // CREATE DIRECT CHARGE
+    // ================================================================
+    $('#btnCreateCharge').on('click', function () {
+        var paymentType = $('#charge_payment_type').val();
+        var orderId     = $('#charge_order_id').val().trim();
+        var amount      = $('#charge_amount').val().trim();
+        var firstName   = $('#charge_first_name').val().trim();
+        var email       = $('#charge_email').val().trim();
+        var phone       = $('#charge_phone').val().trim();
+
+        if (!paymentType || !orderId || !amount || !firstName || !email || !phone) {
+            return Swal.fire({ icon: 'warning', title: 'Validasi', text: 'Lengkapi semua field yang bertanda bintang (*).' });
+        }
+
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Processing...');
+        $('#chargeResult').html('');
+
+        $.ajax({
+            url: '{{ route("createMidtransChargeAction") }}',
+            type: 'POST',
+            data: {
+                _token:       csrfToken,
+                payment_type: paymentType,
+                order_id:     orderId,
+                amount:       amount,
+                first_name:   firstName,
+                email:        email,
+                phone:        phone,
+            },
+            success: function (res) {
+                btn.prop('disabled', false).html('<i class="fa fa-bolt me-1"></i> Create Charge');
+                if (res.success && res.data) {
+                    var status = res.data.transaction_status || res.data.status_code;
+                    var isOk   = ['200','201'].indexOf(String(res.data.status_code)) !== -1;
+                    var color  = isOk ? 'success' : 'warning';
+                    var html   = '<div class="alert alert-' + color + ' mt-2">' +
+                                 '<strong>Status: ' + (res.data.status_message || '-') + '</strong>' +
+                                 (res.data.va_numbers ? '<br>VA Number: <code>' + res.data.va_numbers[0].va_number + '</code> (' + res.data.va_numbers[0].bank.toUpperCase() + ')' : '') +
+                                 (res.data.actions ? '<br><small>Scan/Pay URL tersedia di response JSON.</small>' : '') +
+                                 '</div>' +
+                                 '<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:250px">' + JSON.stringify(res.data, null, 2) + '</pre>';
+                    $('#chargeResult').html(html);
+                    if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
+                } else {
+                    var errMsg = res.message || 'Gagal membuat charge.';
+                    $('#chargeResult').html('<div class="alert alert-danger mt-2"><strong>Gagal:</strong> ' + errMsg + '</div>');
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="fa fa-bolt me-1"></i> Create Charge');
+                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Terjadi kesalahan jaringan.';
+                $('#chargeResult').html('<div class="alert alert-danger mt-2">' + msg + '</div>');
             }
         });
     });

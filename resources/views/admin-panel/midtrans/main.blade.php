@@ -16,6 +16,47 @@
 										</h1>
 									</div>
 								</div>
+
+								{{-- ============================================================ --}}
+								{{-- MAIN TABS NAV — di dalam toolbar agar muncul di atas bg merah --}}
+								{{-- ============================================================ --}}
+								<ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold mb-n2" id="midtransMainTab" role="tablist">
+									<li class="nav-item" role="presentation">
+										<a class="nav-link active text-white text-active-primary pb-4"
+										   id="tab-konfigurasi-link"
+										   data-bs-toggle="tab"
+										   href="#tab_konfigurasi"
+										   role="tab"
+										   aria-controls="tab_konfigurasi"
+										   aria-selected="true">
+											<i class="fa fa-cog me-2"></i> Konfigurasi
+										</a>
+									</li>
+									<li class="nav-item" role="presentation">
+										<a class="nav-link text-white text-active-primary pb-4"
+										   id="tab-transaksi-link"
+										   data-bs-toggle="tab"
+										   href="#tab_transaksi"
+										   role="tab"
+										   aria-controls="tab_transaksi"
+										   aria-selected="false">
+											<i class="fa fa-list me-2"></i> Transaksi
+											<span class="badge badge-light ms-1">{{ $tabCounts['all'] }}</span>
+										</a>
+									</li>
+									<li class="nav-item" role="presentation">
+										<a class="nav-link text-white text-active-primary pb-4"
+										   id="tab-create-order-link"
+										   data-bs-toggle="tab"
+										   href="#tab_create_order"
+										   role="tab"
+										   aria-controls="tab_create_order"
+										   aria-selected="false">
+											<i class="fa fa-shopping-cart me-2"></i> Create Order
+										</a>
+									</li>
+								</ul>
+
 							</div>
 						</div>
 					</div>
@@ -25,423 +66,390 @@
 							<div class="d-flex flex-column flex-column-fluid">
 								<div id="kt_app_content" class="app-content">
 
-									{{-- Status Alert --}}
-									@if($config && $config->is_active == 'Y')
-									<div class="alert alert-success d-flex align-items-center mb-4">
-										<i class="fa fa-check-circle fs-2 me-3 text-success"></i>
-										<div>
-											<strong>Midtrans Active</strong> &mdash; Environment:
-											<span class="badge badge-{{ $config->environment == 'production' ? 'danger' : 'warning' }}">
-												{{ strtoupper($config->environment) }}
-											</span>
-										</div>
-									</div>
-									@else
-									<div class="alert alert-warning d-flex align-items-center mb-4">
-										<i class="fa fa-exclamation-triangle fs-2 me-3 text-warning"></i>
-										<div><strong>Midtrans Not Active</strong> &mdash; Please configure and activate below.</div>
-									</div>
-									@endif
+									{{-- Tab content card — margin negatif agar overlap di atas toolbar --}}
+									<div class="card card-flush mt-n10 mt-lg-n20 shadow-sm">
+										<div class="card-body pt-6 pb-6">
 
-									{{-- ============================================================ --}}
-									{{-- MAIN TABS NAV --}}
-									{{-- ============================================================ --}}
-									<ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold mb-0" id="midtransMainTab" role="tablist">
-										<li class="nav-item" role="presentation">
-											<a class="nav-link active text-active-primary pb-4"
-											   id="tab-konfigurasi-link"
-											   data-bs-toggle="tab"
-											   href="#tab_konfigurasi"
-											   role="tab"
-											   aria-controls="tab_konfigurasi"
-											   aria-selected="true">
-												<i class="fa fa-cog me-2"></i> Konfigurasi
-											</a>
-										</li>
-										<li class="nav-item" role="presentation">
-											<a class="nav-link text-active-primary pb-4"
-											   id="tab-transaksi-link"
-											   data-bs-toggle="tab"
-											   href="#tab_transaksi"
-											   role="tab"
-											   aria-controls="tab_transaksi"
-											   aria-selected="false">
-												<i class="fa fa-list me-2"></i> Transaksi
-												<span class="badge badge-light-primary ms-1">{{ $tabCounts['all'] }}</span>
-											</a>
-										</li>
-										<li class="nav-item" role="presentation">
-											<a class="nav-link text-active-primary pb-4"
-											   id="tab-create-order-link"
-											   data-bs-toggle="tab"
-											   href="#tab_create_order"
-											   role="tab"
-											   aria-controls="tab_create_order"
-											   aria-selected="false">
-												<i class="fa fa-shopping-cart me-2"></i> Create Order
-											</a>
-										</li>
-									</ul>
-
-									{{-- ============================================================ --}}
-									{{-- TAB CONTENT --}}
-									{{-- ============================================================ --}}
-									<div class="tab-content" id="midtransMainTabContent">
-
-										{{-- ======================================================== --}}
-										{{-- TAB 1: KONFIGURASI --}}
-										{{-- ======================================================== --}}
-										<div class="tab-pane fade show active pt-6" id="tab_konfigurasi" role="tabpanel">
-											<div class="row g-6">
-
-												{{-- CARD API CONFIG --}}
-												<div class="col-xl-7">
-													<div class="card card-flush h-100">
-														<div class="card-header">
-															<h3 class="card-title"><i class="fa fa-cog text-primary me-2"></i> API Configuration</h3>
-														</div>
-														<div class="card-body">
-															<form id="formMidtransConfig">
-																@csrf
-																<div class="row">
-																	<div class="col-md-12 mb-5">
-																		<label class="form-label required fw-bold">Environment</label>
-																		<div class="d-flex gap-4">
-																			<div class="form-check form-check-custom form-check-solid">
-																				<input class="form-check-input" type="radio" name="environment" id="env_sandbox" value="sandbox"
-																					{{ (!$config || $config->environment == 'sandbox') ? 'checked' : '' }}>
-																				<label class="form-check-label" for="env_sandbox">
-																					<span class="badge badge-warning fs-7 px-3 py-2"><i class="fa fa-flask me-1"></i> Sandbox (Testing)</span>
-																				</label>
-																			</div>
-																			<div class="form-check form-check-custom form-check-solid">
-																				<input class="form-check-input" type="radio" name="environment" id="env_production" value="production"
-																					{{ ($config && $config->environment == 'production') ? 'checked' : '' }}>
-																				<label class="form-check-label" for="env_production">
-																					<span class="badge badge-danger fs-7 px-3 py-2"><i class="fa fa-rocket me-1"></i> Production (Live)</span>
-																				</label>
-																			</div>
-																		</div>
-																	</div>
-																	<div class="col-md-6 mb-5">
-																		<label class="form-label required fw-bold">Server Key</label>
-																		<div class="input-group">
-																			<input type="password" class="form-control" id="server_key" name="server_key"
-																				placeholder="SB-Mid-server-xxxxx" value="{{ $config->server_key ?? '' }}">
-																			<button class="btn btn-light-secondary" type="button" onclick="toggleVisibility('server_key', this)"><i class="fa fa-eye"></i></button>
-																		</div>
-																	</div>
-																	<div class="col-md-6 mb-5">
-																		<label class="form-label required fw-bold">Client Key</label>
-																		<div class="input-group">
-																			<input type="password" class="form-control" id="client_key" name="client_key"
-																				placeholder="SB-Mid-client-xxxxx" value="{{ $config->client_key ?? '' }}">
-																			<button class="btn btn-light-secondary" type="button" onclick="toggleVisibility('client_key', this)"><i class="fa fa-eye"></i></button>
-																		</div>
-																	</div>
-																	<div class="col-md-12 mb-5">
-																		<label class="form-label fw-bold">Merchant ID <span class="text-muted">(optional)</span></label>
-																		<input type="text" class="form-control" name="merchant_id"
-																			placeholder="e.g. G123456789" value="{{ $config->merchant_id ?? '' }}">
-																	</div>
-																	<div class="col-md-12 mb-5">
-																		<label class="form-label fw-bold">Webhook / Notification URL <span class="text-muted">(optional)</span></label>
-																		<input type="url" class="form-control" name="webhook_url"
-																			placeholder="https://yourdomain.com/midtrans/webhook" value="{{ $config->webhook_url ?? '' }}">
-																	</div>
-																	<div class="col-md-4 mb-5">
-																		<label class="form-label fw-bold">Finish Redirect URL</label>
-																		<input type="url" class="form-control" name="finish_redirect_url" placeholder="https://..." value="{{ $config->finish_redirect_url ?? '' }}">
-																	</div>
-																	<div class="col-md-4 mb-5">
-																		<label class="form-label fw-bold">Unfinish Redirect URL</label>
-																		<input type="url" class="form-control" name="unfinish_redirect_url" placeholder="https://..." value="{{ $config->unfinish_redirect_url ?? '' }}">
-																	</div>
-																	<div class="col-md-4 mb-5">
-																		<label class="form-label fw-bold">Error Redirect URL</label>
-																		<input type="url" class="form-control" name="error_redirect_url" placeholder="https://..." value="{{ $config->error_redirect_url ?? '' }}">
-																	</div>
-																	<div class="col-md-12 mb-5">
-																		<label class="form-label required fw-bold">Status</label>
-																		<div class="d-flex gap-4">
-																			<div class="form-check form-check-custom form-check-solid">
-																				<input class="form-check-input" type="radio" name="is_active" id="status_active" value="Y"
-																					{{ ($config && $config->is_active == 'Y') ? 'checked' : '' }}>
-																				<label class="form-check-label" for="status_active">Active</label>
-																			</div>
-																			<div class="form-check form-check-custom form-check-solid">
-																				<input class="form-check-input" type="radio" name="is_active" id="status_inactive" value="N"
-																					{{ (!$config || $config->is_active == 'N') ? 'checked' : '' }}>
-																				<label class="form-check-label" for="status_inactive">Inactive</label>
-																			</div>
-																		</div>
-																	</div>
-																</div>
-																<?php if($cek_permit['u']){ ?>
-																<div class="d-flex gap-3">
-																	<button type="submit" class="btn btn-primary"><i class="fa fa-save me-2"></i> Save Configuration</button>
-																	<button type="button" class="btn btn-light-info" id="btnTestConnection"><i class="fa fa-plug me-2"></i> Test Connection</button>
-																</div>
-																<?php } ?>
-															</form>
-														</div>
-													</div>
+											{{-- Status Alert --}}
+											@if($config && $config->is_active == 'Y')
+											<div class="alert alert-success d-flex align-items-center mb-4">
+												<i class="fa fa-check-circle fs-2 me-3 text-success"></i>
+												<div>
+													<strong>Midtrans Active</strong> &mdash; Environment:
+													<span class="badge badge-{{ $config->environment == 'production' ? 'danger' : 'warning' }}">
+														{{ strtoupper($config->environment) }}
+													</span>
 												</div>
+											</div>
+											@else
+											<div class="alert alert-warning d-flex align-items-center mb-4">
+												<i class="fa fa-exclamation-triangle fs-2 me-3 text-warning"></i>
+												<div><strong>Midtrans Not Active</strong> &mdash; Please configure and activate below.</div>
+											</div>
+											@endif
 
-												{{-- CARD PAYMENT TYPES --}}
-												<div class="col-xl-5">
-													<div class="card card-flush h-100">
-														<div class="card-header">
-															<h3 class="card-title"><i class="fa fa-credit-card text-success me-2"></i> Enabled Payment Types</h3>
+											{{-- ============================================================ --}}
+											{{-- TAB CONTENT --}}
+											{{-- ============================================================ --}}
+											<div class="tab-content" id="midtransMainTabContent">
+
+												{{-- ======================================================== --}}
+												{{-- TAB 1: KONFIGURASI --}}
+												{{-- ======================================================== --}}
+												<div class="tab-pane fade show active pt-4" id="tab_konfigurasi" role="tabpanel">
+													<div class="row g-6">
+
+														{{-- CARD API CONFIG --}}
+														<div class="col-xl-7">
+															<div class="card card-flush h-100">
+																<div class="card-header">
+																	<h3 class="card-title"><i class="fa fa-cog text-primary me-2"></i> API Configuration</h3>
+																</div>
+																<div class="card-body">
+																	<form id="formMidtransConfig">
+																		@csrf
+																		<div class="row">
+																			<div class="col-md-12 mb-5">
+																				<label class="form-label required fw-bold">Environment</label>
+																				<div class="d-flex gap-4">
+																					<div class="form-check form-check-custom form-check-solid">
+																						<input class="form-check-input" type="radio" name="environment" id="env_sandbox" value="sandbox"
+																							{{ (!$config || $config->environment == 'sandbox') ? 'checked' : '' }}>
+																						<label class="form-check-label" for="env_sandbox">
+																							<span class="badge badge-warning fs-7 px-3 py-2"><i class="fa fa-flask me-1"></i> Sandbox (Testing)</span>
+																						</label>
+																					</div>
+																					<div class="form-check form-check-custom form-check-solid">
+																						<input class="form-check-input" type="radio" name="environment" id="env_production" value="production"
+																							{{ ($config && $config->environment == 'production') ? 'checked' : '' }}>
+																						<label class="form-check-label" for="env_production">
+																							<span class="badge badge-danger fs-7 px-3 py-2"><i class="fa fa-rocket me-1"></i> Production (Live)</span>
+																						</label>
+																					</div>
+																				</div>
+																			</div>
+																			<div class="col-md-6 mb-5">
+																				<label class="form-label required fw-bold">Server Key</label>
+																				<div class="input-group">
+																					<input type="password" class="form-control" id="server_key" name="server_key"
+																						placeholder="SB-Mid-server-xxxxx" value="{{ $config->server_key ?? '' }}">
+																					<button class="btn btn-light-secondary" type="button" onclick="toggleVisibility('server_key', this)"><i class="fa fa-eye"></i></button>
+																				</div>
+																			</div>
+																			<div class="col-md-6 mb-5">
+																				<label class="form-label required fw-bold">Client Key</label>
+																				<div class="input-group">
+																					<input type="password" class="form-control" id="client_key" name="client_key"
+																						placeholder="SB-Mid-client-xxxxx" value="{{ $config->client_key ?? '' }}">
+																					<button class="btn btn-light-secondary" type="button" onclick="toggleVisibility('client_key', this)"><i class="fa fa-eye"></i></button>
+																				</div>
+																			</div>
+																			<div class="col-md-12 mb-5">
+																				<label class="form-label fw-bold">Merchant ID <span class="text-muted">(optional)</span></label>
+																				<input type="text" class="form-control" name="merchant_id"
+																					placeholder="e.g. G123456789" value="{{ $config->merchant_id ?? '' }}">
+																			</div>
+																			<div class="col-md-12 mb-5">
+																				<label class="form-label fw-bold">Webhook / Notification URL <span class="text-muted">(optional)</span></label>
+																				<input type="url" class="form-control" name="webhook_url"
+																					placeholder="https://yourdomain.com/midtrans/webhook" value="{{ $config->webhook_url ?? '' }}">
+																			</div>
+																			<div class="col-md-4 mb-5">
+																				<label class="form-label fw-bold">Finish Redirect URL</label>
+																				<input type="url" class="form-control" name="finish_redirect_url" placeholder="https://..." value="{{ $config->finish_redirect_url ?? '' }}">
+																			</div>
+																			<div class="col-md-4 mb-5">
+																				<label class="form-label fw-bold">Unfinish Redirect URL</label>
+																				<input type="url" class="form-control" name="unfinish_redirect_url" placeholder="https://..." value="{{ $config->unfinish_redirect_url ?? '' }}">
+																			</div>
+																			<div class="col-md-4 mb-5">
+																				<label class="form-label fw-bold">Error Redirect URL</label>
+																				<input type="url" class="form-control" name="error_redirect_url" placeholder="https://..." value="{{ $config->error_redirect_url ?? '' }}">
+																			</div>
+																			<div class="col-md-12 mb-5">
+																				<label class="form-label required fw-bold">Status</label>
+																				<div class="d-flex gap-4">
+																					<div class="form-check form-check-custom form-check-solid">
+																						<input class="form-check-input" type="radio" name="is_active" id="status_active" value="Y"
+																							{{ ($config && $config->is_active == 'Y') ? 'checked' : '' }}>
+																						<label class="form-check-label" for="status_active">Active</label>
+																					</div>
+																					<div class="form-check form-check-custom form-check-solid">
+																						<input class="form-check-input" type="radio" name="is_active" id="status_inactive" value="N"
+																							{{ (!$config || $config->is_active == 'N') ? 'checked' : '' }}>
+																						<label class="form-check-label" for="status_inactive">Inactive</label>
+																					</div>
+																				</div>
+																			</div>
+																		</div>
+																		<?php if($cek_permit['u']){ ?>
+																		<div class="d-flex gap-3">
+																			<button type="submit" class="btn btn-primary"><i class="fa fa-save me-2"></i> Save Configuration</button>
+																			<button type="button" class="btn btn-light-info" id="btnTestConnection"><i class="fa fa-plug me-2"></i> Test Connection</button>
+																		</div>
+																		<?php } ?>
+																	</form>
+																</div>
+															</div>
+														</div>
+
+														{{-- CARD PAYMENT TYPES --}}
+														<div class="col-xl-5">
+															<div class="card card-flush h-100">
+																<div class="card-header">
+																	<h3 class="card-title"><i class="fa fa-credit-card text-success me-2"></i> Enabled Payment Types</h3>
+																	<div class="card-toolbar">
+																		<button class="btn btn-sm btn-light-secondary" type="button" id="btnSelectAll">Select All</button>
+																		<button class="btn btn-sm btn-light-secondary ms-2" type="button" id="btnDeselectAll">Deselect All</button>
+																	</div>
+																</div>
+																<div class="card-body pt-0">
+																	<div class="row g-3" id="paymentTypesContainer">
+																		@foreach($allPaymentTypes as $typeKey => $typeLabel)
+																		<div class="col-12">
+																			<label class="d-flex align-items-center cursor-pointer border rounded px-4 py-3 payment-type-item {{ in_array($typeKey, $selectedTypes) ? 'border-primary bg-light-primary' : 'border-gray-200' }}">
+																				<input type="checkbox" class="form-check-input me-3 payment-type-checkbox"
+																					value="{{ $typeKey }}" {{ in_array($typeKey, $selectedTypes) ? 'checked' : '' }}>
+																				<span class="fs-6">{{ $typeLabel }}</span>
+																			</label>
+																		</div>
+																		@endforeach
+																	</div>
+																</div>
+															</div>
+														</div>
+
+														{{-- TRANSACTION TOOLS --}}
+														<div class="col-xl-12 mt-4">
+															<div class="row g-6">
+																<div class="col-xl-6">
+																	<div class="card card-flush">
+																		<div class="card-header"><h3 class="card-title"><i class="fa fa-search text-info me-2"></i> Get Transaction Status</h3></div>
+																		<div class="card-body">
+																			<div class="input-group">
+																				<input type="text" class="form-control" id="status_order_id" placeholder="Enter Order ID">
+																				<button class="btn btn-info" id="btnGetStatus"><i class="fa fa-search me-1"></i> Check</button>
+																			</div>
+																			<div id="statusResult" class="mt-3"></div>
+																		</div>
+																	</div>
+																</div>
+																<div class="col-xl-6">
+																	<div class="card card-flush">
+																		<div class="card-header"><h3 class="card-title"><i class="fa fa-tasks text-warning me-2"></i> Transaction Actions</h3></div>
+																		<div class="card-body">
+																			<label class="form-label fw-bold">Order ID</label>
+																			<input type="text" class="form-control mb-3" id="action_order_id" placeholder="Enter Order ID">
+																			<div class="d-flex flex-wrap gap-2">
+																				<button class="btn btn-light-success btn-sm" id="btnApprove"><i class="fa fa-check me-1"></i> Approve</button>
+																				<button class="btn btn-light-danger btn-sm" id="btnCancel"><i class="fa fa-times me-1"></i> Cancel</button>
+																				<button class="btn btn-light-secondary btn-sm" id="btnExpire"><i class="fa fa-clock me-1"></i> Expire</button>
+																			</div>
+																			<div id="actionResult" class="mt-3"></div>
+																		</div>
+																	</div>
+																</div>
+																<div class="col-xl-6">
+																	<div class="card card-flush">
+																		<div class="card-header"><h3 class="card-title"><i class="fa fa-undo text-danger me-2"></i> Refund Transaction</h3></div>
+																		<div class="card-body">
+																			<div class="mb-3"><label class="form-label fw-bold">Order ID</label><input type="text" class="form-control" id="refund_order_id" placeholder="Enter Order ID"></div>
+																			<div class="mb-3"><label class="form-label fw-bold">Refund Amount (IDR)</label><input type="number" class="form-control" id="refund_amount" placeholder="e.g. 50000" min="1"></div>
+																			<div class="mb-3"><label class="form-label fw-bold">Reason</label><input type="text" class="form-control" id="refund_reason" placeholder="Customer request refund"></div>
+																			<button class="btn btn-danger" id="btnRefund"><i class="fa fa-undo me-1"></i> Process Refund</button>
+																			<div id="refundResult" class="mt-3"></div>
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</div>{{-- end col-xl-12 --}}
+
+													</div>{{-- end row g-6 --}}
+												</div>{{-- end tab_konfigurasi --}}
+
+												{{-- ======================================================== --}}
+												{{-- TAB 2: TRANSAKSI --}}
+												{{-- ======================================================== --}}
+												<div class="tab-pane fade pt-4" id="tab_transaksi" role="tabpanel">
+													<div class="card card-flush">
+														<div class="card-header align-items-center py-5 gap-2">
+															<h3 class="card-title"><i class="fa fa-list text-primary me-2"></i> Riwayat Transaksi Midtrans</h3>
 															<div class="card-toolbar">
-																<button class="btn btn-sm btn-light-secondary" type="button" id="btnSelectAll">Select All</button>
-																<button class="btn btn-sm btn-light-secondary ms-2" type="button" id="btnDeselectAll">Deselect All</button>
+																<button class="btn btn-sm btn-light-success" id="btnSyncAll"><i class="fa fa-sync-alt me-1"></i> Sync All</button>
 															</div>
 														</div>
 														<div class="card-body pt-0">
-															<div class="row g-3" id="paymentTypesContainer">
-																@foreach($allPaymentTypes as $typeKey => $typeLabel)
-																<div class="col-12">
-																	<label class="d-flex align-items-center cursor-pointer border rounded px-4 py-3 payment-type-item {{ in_array($typeKey, $selectedTypes) ? 'border-primary bg-light-primary' : 'border-gray-200' }}">
-																		<input type="checkbox" class="form-check-input me-3 payment-type-checkbox"
-																			value="{{ $typeKey }}" {{ in_array($typeKey, $selectedTypes) ? 'checked' : '' }}>
-																		<span class="fs-6">{{ $typeLabel }}</span>
-																	</label>
-																</div>
-																@endforeach
+															{{-- Status Filter Pills --}}
+															<div class="d-flex flex-wrap gap-2 mb-5 mt-4">
+																<button class="btn btn-sm btn-primary filter-status active" data-status="all">
+																	All <span class="badge badge-light ms-1">{{ $tabCounts['all'] }}</span>
+																</button>
+																<button class="btn btn-sm btn-light-warning filter-status" data-status="pending">
+																	Pending <span class="badge badge-warning ms-1">{{ $tabCounts['pending'] }}</span>
+																</button>
+																<button class="btn btn-sm btn-light-success filter-status" data-status="settlement">
+																	Settlement <span class="badge badge-success ms-1">{{ $tabCounts['settlement'] }}</span>
+																</button>
+																<button class="btn btn-sm btn-light-danger filter-status" data-status="cancel">
+																	Cancel <span class="badge badge-danger ms-1">{{ $tabCounts['cancel'] }}</span>
+																</button>
+																<button class="btn btn-sm btn-light-secondary filter-status" data-status="expire">
+																	Expire <span class="badge badge-secondary ms-1">{{ $tabCounts['expire'] }}</span>
+																</button>
+																<button class="btn btn-sm btn-light-danger filter-status" data-status="deny">
+																	Deny <span class="badge badge-danger ms-1">{{ $tabCounts['deny'] }}</span>
+																</button>
+																<button class="btn btn-sm btn-light-info filter-status" data-status="refund">
+																	Refund <span class="badge badge-info ms-1">{{ $tabCounts['refund'] }}</span>
+																</button>
 															</div>
+
+															{{-- Datatable --}}
+															<table id="dtTransaksi" class="table table-striped table-row-dashed table-row-gray-300 align-middle gs-0 gy-4 w-100">
+																<thead>
+																	<tr class="fw-bold text-muted bg-light">
+																		<th class="ps-4 min-w-50px">#</th>
+																		<th class="min-w-150px">Order ID</th>
+																		<th class="min-w-150px">Transaction ID</th>
+																		<th class="min-w-100px">Status</th>
+																		<th class="min-w-120px">Payment Type</th>
+																		<th class="min-w-120px">Amount</th>
+																		<th class="min-w-130px">Tgl Transaksi</th>
+																		<th class="min-w-80px text-center">Aksi</th>
+																	</tr>
+																</thead>
+																<tbody></tbody>
+															</table>
 														</div>
 													</div>
-												</div>
+												</div>{{-- end tab_transaksi --}}
 
-												{{-- TRANSACTION TOOLS --}}
-												<div class="col-xl-12 mt-4">
+												{{-- ======================================================== --}}
+												{{-- TAB 3: CREATE ORDER --}}
+												{{-- ======================================================== --}}
+												<div class="tab-pane fade pt-4" id="tab_create_order" role="tabpanel">
 													<div class="row g-6">
+
+														{{-- SNAP TOKEN CARD --}}
 														<div class="col-xl-6">
-															<div class="card card-flush">
-																<div class="card-header"><h3 class="card-title"><i class="fa fa-search text-info me-2"></i> Get Transaction Status</h3></div>
-																<div class="card-body">
-																	<div class="input-group">
-																		<input type="text" class="form-control" id="status_order_id" placeholder="Enter Order ID">
-																		<button class="btn btn-info" id="btnGetStatus"><i class="fa fa-search me-1"></i> Check</button>
+															<div class="card card-flush h-100">
+																<div class="card-header">
+																	<h3 class="card-title"><i class="fa fa-key text-primary me-2"></i> SNAP Token &amp; Payment Popup</h3>
+																	<div class="card-toolbar">
+																		<span class="badge badge-light-primary">via /snap/v1/transactions</span>
 																	</div>
-																	<div id="statusResult" class="mt-3"></div>
 																</div>
-															</div>
-														</div>
-														<div class="col-xl-6">
-															<div class="card card-flush">
-																<div class="card-header"><h3 class="card-title"><i class="fa fa-tasks text-warning me-2"></i> Transaction Actions</h3></div>
 																<div class="card-body">
-																	<label class="form-label fw-bold">Order ID</label>
-																	<input type="text" class="form-control mb-3" id="action_order_id" placeholder="Enter Order ID">
-																	<div class="d-flex flex-wrap gap-2">
-																		<button class="btn btn-light-success btn-sm" id="btnApprove"><i class="fa fa-check me-1"></i> Approve</button>
-																		<button class="btn btn-light-danger btn-sm" id="btnCancel"><i class="fa fa-times me-1"></i> Cancel</button>
-																		<button class="btn btn-light-secondary btn-sm" id="btnExpire"><i class="fa fa-clock me-1"></i> Expire</button>
+																	<p class="text-muted fs-7 mb-5">Generate SNAP token lalu tampilkan payment popup Midtrans langsung di halaman ini.</p>
+																	<div class="row g-3">
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">Order ID <span class="text-danger">*</span></label>
+																			<input type="text" class="form-control" id="snap_order_id" placeholder="order-{{ date('YmdHis') }}">
+																		</div>
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">Amount (IDR) <span class="text-danger">*</span></label>
+																			<input type="number" class="form-control" id="snap_amount" placeholder="100000" min="1">
+																		</div>
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
+																			<input type="text" class="form-control" id="snap_first_name" placeholder="John">
+																		</div>
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">Last Name</label>
+																			<input type="text" class="form-control" id="snap_last_name" placeholder="Doe">
+																		</div>
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+																			<input type="email" class="form-control" id="snap_email" placeholder="john@example.com">
+																		</div>
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">Phone <span class="text-danger">*</span></label>
+																			<input type="text" class="form-control" id="snap_phone" placeholder="08xxxxxxxxxx">
+																		</div>
 																	</div>
-																	<div id="actionResult" class="mt-3"></div>
+																	<div class="d-flex gap-2 mt-4">
+																		<button class="btn btn-primary" id="btnCreateSnap">
+																			<i class="fa fa-key me-1"></i> Generate Token &amp; Bayar
+																		</button>
+																		<button class="btn btn-light-secondary" id="btnGenerateOrderId" type="button">
+																			<i class="fa fa-random me-1"></i> Auto Order ID
+																		</button>
+																	</div>
+																	<div id="snapResult" class="mt-3"></div>
 																</div>
 															</div>
 														</div>
+
+														{{-- DIRECT CHARGE CARD --}}
 														<div class="col-xl-6">
-															<div class="card card-flush">
-																<div class="card-header"><h3 class="card-title"><i class="fa fa-undo text-danger me-2"></i> Refund Transaction</h3></div>
+															<div class="card card-flush h-100">
+																<div class="card-header">
+																	<h3 class="card-title"><i class="fa fa-bolt text-warning me-2"></i> Direct Charge API</h3>
+																	<div class="card-toolbar">
+																		<span class="badge badge-light-warning">via /v2/charge</span>
+																	</div>
+																</div>
 																<div class="card-body">
-																	<div class="mb-3"><label class="form-label fw-bold">Order ID</label><input type="text" class="form-control" id="refund_order_id" placeholder="Enter Order ID"></div>
-																	<div class="mb-3"><label class="form-label fw-bold">Refund Amount (IDR)</label><input type="number" class="form-control" id="refund_amount" placeholder="e.g. 50000" min="1"></div>
-																	<div class="mb-3"><label class="form-label fw-bold">Reason</label><input type="text" class="form-control" id="refund_reason" placeholder="Customer request refund"></div>
-																	<button class="btn btn-danger" id="btnRefund"><i class="fa fa-undo me-1"></i> Process Refund</button>
-																	<div id="refundResult" class="mt-3"></div>
+																	<p class="text-muted fs-7 mb-5">Buat charge langsung tanpa popup. Cocok untuk VA, QRIS, dan e-wallet via API.</p>
+																	<div class="row g-3">
+																		<div class="col-md-12">
+																			<label class="form-label fw-bold">Payment Type <span class="text-danger">*</span></label>
+																			<select class="form-select" id="charge_payment_type">
+																				<option value="">-- Pilih Metode Pembayaran --</option>
+																				<optgroup label="Bank Transfer">
+																					<option value="bca_va">BCA Virtual Account</option>
+																					<option value="bni_va">BNI Virtual Account</option>
+																					<option value="bri_va">BRI Virtual Account</option>
+																					<option value="permata_va">Permata Virtual Account</option>
+																					<option value="other_va">Other Virtual Account</option>
+																				</optgroup>
+																				<optgroup label="E-Wallet">
+																					<option value="gopay">GoPay</option>
+																					<option value="shopeepay">ShopeePay</option>
+																					<option value="qris">QRIS</option>
+																				</optgroup>
+																				<optgroup label="Convenience Store">
+																					<option value="indomaret">Indomaret</option>
+																					<option value="alfamart">Alfamart</option>
+																				</optgroup>
+																			</select>
+																		</div>
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">Order ID <span class="text-danger">*</span></label>
+																			<input type="text" class="form-control" id="charge_order_id" placeholder="order-{{ date('YmdHis') }}">
+																		</div>
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">Amount (IDR) <span class="text-danger">*</span></label>
+																			<input type="number" class="form-control" id="charge_amount" placeholder="100000" min="1">
+																		</div>
+																		<div class="col-md-12">
+																			<label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
+																			<input type="text" class="form-control" id="charge_first_name" placeholder="John">
+																		</div>
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+																			<input type="email" class="form-control" id="charge_email" placeholder="john@example.com">
+																		</div>
+																		<div class="col-md-6">
+																			<label class="form-label fw-bold">Phone <span class="text-danger">*</span></label>
+																			<input type="text" class="form-control" id="charge_phone" placeholder="08xxxxxxxxxx">
+																		</div>
+																	</div>
+																	<button class="btn btn-warning mt-4" id="btnCreateCharge">
+																		<i class="fa fa-bolt me-1"></i> Create Charge
+																	</button>
+																	<div id="chargeResult" class="mt-3"></div>
 																</div>
 															</div>
 														</div>
-													</div>
-												</div>{{-- end col-xl-12 --}}
 
-											</div>{{-- end row g-6 --}}
-										</div>{{-- end tab_konfigurasi --}}
+													</div>{{-- end row g-6 --}}
+												</div>{{-- end tab_create_order --}}
 
-										{{-- ======================================================== --}}
-										{{-- TAB 2: TRANSAKSI --}}
-										{{-- ======================================================== --}}
-										<div class="tab-pane fade pt-6" id="tab_transaksi" role="tabpanel">
-											<div class="card card-flush">
-												<div class="card-header align-items-center py-5 gap-2">
-													<h3 class="card-title"><i class="fa fa-list text-primary me-2"></i> Riwayat Transaksi Midtrans</h3>
-													<div class="card-toolbar">
-														<button class="btn btn-sm btn-light-success" id="btnSyncAll"><i class="fa fa-sync-alt me-1"></i> Sync All</button>
-													</div>
-												</div>
-												<div class="card-body pt-0">
-													{{-- Status Filter Pills --}}
-													<div class="d-flex flex-wrap gap-2 mb-5 mt-4">
-														<button class="btn btn-sm btn-primary filter-status active" data-status="all">
-															All <span class="badge badge-light ms-1">{{ $tabCounts['all'] }}</span>
-														</button>
-														<button class="btn btn-sm btn-light-warning filter-status" data-status="pending">
-															Pending <span class="badge badge-warning ms-1">{{ $tabCounts['pending'] }}</span>
-														</button>
-														<button class="btn btn-sm btn-light-success filter-status" data-status="settlement">
-															Settlement <span class="badge badge-success ms-1">{{ $tabCounts['settlement'] }}</span>
-														</button>
-														<button class="btn btn-sm btn-light-danger filter-status" data-status="cancel">
-															Cancel <span class="badge badge-danger ms-1">{{ $tabCounts['cancel'] }}</span>
-														</button>
-														<button class="btn btn-sm btn-light-secondary filter-status" data-status="expire">
-															Expire <span class="badge badge-secondary ms-1">{{ $tabCounts['expire'] }}</span>
-														</button>
-														<button class="btn btn-sm btn-light-danger filter-status" data-status="deny">
-															Deny <span class="badge badge-danger ms-1">{{ $tabCounts['deny'] }}</span>
-														</button>
-														<button class="btn btn-sm btn-light-info filter-status" data-status="refund">
-															Refund <span class="badge badge-info ms-1">{{ $tabCounts['refund'] }}</span>
-														</button>
-													</div>
+											</div>{{-- end tab-content --}}
 
-													{{-- Datatable --}}
-													<table id="dtTransaksi" class="table table-striped table-row-dashed table-row-gray-300 align-middle gs-0 gy-4 w-100">
-														<thead>
-															<tr class="fw-bold text-muted bg-light">
-																<th class="ps-4 min-w-50px">#</th>
-																<th class="min-w-150px">Order ID</th>
-																<th class="min-w-150px">Transaction ID</th>
-																<th class="min-w-100px">Status</th>
-																<th class="min-w-120px">Payment Type</th>
-																<th class="min-w-120px">Amount</th>
-																<th class="min-w-130px">Tgl Transaksi</th>
-																<th class="min-w-80px text-center">Aksi</th>
-															</tr>
-														</thead>
-														<tbody></tbody>
-													</table>
-												</div>
-											</div>
-										</div>{{-- end tab_transaksi --}}
-
-										{{-- ======================================================== --}}
-										{{-- TAB 3: CREATE ORDER --}}
-										{{-- ======================================================== --}}
-										<div class="tab-pane fade pt-6" id="tab_create_order" role="tabpanel">
-											<div class="row g-6">
-
-												{{-- SNAP TOKEN CARD --}}
-												<div class="col-xl-6">
-													<div class="card card-flush h-100">
-														<div class="card-header">
-															<h3 class="card-title"><i class="fa fa-key text-primary me-2"></i> SNAP Token &amp; Payment Popup</h3>
-															<div class="card-toolbar">
-																<span class="badge badge-light-primary">via /snap/v1/transactions</span>
-															</div>
-														</div>
-														<div class="card-body">
-															<p class="text-muted fs-7 mb-5">Generate SNAP token lalu tampilkan payment popup Midtrans langsung di halaman ini.</p>
-															<div class="row g-3">
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">Order ID <span class="text-danger">*</span></label>
-																	<input type="text" class="form-control" id="snap_order_id" placeholder="order-{{ date('YmdHis') }}">
-																</div>
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">Amount (IDR) <span class="text-danger">*</span></label>
-																	<input type="number" class="form-control" id="snap_amount" placeholder="100000" min="1">
-																</div>
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
-																	<input type="text" class="form-control" id="snap_first_name" placeholder="John">
-																</div>
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">Last Name</label>
-																	<input type="text" class="form-control" id="snap_last_name" placeholder="Doe">
-																</div>
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
-																	<input type="email" class="form-control" id="snap_email" placeholder="john@example.com">
-																</div>
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">Phone <span class="text-danger">*</span></label>
-																	<input type="text" class="form-control" id="snap_phone" placeholder="08xxxxxxxxxx">
-																</div>
-															</div>
-															<div class="d-flex gap-2 mt-4">
-																<button class="btn btn-primary" id="btnCreateSnap">
-																	<i class="fa fa-key me-1"></i> Generate Token &amp; Bayar
-																</button>
-																<button class="btn btn-light-secondary" id="btnGenerateOrderId" type="button">
-																	<i class="fa fa-random me-1"></i> Auto Order ID
-																</button>
-															</div>
-															<div id="snapResult" class="mt-3"></div>
-														</div>
-													</div>
-												</div>
-
-												{{-- DIRECT CHARGE CARD --}}
-												<div class="col-xl-6">
-													<div class="card card-flush h-100">
-														<div class="card-header">
-															<h3 class="card-title"><i class="fa fa-bolt text-warning me-2"></i> Direct Charge API</h3>
-															<div class="card-toolbar">
-																<span class="badge badge-light-warning">via /v2/charge</span>
-															</div>
-														</div>
-														<div class="card-body">
-															<p class="text-muted fs-7 mb-5">Buat charge langsung tanpa popup. Cocok untuk VA, QRIS, dan e-wallet via API.</p>
-															<div class="row g-3">
-																<div class="col-md-12">
-																	<label class="form-label fw-bold">Payment Type <span class="text-danger">*</span></label>
-																	<select class="form-select" id="charge_payment_type">
-																		<option value="">-- Pilih Metode Pembayaran --</option>
-																		<optgroup label="Bank Transfer">
-																			<option value="bca_va">BCA Virtual Account</option>
-																			<option value="bni_va">BNI Virtual Account</option>
-																			<option value="bri_va">BRI Virtual Account</option>
-																			<option value="permata_va">Permata Virtual Account</option>
-																			<option value="other_va">Other Virtual Account</option>
-																		</optgroup>
-																		<optgroup label="E-Wallet">
-																			<option value="gopay">GoPay</option>
-																			<option value="shopeepay">ShopeePay</option>
-																			<option value="qris">QRIS</option>
-																		</optgroup>
-																		<optgroup label="Convenience Store">
-																			<option value="indomaret">Indomaret</option>
-																			<option value="alfamart">Alfamart</option>
-																		</optgroup>
-																	</select>
-																</div>
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">Order ID <span class="text-danger">*</span></label>
-																	<input type="text" class="form-control" id="charge_order_id" placeholder="order-{{ date('YmdHis') }}">
-																</div>
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">Amount (IDR) <span class="text-danger">*</span></label>
-																	<input type="number" class="form-control" id="charge_amount" placeholder="100000" min="1">
-																</div>
-																<div class="col-md-12">
-																	<label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
-																	<input type="text" class="form-control" id="charge_first_name" placeholder="John">
-																</div>
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
-																	<input type="email" class="form-control" id="charge_email" placeholder="john@example.com">
-																</div>
-																<div class="col-md-6">
-																	<label class="form-label fw-bold">Phone <span class="text-danger">*</span></label>
-																	<input type="text" class="form-control" id="charge_phone" placeholder="08xxxxxxxxxx">
-																</div>
-															</div>
-															<button class="btn btn-warning mt-4" id="btnCreateCharge">
-																<i class="fa fa-bolt me-1"></i> Create Charge
-															</button>
-															<div id="chargeResult" class="mt-3"></div>
-														</div>
-													</div>
-												</div>
-
-											</div>{{-- end row g-6 --}}
-										</div>{{-- end tab_create_order --}}
-
-									</div>{{-- end tab-content --}}
+										</div>{{-- end card-body --}}
+									</div>{{-- end card wrapper --}}
 
 								</div>{{-- end kt_app_content --}}
 							</div>
@@ -738,8 +746,13 @@
     function generateOrderId() {
         var now = new Date();
         var pad = function(n){ return String(n).padStart(2,'0'); };
-        return 'ORD-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate())
-            + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+        return 'ORD-' +
+            now.getFullYear() +
+            pad(now.getMonth() + 1) +
+            pad(now.getDate()) +
+            pad(now.getHours()) +
+            pad(now.getMinutes()) +
+            pad(now.getSeconds());
     }
 
     $('#btnGenerateOrderId').on('click', function () {
@@ -747,7 +760,7 @@
     });
 
     // ================================================================
-    // CREATE SNAP TOKEN + OPEN PAYMENT POPUP
+    // CREATE SNAP TOKEN & OPEN PAYMENT POPUP
     // ================================================================
     $('#btnCreateSnap').on('click', function () {
         var orderId   = $('#snap_order_id').val().trim();
@@ -758,12 +771,11 @@
         var phone     = $('#snap_phone').val().trim();
 
         if (!orderId || !amount || !firstName || !email || !phone) {
-            return Swal.fire({ icon: 'warning', title: 'Validasi', text: 'Lengkapi semua field yang bertanda bintang (*).' });
+            return Swal.fire({ icon: 'warning', title: 'Input', text: 'Lengkapi semua field wajib.' });
         }
 
         var btn = $(this);
-        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Membuat token...');
-        $('#snapResult').html('');
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Generating...');
 
         $.ajax({
             url: '{{ route("createMidtransSnapTokenAction") }}',
@@ -780,35 +792,29 @@
             success: function (res) {
                 btn.prop('disabled', false).html('<i class="fa fa-key me-1"></i> Generate Token &amp; Bayar');
                 if (res.success && res.data && res.data.token) {
-                    var token = res.data.token;
-                    $('#snapResult').html(
-                        '<div class="alert alert-success d-flex align-items-center gap-3 mt-2">' +
-                        '<i class="fa fa-check-circle fs-3 text-success"></i>' +
-                        '<div><strong>Token berhasil dibuat!</strong><br>' +
-                        '<small class="text-muted">Token: <code>' + token + '</code></small></div>' +
-                        '</div>'
-                    );
-                    // Buka Midtrans Snap popup
+                    $('#snapResult').html('<div class="alert alert-success mt-2"><i class="fa fa-check me-2"></i>Token berhasil dibuat. Membuka payment popup...</div>');
                     loadSnapScript(function () {
-                        snap.pay(token, {
+                        window.snap.pay(res.data.token, {
                             onSuccess: function (result) {
-                                Swal.fire({ icon: 'success', title: 'Pembayaran Berhasil!', text: 'Order ID: ' + result.order_id + ' | Status: ' + result.transaction_status });
-                                if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
+                                Swal.fire({ icon: 'success', title: 'Pembayaran Berhasil!', text: 'Order ID: ' + result.order_id });
+                                $('#snapResult').html('<div class="alert alert-success mt-2">Pembayaran berhasil! Order ID: ' + result.order_id + '</div>');
                             },
                             onPending: function (result) {
-                                Swal.fire({ icon: 'info', title: 'Pembayaran Pending', text: 'Order ID: ' + result.order_id + ' menunggu konfirmasi.' });
+                                Swal.fire({ icon: 'info', title: 'Menunggu Pembayaran', text: 'Order ID: ' + result.order_id });
+                                $('#snapResult').html('<div class="alert alert-warning mt-2">Pending. Order ID: ' + result.order_id + '</div>');
                             },
                             onError: function (result) {
-                                Swal.fire({ icon: 'error', title: 'Pembayaran Gagal', text: result.status_message || 'Terjadi kesalahan.' });
+                                Swal.fire({ icon: 'error', title: 'Pembayaran Gagal', text: result.status_message });
+                                $('#snapResult').html('<div class="alert alert-danger mt-2">Error: ' + result.status_message + '</div>');
                             },
                             onClose: function () {
-                                Swal.fire({ icon: 'warning', title: 'Popup Ditutup', text: 'Anda menutup halaman pembayaran sebelum menyelesaikan transaksi.', timer: 2000, showConfirmButton: false });
+                                $('#snapResult').html('<div class="alert alert-secondary mt-2">Popup ditutup oleh user.</div>');
                             }
                         });
                     });
                 } else {
-                    var errMsg = (res.data && res.data.error_messages) ? res.data.error_messages.join(', ') : (res.message || 'Gagal membuat token.');
-                    $('#snapResult').html('<div class="alert alert-danger mt-2"><strong>Gagal:</strong> ' + errMsg + '</div>');
+                    var errMsg = (res.data && res.data.error_messages) ? res.data.error_messages.join(', ') : res.message;
+                    $('#snapResult').html('<div class="alert alert-danger mt-2"><i class="fa fa-times me-2"></i>' + errMsg + '</div>');
                 }
             },
             error: function (xhr) {
@@ -831,12 +837,11 @@
         var phone       = $('#charge_phone').val().trim();
 
         if (!paymentType || !orderId || !amount || !firstName || !email || !phone) {
-            return Swal.fire({ icon: 'warning', title: 'Validasi', text: 'Lengkapi semua field yang bertanda bintang (*).' });
+            return Swal.fire({ icon: 'warning', title: 'Input', text: 'Lengkapi semua field wajib.' });
         }
 
         var btn = $(this);
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Processing...');
-        $('#chargeResult').html('');
 
         $.ajax({
             url: '{{ route("createMidtransChargeAction") }}',
@@ -852,21 +857,10 @@
             },
             success: function (res) {
                 btn.prop('disabled', false).html('<i class="fa fa-bolt me-1"></i> Create Charge');
-                if (res.success && res.data) {
-                    var status = res.data.transaction_status || res.data.status_code;
-                    var isOk   = ['200','201'].indexOf(String(res.data.status_code)) !== -1;
-                    var color  = isOk ? 'success' : 'warning';
-                    var html   = '<div class="alert alert-' + color + ' mt-2">' +
-                                 '<strong>Status: ' + (res.data.status_message || '-') + '</strong>' +
-                                 (res.data.va_numbers ? '<br>VA Number: <code>' + res.data.va_numbers[0].va_number + '</code> (' + res.data.va_numbers[0].bank.toUpperCase() + ')' : '') +
-                                 (res.data.actions ? '<br><small>Scan/Pay URL tersedia di response JSON.</small>' : '') +
-                                 '</div>' +
-                                 '<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:250px">' + JSON.stringify(res.data, null, 2) + '</pre>';
-                    $('#chargeResult').html(html);
-                    if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
+                if (res.success) {
+                    $('#chargeResult').html('<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:300px">' + JSON.stringify(res.data, null, 2) + '</pre>');
                 } else {
-                    var errMsg = res.message || 'Gagal membuat charge.';
-                    $('#chargeResult').html('<div class="alert alert-danger mt-2"><strong>Gagal:</strong> ' + errMsg + '</div>');
+                    $('#chargeResult').html('<div class="alert alert-danger mt-2">' + res.message + '</div>');
                 }
             },
             error: function (xhr) {
@@ -877,15 +871,18 @@
         });
     });
 
-    window.toggleVisibility = function (inputId, btn) {
-        var input = document.getElementById(inputId);
+    // ================================================================
+    // TOGGLE PASSWORD VISIBILITY
+    // ================================================================
+    window.toggleVisibility = function (fieldId, btn) {
+        var input = document.getElementById(fieldId);
         var icon  = btn.querySelector('i');
         if (input.type === 'password') {
             input.type = 'text';
-            icon.classList.replace('fa-eye', 'fa-eye-slash');
+            icon.className = 'fa fa-eye-slash';
         } else {
             input.type = 'password';
-            icon.classList.replace('fa-eye-slash', 'fa-eye');
+            icon.className = 'fa fa-eye';
         }
     };
 

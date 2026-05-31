@@ -29,8 +29,8 @@
 
 										<div class="card-header card-header-stretch border-bottom border-gray-200 d-flex flex-column align-items-stretch pt-5 pb-0 gap-3">
 
-											<div class="d-flex align-items-center justify-content-between">
-												<h3 class="fw-bold text-gray-800 mb-0">
+											<div class="d-flex align-items-center justify-content-between py-5">
+												<h3 class="fw-bold text-gray-800 mb-0 mt-5 ">
 													<i class="fa fa-credit-card text-primary me-2"></i> Midtrans Gateway
 												</h3>
 												@if($config && $config->is_active == 'Y')

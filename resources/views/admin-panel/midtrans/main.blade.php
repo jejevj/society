@@ -335,23 +335,15 @@
 @include('admin-panel.layouts.footer')
 
 {{-- ================================================================ --}}
-{{-- SCRIPTS: diletakkan SETELAH footer agar bundle sudah ter-load     --}}
+{{-- SCRIPTS --}}
 {{-- ================================================================ --}}
 <script>
 (function () {
-    // ============================================================
-    // INISIALISASI NAVBAR & TAB
-    // Gunakan window.onload agar semua bundle (KTMenu, Bootstrap)
-    // sudah benar-benar ter-load sebelum dijalankan
-    // ============================================================
     window.addEventListener('load', function () {
-
-        // Re-init KTMenu untuk navbar dropdown
         if (typeof KTMenu !== 'undefined') {
             KTMenu.init();
         }
 
-        // Inisialisasi Bootstrap Tab secara manual (fallback)
         var tabLinks = document.querySelectorAll('#midtransMainTab [data-bs-toggle="tab"]');
         tabLinks.forEach(function (el) {
             el.addEventListener('click', function (e) {
@@ -375,9 +367,6 @@
         });
     });
 
-    // ============================================================
-    // DATATABLE TRANSAKSI
-    // ============================================================
     var dtTransaksi        = null;
     var currentStatus      = 'all';
     window._dtTransaksiLoaded = false;
@@ -418,7 +407,6 @@
         window._dtTransaksiLoaded = true;
     }
 
-    // Filter pills
     $(document).on('click', '.filter-status', function () {
         $('.filter-status').removeClass('active btn-primary').addClass('btn-light-secondary');
         $(this).removeClass('btn-light-secondary').addClass('active btn-primary');
@@ -431,7 +419,6 @@
         }
     });
 
-    // Sync row
     $(document).on('click', '.btn-sync-row', function () {
         var orderId = $(this).data('order');
         var btn     = $(this);
@@ -455,9 +442,6 @@
         });
     });
 
-    // ============================================================
-    // FORM CONFIG
-    // ============================================================
     $('#formMidtransConfig').on('submit', function (e) {
         e.preventDefault();
         var paymentTypes = [];
@@ -482,7 +466,6 @@
         });
     });
 
-    // Payment type highlight
     $(document).on('change', '.payment-type-checkbox', function () {
         var label = $(this).closest('label');
         if ($(this).is(':checked')) {
@@ -494,7 +477,6 @@
     $('#btnSelectAll').on('click',   function () { $('.payment-type-checkbox').prop('checked', true).trigger('change'); });
     $('#btnDeselectAll').on('click', function () { $('.payment-type-checkbox').prop('checked', false).trigger('change'); });
 
-    // Test connection
     $('#btnTestConnection').on('click', function () {
         var btn = $(this);
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-2"></i> Testing...');
@@ -512,11 +494,7 @@
         });
     });
 
-    // ============================================================
-    // GET TRANSACTION STATUS
-    // FIX: route name was "getTransactionStatusAction" (not defined),
-    //      correct route name is "getMidtransStatusAction"
-    // ============================================================
+    // Get Transaction Status - menggunakan route name yang benar: getMidtransStatusAction
     $('#btnGetStatus').on('click', function () {
         var orderId = $('#status_order_id').val().trim();
         if (!orderId) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Masukkan Order ID.' });
@@ -536,14 +514,6 @@
         });
     });
 
-    // ============================================================
-    // TRANSACTION ACTIONS
-    // FIX: corrected route names to match web.php definitions
-    //   approveTransactionAction  -> approveMidtransAction
-    //   cancelTransactionAction   -> cancelMidtransAction
-    //   expireTransactionAction   -> expireMidtransAction
-    //   refundTransactionAction   -> refundMidtransAction
-    // ============================================================
     function doTransactionAction(url, data, resultDiv) {
         $.ajax({
             url: url, type: 'POST',
@@ -584,7 +554,29 @@
         doTransactionAction('{{ route("refundMidtransAction") }}', { order_id: o, amount: amt, reason: rsn }, '#refundResult');
     });
 
-    // Toggle password visibility
+    // Sync All
+    $('#btnSyncAll').on('click', function () {
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Syncing...');
+        $.ajax({
+            url: routeSync, type: 'POST',
+            data: { _token: csrfToken, sync_all: true },
+            success: function (res) {
+                btn.prop('disabled', false).html('<i class="fa fa-sync-alt me-1"></i> Sync All');
+                if (res.success) {
+                    Swal.fire({ icon: 'success', title: 'Synced!', text: res.message, timer: 1800, showConfirmButton: false });
+                    if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
+                }
+            },
+            error: function () {
+                btn.prop('disabled', false).html('<i class="fa fa-sync-alt me-1"></i> Sync All');
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan jaringan.' });
+            }
+        });
+    });
+
     window.toggleVisibility = function (inputId, btn) {
         var input = document.getElementById(inputId);
         var icon  = btn.querySelector('i');

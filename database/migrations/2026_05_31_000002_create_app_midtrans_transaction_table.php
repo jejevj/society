@@ -31,6 +31,16 @@ return new class extends Migration
                 $table->string('updated_by', 100)->nullable();
                 $table->timestamps();
             });
+        } else {
+            // Pastikan kolom snap_token & redirect_url ada (untuk DB yang dibuat sebelum kolom ini ditambahkan)
+            Schema::table('app_midtrans_transaction', function (Blueprint $table) {
+                if (!Schema::hasColumn('app_midtrans_transaction', 'snap_token')) {
+                    $table->text('snap_token')->nullable()->after('approval_code');
+                }
+                if (!Schema::hasColumn('app_midtrans_transaction', 'redirect_url')) {
+                    $table->text('redirect_url')->nullable()->after('snap_token');
+                }
+            });
         }
     }
 

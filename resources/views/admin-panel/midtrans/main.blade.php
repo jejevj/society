@@ -1,6 +1,6 @@
 @include('admin-panel.layouts.header')
 				<div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
-					<div id="kt_app_toolbar" class="app-toolbar py-6">
+					<div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
 						<div id="kt_app_toolbar_container" class="app-container container-xxl d-flex align-items-start">
 							<div class="d-flex flex-column flex-row-fluid">
 								<div class="d-flex align-items-center pt-1">
@@ -9,54 +9,13 @@
 										['label' => 'Midtrans Configurations', 'url' => null],
 									]])
 								</div>
-								<div class="d-flex flex-stack flex-wrap flex-lg-nowrap gap-4 gap-lg-10 pt-6 pb-18 py-lg-13">
+								<div class="d-flex flex-stack pt-4 pb-4">
 									<div class="page-title d-flex align-items-center me-3">
 										<h1 class="page-heading d-flex fw-bolder fs-2 flex-column justify-content-center my-0">{{ $menu }}
-											<span class="page-desc opacity-50 fs-6 fw-bold pt-4"></span>
+											<span class="page-desc opacity-50 fs-6 fw-bold pt-2"></span>
 										</h1>
 									</div>
 								</div>
-
-								{{-- ============================================================ --}}
-								{{-- MAIN TABS NAV — di dalam toolbar agar muncul di atas bg merah --}}
-								{{-- ============================================================ --}}
-								<ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold mb-n2" id="midtransMainTab" role="tablist">
-									<li class="nav-item" role="presentation">
-										<a class="nav-link active text-white text-active-primary pb-4"
-										   id="tab-konfigurasi-link"
-										   data-bs-toggle="tab"
-										   href="#tab_konfigurasi"
-										   role="tab"
-										   aria-controls="tab_konfigurasi"
-										   aria-selected="true">
-											<i class="fa fa-cog me-2"></i> Konfigurasi
-										</a>
-									</li>
-									<li class="nav-item" role="presentation">
-										<a class="nav-link text-white text-active-primary pb-4"
-										   id="tab-transaksi-link"
-										   data-bs-toggle="tab"
-										   href="#tab_transaksi"
-										   role="tab"
-										   aria-controls="tab_transaksi"
-										   aria-selected="false">
-											<i class="fa fa-list me-2"></i> Transaksi
-											<span class="badge badge-light ms-1">{{ $tabCounts['all'] }}</span>
-										</a>
-									</li>
-									<li class="nav-item" role="presentation">
-										<a class="nav-link text-white text-active-primary pb-4"
-										   id="tab-create-order-link"
-										   data-bs-toggle="tab"
-										   href="#tab_create_order"
-										   role="tab"
-										   aria-controls="tab_create_order"
-										   aria-selected="false">
-											<i class="fa fa-shopping-cart me-2"></i> Create Order
-										</a>
-									</li>
-								</ul>
-
 							</div>
 						</div>
 					</div>
@@ -64,29 +23,78 @@
 					<div class="app-container container-xxl">
 						<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
 							<div class="d-flex flex-column flex-column-fluid">
-								<div id="kt_app_content" class="app-content">
+								<div id="kt_app_content" class="app-content pt-4 pb-6">
 
-									{{-- Tab content card — margin negatif agar overlap di atas toolbar --}}
-									<div class="card card-flush mt-n10 mt-lg-n20 shadow-sm">
-										<div class="card-body pt-6 pb-6">
+									{{-- ============================================================ --}}
+									{{-- CARD UTAMA: header = tab nav, body = tab content --}}
+									{{-- ============================================================ --}}
+									<div class="card card-flush shadow-sm">
 
-											{{-- Status Alert --}}
-											@if($config && $config->is_active == 'Y')
-											<div class="alert alert-success d-flex align-items-center mb-4">
-												<i class="fa fa-check-circle fs-2 me-3 text-success"></i>
-												<div>
-													<strong>Midtrans Active</strong> &mdash; Environment:
-													<span class="badge badge-{{ $config->environment == 'production' ? 'danger' : 'warning' }}">
-														{{ strtoupper($config->environment) }}
+										{{-- CARD HEADER — tab nav di sini, 100% aman --}}
+										<div class="card-header card-header-stretch border-bottom border-gray-200">
+											<div class="card-title">
+												<h3 class="fw-bold text-gray-800">
+													<i class="fa fa-credit-card text-primary me-2"></i> Midtrans Gateway
+												</h3>
+											</div>
+											<div class="card-toolbar">
+												{{-- Status badge --}}
+												@if($config && $config->is_active == 'Y')
+													<span class="badge badge-light-success fs-7">
+														<i class="fa fa-circle text-success me-1 fs-9"></i>
+														{{ strtoupper($config->environment) }} Active
 													</span>
-												</div>
+												@else
+													<span class="badge badge-light-warning fs-7">
+														<i class="fa fa-circle text-warning me-1 fs-9"></i>
+														Not Active
+													</span>
+												@endif
 											</div>
-											@else
-											<div class="alert alert-warning d-flex align-items-center mb-4">
-												<i class="fa fa-exclamation-triangle fs-2 me-3 text-warning"></i>
-												<div><strong>Midtrans Not Active</strong> &mdash; Please configure and activate below.</div>
-											</div>
-											@endif
+										</div>
+
+										{{-- TAB NAV di bawah card-header, masih dalam card --}}
+										<div class="card-header border-0 pt-0 pb-0">
+											<ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold" id="midtransMainTab" role="tablist">
+												<li class="nav-item" role="presentation">
+													<a class="nav-link active text-active-primary pb-4"
+													   id="tab-konfigurasi-link"
+													   data-bs-toggle="tab"
+													   href="#tab_konfigurasi"
+													   role="tab"
+													   aria-controls="tab_konfigurasi"
+													   aria-selected="true">
+														<i class="fa fa-cog me-2"></i> Konfigurasi
+													</a>
+												</li>
+												<li class="nav-item" role="presentation">
+													<a class="nav-link text-active-primary pb-4"
+													   id="tab-transaksi-link"
+													   data-bs-toggle="tab"
+													   href="#tab_transaksi"
+													   role="tab"
+													   aria-controls="tab_transaksi"
+													   aria-selected="false">
+														<i class="fa fa-list me-2"></i> Transaksi
+														<span class="badge badge-light ms-1">{{ $tabCounts['all'] }}</span>
+													</a>
+												</li>
+												<li class="nav-item" role="presentation">
+													<a class="nav-link text-active-primary pb-4"
+													   id="tab-create-order-link"
+													   data-bs-toggle="tab"
+													   href="#tab_create_order"
+													   role="tab"
+													   aria-controls="tab_create_order"
+													   aria-selected="false">
+														<i class="fa fa-shopping-cart me-2"></i> Create Order
+													</a>
+												</li>
+											</ul>
+										</div>
+
+										{{-- CARD BODY — semua tab-content di sini --}}
+										<div class="card-body pt-6">
 
 											{{-- ============================================================ --}}
 											{{-- TAB CONTENT --}}
@@ -96,7 +104,7 @@
 												{{-- ======================================================== --}}
 												{{-- TAB 1: KONFIGURASI --}}
 												{{-- ======================================================== --}}
-												<div class="tab-pane fade show active pt-4" id="tab_konfigurasi" role="tabpanel">
+												<div class="tab-pane fade show active" id="tab_konfigurasi" role="tabpanel">
 													<div class="row g-6">
 
 														{{-- CARD API CONFIG --}}
@@ -270,7 +278,7 @@
 												{{-- ======================================================== --}}
 												{{-- TAB 2: TRANSAKSI --}}
 												{{-- ======================================================== --}}
-												<div class="tab-pane fade pt-4" id="tab_transaksi" role="tabpanel">
+												<div class="tab-pane fade" id="tab_transaksi" role="tabpanel">
 													<div class="card card-flush">
 														<div class="card-header align-items-center py-5 gap-2">
 															<h3 class="card-title"><i class="fa fa-list text-primary me-2"></i> Riwayat Transaksi Midtrans</h3>
@@ -327,7 +335,7 @@
 												{{-- ======================================================== --}}
 												{{-- TAB 3: CREATE ORDER --}}
 												{{-- ======================================================== --}}
-												<div class="tab-pane fade pt-4" id="tab_create_order" role="tabpanel">
+												<div class="tab-pane fade" id="tab_create_order" role="tabpanel">
 													<div class="row g-6">
 
 														{{-- SNAP TOKEN CARD --}}
@@ -449,7 +457,7 @@
 											</div>{{-- end tab-content --}}
 
 										</div>{{-- end card-body --}}
-									</div>{{-- end card wrapper --}}
+									</div>{{-- end card utama --}}
 
 								</div>{{-- end kt_app_content --}}
 							</div>

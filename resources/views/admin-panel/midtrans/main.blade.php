@@ -26,19 +26,18 @@
 								<div id="kt_app_content" class="app-content pt-4 pb-6">
 
 									{{-- ============================================================ --}}
-									{{-- CARD UTAMA: header = tab nav, body = tab content --}}
+									{{-- CARD UTAMA: satu card-header berisi title + badge + tab nav --}}
 									{{-- ============================================================ --}}
 									<div class="card card-flush shadow-sm">
 
-										{{-- CARD HEADER — tab nav di sini, 100% aman --}}
-										<div class="card-header card-header-stretch border-bottom border-gray-200">
-											<div class="card-title">
-												<h3 class="fw-bold text-gray-800">
+										{{-- SATU CARD HEADER: title, badge, dan tab nav dalam satu blok --}}
+										<div class="card-header card-header-stretch border-bottom border-gray-200 d-flex flex-column align-items-stretch pt-5 pb-0 gap-3">
+
+											{{-- Baris 1: Title + Badge --}}
+											<div class="d-flex align-items-center justify-content-between">
+												<h3 class="fw-bold text-gray-800 mb-0">
 													<i class="fa fa-credit-card text-primary me-2"></i> Midtrans Gateway
 												</h3>
-											</div>
-											<div class="card-toolbar">
-												{{-- Status badge --}}
 												@if($config && $config->is_active == 'Y')
 													<span class="badge badge-light-success fs-7">
 														<i class="fa fa-circle text-success me-1 fs-9"></i>
@@ -51,11 +50,9 @@
 													</span>
 												@endif
 											</div>
-										</div>
 
-										{{-- TAB NAV di bawah card-header, masih dalam card --}}
-										<div class="card-header border-0 pt-0 pb-0">
-											<ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold" id="midtransMainTab" role="tablist">
+											{{-- Baris 2: Tab Nav (menyatu dalam card-header) --}}
+											<ul class="nav nav-tabs nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold mb-0" id="midtransMainTab" role="tablist">
 												<li class="nav-item" role="presentation">
 													<a class="nav-link active text-active-primary pb-4"
 													   id="tab-konfigurasi-link"
@@ -91,7 +88,8 @@
 													</a>
 												</li>
 											</ul>
-										</div>
+
+										</div>{{-- end single card-header --}}
 
 										{{-- CARD BODY — semua tab-content di sini --}}
 										<div class="card-body pt-6">

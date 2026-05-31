@@ -52,7 +52,6 @@ class MidtransConfigController extends Controller
             $selectedTypes = json_decode($config->payment_types, true) ?? [];
         }
 
-        // Safe tabCounts — works even if migration has not been run yet
         $tabCounts = ['all'=>0,'pending'=>0,'settlement'=>0,'cancel'=>0,'expire'=>0,'deny'=>0,'refund'=>0];
         try {
             if (Schema::hasTable('app_midtrans_transaction')) {
@@ -161,6 +160,89 @@ class MidtransConfigController extends Controller
         } catch (\Exception $e) {
             return response()->json(['draw' => (int)$request->get('draw'), 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => [], 'error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Fetch a list of transactions directly from Midtrans API by multiple order IDs.
+     * Midtrans does not expose a "list all" endpoint — so we fetch each order_id stored locally.
+     * For bulk refresh, iterates all local order_ids and re-syncs status from Midtrans.
+     */
+    public function fetchMidtransTransactionsAction(Request $request)
+    {
+        if (!$request->session()->has('id')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $config = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
+        if (!$config || empty($config->server_key)) {
+            return response()->json(['success' => false, 'message' => 'Midtrans belum dikonfigurasi. Simpan server key terlebih dahulu.']);
+        }
+
+        if (!Schema::hasTable('app_midtrans_transaction')) {
+            return response()->json(['success' => false, 'message' => 'Tabel transaksi belum tersedia. Jalankan migration terlebih dahulu.']);
+        }
+
+        $baseUrl = $config->environment === 'production'
+            ? 'https://api.midtrans.com'
+            : 'https://api.sandbox.midtrans.com';
+
+        // Ambil semua order_id dari DB lokal lalu re-fetch status dari Midtrans
+        $orderIds = DB::table('app_midtrans_transaction')->pluck('order_id');
+
+        $synced  = 0;
+        $failed  = 0;
+        $errors  = [];
+
+        foreach ($orderIds as $orderId) {
+            try {
+                $response = Http::withBasicAuth($config->server_key, '')
+                    ->timeout(10)
+                    ->get($baseUrl . '/v2/' . $orderId . '/status');
+
+                $res = $response->json();
+
+                if (!isset($res['transaction_status'])) {
+                    $failed++;
+                    $errors[] = $orderId . ': ' . ($res['status_message'] ?? 'No status returned');
+                    continue;
+                }
+
+                $payload = [
+                    'transaction_id'     => $res['transaction_id'] ?? null,
+                    'transaction_status' => $res['transaction_status'] ?? null,
+                    'payment_type'       => $res['payment_type'] ?? null,
+                    'gross_amount'       => isset($res['gross_amount']) ? (float) $res['gross_amount'] : null,
+                    'currency'           => $res['currency'] ?? 'IDR',
+                    'fraud_status'       => $res['fraud_status'] ?? null,
+                    'status_message'     => $res['status_message'] ?? null,
+                    'bank'               => $res['bank'] ?? null,
+                    'masked_card'        => $res['masked_card'] ?? null,
+                    'approval_code'      => $res['approval_code'] ?? null,
+                    'raw_response'       => json_encode($res),
+                    'transaction_time'   => isset($res['transaction_time']) ? \Carbon\Carbon::parse($res['transaction_time']) : null,
+                    'settlement_time'    => isset($res['settlement_time']) ? \Carbon\Carbon::parse($res['settlement_time']) : null,
+                    'updated_by'         => session('nama'),
+                    'updated_at'         => now(),
+                ];
+
+                DB::table('app_midtrans_transaction')
+                    ->where('order_id', $orderId)
+                    ->update($payload);
+
+                $synced++;
+            } catch (\Exception $e) {
+                $failed++;
+                $errors[] = $orderId . ': ' . $e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Selesai. Berhasil sync: {$synced}, Gagal: {$failed}.",
+            'synced'  => $synced,
+            'failed'  => $failed,
+            'errors'  => $errors,
+        ]);
     }
 
     public function syncTransaksiAction(Request $request)
@@ -399,55 +481,223 @@ class MidtransConfigController extends Controller
         }
     }
 
+    /**
+     * Create Snap token, open payment popup, and save order to DB immediately.
+     * Saving to DB first (status=pending) ensures the order is trackable even if
+     * the user closes the browser before completing payment.
+     */
     public function createSnapTokenAction(Request $request)
     {
-        if ($request->session()->has('id')) {
-            $validator = Validator::make($request->all(), [
-                'order_id' => 'required|string', 'amount' => 'required|numeric|min:1',
-                'first_name' => 'required|string|max:100', 'last_name' => 'nullable|string|max:100',
-                'email' => 'required|email|max:255', 'phone' => 'required|string|max:20',
+        if (!$request->session()->has('id')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'order_id'   => 'required|string|max:100',
+            'amount'     => 'required|numeric|min:1',
+            'first_name' => 'required|string|max:100',
+            'last_name'  => 'nullable|string|max:100',
+            'email'      => 'required|email|max:255',
+            'phone'      => 'required|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $config = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
+        if (!$config || empty($config->server_key)) {
+            return response()->json(['success' => false, 'message' => 'Midtrans belum dikonfigurasi. Simpan server key terlebih dahulu.']);
+        }
+        if ($config->is_active !== 'Y') {
+            return response()->json(['success' => false, 'message' => 'Midtrans tidak aktif. Aktifkan konfigurasi terlebih dahulu.']);
+        }
+
+        // Check duplicate order_id
+        if (Schema::hasTable('app_midtrans_transaction')) {
+            if (DB::table('app_midtrans_transaction')->where('order_id', $request->order_id)->exists()) {
+                return response()->json(['success' => false, 'message' => 'Order ID sudah ada. Gunakan Order ID yang berbeda.']);
+            }
+        }
+
+        $baseUrl = $config->environment === 'production'
+            ? 'https://app.midtrans.com'
+            : 'https://app.sandbox.midtrans.com';
+
+        $enabledPayments = json_decode($config->payment_types, true) ?? [];
+
+        $payload = [
+            'transaction_details' => [
+                'order_id'    => $request->order_id,
+                'gross_amount' => (int) $request->amount,
+            ],
+            'customer_details' => [
+                'first_name' => $request->first_name,
+                'last_name'  => $request->last_name ?? '',
+                'email'      => $request->email,
+                'phone'      => $request->phone,
+            ],
+            'callbacks' => [
+                'finish'   => $config->finish_redirect_url   ?: url('/'),
+                'unfinish' => $config->unfinish_redirect_url ?: url('/'),
+                'error'    => $config->error_redirect_url    ?: url('/'),
+            ],
+        ];
+
+        // Only send enabled_payments if configured — empty array causes Midtrans error
+        if (!empty($enabledPayments)) {
+            $payload['enabled_payments'] = $enabledPayments;
+        }
+
+        try {
+            $response = Http::withBasicAuth($config->server_key, '')
+                ->timeout(20)
+                ->post($baseUrl . '/snap/v1/transactions', $payload);
+
+            $res = $response->json();
+
+            // Midtrans returns token + redirect_url on success
+            if (!isset($res['token'])) {
+                $errMsg = $res['error_messages'][0] ?? ($res['message'] ?? 'Gagal mendapatkan token dari Midtrans.');
+                return response()->json(['success' => false, 'message' => $errMsg, 'midtrans_response' => $res]);
+            }
+
+            // Save pending order to DB immediately
+            if (Schema::hasTable('app_midtrans_transaction')) {
+                DB::table('app_midtrans_transaction')->insert([
+                    'order_id'           => $request->order_id,
+                    'transaction_id'     => null,
+                    'transaction_status' => 'pending',
+                    'payment_type'       => null,
+                    'gross_amount'       => (float) $request->amount,
+                    'currency'           => 'IDR',
+                    'fraud_status'       => null,
+                    'status_message'     => 'Snap token generated — awaiting payment',
+                    'raw_response'       => json_encode($res),
+                    'transaction_time'   => now(),
+                    'settlement_time'    => null,
+                    'bank'               => null,
+                    'masked_card'        => null,
+                    'approval_code'      => null,
+                    'created_by'         => session('nama'),
+                    'created_at'         => now(),
+                    'updated_by'         => session('nama'),
+                    'updated_at'         => now(),
+                ]);
+            }
+
+            return response()->json([
+                'success'      => true,
+                'token'        => $res['token'],
+                'redirect_url' => $res['redirect_url'] ?? null,
+                'data'         => $res,
             ]);
-            if ($validator->fails()) return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            $config = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
-            if (!$config || empty($config->server_key)) return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
-            $baseUrl = $config->environment === 'production' ? 'https://app.midtrans.com' : 'https://app.sandbox.midtrans.com';
-            $payload = [
-                'transaction_details' => ['order_id' => $request->order_id, 'gross_amount' => (int) $request->amount],
-                'customer_details'    => ['first_name' => $request->first_name, 'last_name' => $request->last_name ?? '', 'email' => $request->email, 'phone' => $request->phone],
-                'enabled_payments'    => json_decode($config->payment_types, true) ?? [],
-                'callbacks'           => ['finish' => $config->finish_redirect_url ?: url('/'), 'unfinish' => $config->unfinish_redirect_url ?: url('/'), 'error' => $config->error_redirect_url ?: url('/')],
-            ];
-            try {
-                $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/snap/v1/transactions', $payload);
-                return response()->json(['success' => true, 'data' => $response->json()]);
-            } catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()]); }
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Exception: ' . $e->getMessage()]);
         }
     }
 
     public function createChargeAction(Request $request)
     {
-        if ($request->session()->has('id')) {
-            $validator = Validator::make($request->all(), [
-                'payment_type' => 'required|string', 'order_id' => 'required|string',
-                'amount' => 'required|numeric|min:1', 'first_name' => 'required|string|max:100',
-                'email' => 'required|email|max:255', 'phone' => 'required|string|max:20',
-            ]);
-            if ($validator->fails()) return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-            $config = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
-            if (!$config || empty($config->server_key)) return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
-            $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
-            $payload = [
-                'payment_type'        => $request->payment_type,
-                'transaction_details' => ['order_id' => $request->order_id, 'gross_amount' => (int) $request->amount],
-                'customer_details'    => ['first_name' => $request->first_name, 'email' => $request->email, 'phone' => $request->phone],
-            ];
-            if (in_array($request->payment_type, ['bca_va','bni_va','bri_va','permata_va','other_va'])) {
-                $payload['bank_transfer'] = ['bank' => str_replace('_va', '', $request->payment_type)];
+        if (!$request->session()->has('id')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'payment_type' => 'required|string',
+            'order_id'     => 'required|string',
+            'amount'       => 'required|numeric|min:1',
+            'first_name'   => 'required|string|max:100',
+            'email'        => 'required|email|max:255',
+            'phone'        => 'required|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $config = DB::table('app_midtrans_config')->where('id_midtrans', 1)->first();
+        if (!$config || empty($config->server_key)) {
+            return response()->json(['success' => false, 'message' => 'Midtrans belum dikonfigurasi.']);
+        }
+        if ($config->is_active !== 'Y') {
+            return response()->json(['success' => false, 'message' => 'Midtrans tidak aktif.']);
+        }
+
+        $baseUrl = $config->environment === 'production'
+            ? 'https://api.midtrans.com'
+            : 'https://api.sandbox.midtrans.com';
+
+        $payload = [
+            'payment_type'        => $request->payment_type,
+            'transaction_details' => [
+                'order_id'     => $request->order_id,
+                'gross_amount' => (int) $request->amount,
+            ],
+            'customer_details' => [
+                'first_name' => $request->first_name,
+                'email'      => $request->email,
+                'phone'      => $request->phone,
+            ],
+        ];
+
+        // Map payment type to bank key for bank_transfer payments
+        $bankMap = [
+            'bca_va'     => 'bca',
+            'bni_va'     => 'bni',
+            'bri_va'     => 'bri',
+            'permata_va' => 'permata',
+            'other_va'   => 'other',
+        ];
+
+        if (isset($bankMap[$request->payment_type])) {
+            $payload['bank_transfer'] = ['bank' => $bankMap[$request->payment_type]];
+        }
+
+        try {
+            $response = Http::withBasicAuth($config->server_key, '')
+                ->timeout(15)
+                ->post($baseUrl . '/v2/charge', $payload);
+
+            $res = $response->json();
+
+            if (isset($res['status_code']) && !in_array($res['status_code'], ['200', '201', '202'])) {
+                $errMsg = $res['status_message'] ?? 'Charge gagal.';
+                return response()->json(['success' => false, 'message' => $errMsg, 'midtrans_response' => $res]);
             }
-            try {
-                $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/v2/charge', $payload);
-                return response()->json(['success' => true, 'data' => $response->json()]);
-            } catch (\Exception $e) { return response()->json(['success' => false, 'message' => $e->getMessage()]); }
+
+            // Save to DB
+            if (Schema::hasTable('app_midtrans_transaction') && isset($res['order_id'])) {
+                $exists = DB::table('app_midtrans_transaction')->where('order_id', $res['order_id'])->exists();
+                $dbPayload = [
+                    'transaction_id'     => $res['transaction_id'] ?? null,
+                    'transaction_status' => $res['transaction_status'] ?? 'pending',
+                    'payment_type'       => $res['payment_type'] ?? $request->payment_type,
+                    'gross_amount'       => isset($res['gross_amount']) ? (float) $res['gross_amount'] : (float) $request->amount,
+                    'currency'           => $res['currency'] ?? 'IDR',
+                    'fraud_status'       => $res['fraud_status'] ?? null,
+                    'status_message'     => $res['status_message'] ?? null,
+                    'raw_response'       => json_encode($res),
+                    'transaction_time'   => now(),
+                    'updated_by'         => session('nama'),
+                    'updated_at'         => now(),
+                ];
+
+                if ($exists) {
+                    DB::table('app_midtrans_transaction')->where('order_id', $res['order_id'])->update($dbPayload);
+                } else {
+                    $dbPayload['order_id']   = $res['order_id'];
+                    $dbPayload['created_by'] = session('nama');
+                    $dbPayload['created_at'] = now();
+                    DB::table('app_midtrans_transaction')->insert($dbPayload);
+                }
+            }
+
+            return response()->json(['success' => true, 'data' => $res]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
 }

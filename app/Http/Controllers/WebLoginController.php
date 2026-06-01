@@ -205,20 +205,26 @@ class WebLoginController extends Controller
         $this->dataService->createLogWeb($request, 'registrasiAction', 'User registered, OTP sent. user_id=' . $userId);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Account created. Please verify your email with the OTP we sent.',
-            'user_id' => $userId,
+            'success'    => true,
+            'message'    => 'Account created. Please verify your email with the OTP we sent.',
+            'user_id'    => $userId,
+            'has_event'  => $request->filled('kode_event') ? true : false,
         ]);
     }
 
     /**
      * STEP 2: Verify OTP entered by user during registration.
+     *
+     * Behaviour:
+     *  - With event  : status_user stays 0 (activated after payment)
+     *  - Without event: status_user set to 1 immediately (no payment needed)
      */
     public function verifyOtpRegistrasi(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|integer',
-            'otp'     => 'required|string|min:6|max:6',
+            'user_id'   => 'required|integer',
+            'otp'       => 'required|string|min:6|max:6',
+            'has_event' => 'nullable|boolean',
         ]);
 
         $user = DB::table('app_user')->where('id_user', $request->user_id)->first();
@@ -231,23 +237,31 @@ class WebLoginController extends Controller
             return response()->json(['success' => false, 'message' => 'Invalid OTP. Please check your email and try again.']);
         }
 
-        // Mark OTP verified, clear otp field
+        // If no event context: activate user immediately after OTP verified
+        // If has event: keep status_user = 0 until payment is completed
+        $hasEvent   = filter_var($request->has_event ?? false, FILTER_VALIDATE_BOOLEAN);
+        $newStatus  = $hasEvent ? 0 : 1;
+
         DB::table('app_user')->where('id_user', $request->user_id)->update([
             'otp_user'     => null,
             'verify_token' => null,
-            'status_user'  => 0,
+            'status_user'  => $newStatus,
             'updated_at'   => now(),
         ]);
 
-        // Update registrasi status
+        // Update registrasi status if event row exists
         DB::table('t_event_registrasi')
             ->where('id_user', $request->user_id)
             ->where('status_registrasi', 'PENDING_OTP')
             ->update(['status_registrasi' => 'PENDING_PAYMENT', 'updated_at' => now()]);
 
-        $this->dataService->createLogWeb($request, 'verifyOtpRegistrasi', 'OTP verified for user_id=' . $request->user_id);
+        $this->dataService->createLogWeb($request, 'verifyOtpRegistrasi', 'OTP verified for user_id=' . $request->user_id . ' | activated=' . ($newStatus ? 'yes' : 'no'));
 
-        return response()->json(['success' => true, 'message' => 'OTP verified successfully.']);
+        return response()->json([
+            'success'   => true,
+            'message'   => 'OTP verified successfully.',
+            'activated' => (bool) $newStatus,
+        ]);
     }
 
     /**

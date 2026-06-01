@@ -827,7 +827,11 @@
 <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
 
 <script>
-$.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+// ── Global CSRF setup for all $.ajax calls ──
+let _csrfToken = '{{ csrf_token() }}';
+$.ajaxSetup({
+    headers: { 'X-CSRF-TOKEN': _csrfToken }
+});
 
 // ── State ──
 let regState = {
@@ -933,7 +937,11 @@ $('#btnVerifyOtp').on('click', function() {
     $.ajax({
         url: '{{ route("verifyOtpRegistrasi") }}',
         type: 'POST',
-        data: { user_id: regState.userId, otp: otp },
+        data: {
+            _token:  _csrfToken,
+            user_id: regState.userId,
+            otp:     otp
+        },
         success: function(r) {
             Swal.close();
             if (r.success) {
@@ -983,7 +991,7 @@ $('#resendOtp').on('click', function() {
     $.ajax({
         url: '{{ route("resendOtpRegistrasi") }}',
         type: 'POST',
-        data: { user_id: regState.userId },
+        data: { _token: _csrfToken, user_id: regState.userId },
         success: function(r) {
             if (r.success) {
                 $('.otp-digit').val('');
@@ -1002,8 +1010,8 @@ function loadPackages() {
     $('#packageLoading').show();
     $.ajax({
         url: '{{ route("getEventPackages") }}',
-        type: 'GET',
-        data: { kode_event: regState.kodeEvent },
+        type: 'POST',
+        data: { _token: _csrfToken, kode_event: regState.kodeEvent },
         success: function(r) {
             $('#packageLoading').hide();
             let html = '';
@@ -1084,9 +1092,10 @@ function getSnapToken() {
         url: '{{ route("getRegistrationSnapToken") }}',
         type: 'POST',
         data: {
-            user_id:     regState.userId,
-            kode_event:  regState.kodeEvent,
-            packages:    pkgIds
+            _token:     _csrfToken,
+            user_id:    regState.userId,
+            kode_event: regState.kodeEvent,
+            packages:   pkgIds
         },
         success: function(r) {
             if (r.success) {
@@ -1104,11 +1113,15 @@ $('#btnPayNow').on('click', function() {
     regState.selectedPackages.forEach(function(p) { total += p.price; });
 
     if (total === 0) {
-        // No payment needed, enroll directly
         $.ajax({
             url: '{{ route("enrollEventFree") }}',
             type: 'POST',
-            data: { user_id: regState.userId, kode_event: regState.kodeEvent, packages: regState.selectedPackages.map(p => p.id) },
+            data: {
+                _token:     _csrfToken,
+                user_id:    regState.userId,
+                kode_event: regState.kodeEvent,
+                packages:   regState.selectedPackages.map(p => p.id)
+            },
             success: function(r) {
                 if (r.success) {
                     goToStep('Success');
@@ -1132,9 +1145,10 @@ $('#btnPayNow').on('click', function() {
                 url: '{{ route("paymentRegistrationCallback") }}',
                 type: 'POST',
                 data: {
-                    user_id:        regState.userId,
-                    kode_event:     regState.kodeEvent,
-                    packages:       regState.selectedPackages.map(p => p.id),
+                    _token:          _csrfToken,
+                    user_id:         regState.userId,
+                    kode_event:      regState.kodeEvent,
+                    packages:        regState.selectedPackages.map(p => p.id),
                     midtrans_result: JSON.stringify(result)
                 },
                 success: function(r) {

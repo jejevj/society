@@ -80,6 +80,19 @@ class WebLoginController extends Controller
     }
 
     /**
+     * Generate a unique kode_registrasi.
+     * Format: REG-{YmdHis}-{random4}
+     */
+    private function generateKodeRegistrasi(): string
+    {
+        do {
+            $kode = 'REG-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(4));
+        } while (DB::table('t_event_registrasi')->where('kode_registrasi', $kode)->exists());
+
+        return $kode;
+    }
+
+    /**
      * STEP 1: Create user account + send OTP registration code.
      * Returns user_id on success so frontend can proceed to OTP step.
      */
@@ -169,6 +182,7 @@ class WebLoginController extends Controller
             $ev = DB::table('t_event')->where('kode_event', $request->kode_event)->where('status_event', 'Y')->first();
             if ($ev) {
                 DB::table('t_event_registrasi')->insert([
+                    'kode_registrasi'   => $this->generateKodeRegistrasi(),
                     'kode_event'        => $ev->kode_event,
                     'id_user'           => $userId,
                     'role_peserta'      => $request->role_event ?? 'participant',
@@ -219,9 +233,9 @@ class WebLoginController extends Controller
 
         // Mark OTP verified, clear otp field
         DB::table('app_user')->where('id_user', $request->user_id)->update([
-            'otp_user'    => null,
+            'otp_user'     => null,
             'verify_token' => null,
-            'status_user'  => 0, // still 0 until payment done (or admin activation for non-event)
+            'status_user'  => 0,
             'updated_at'   => now(),
         ]);
 
@@ -293,7 +307,7 @@ class WebLoginController extends Controller
             return response()->json(['success' => false, 'message' => 'User not found.']);
         }
 
-        $packages  = $request->packages ?? [];
+        $packages    = $request->packages ?? [];
         $totalAmount = 0;
         $itemDetails = [];
 
@@ -329,7 +343,6 @@ class WebLoginController extends Controller
             'item_details' => $itemDetails,
         ];
 
-        // Use Midtrans API
         \Midtrans\Config::$serverKey    = env('MIDTRANS_SERVER_KEY');
         \Midtrans\Config::$isProduction = env('MIDTRANS_PRODUCTION', false);
         \Midtrans\Config::$isSanitized  = true;
@@ -338,15 +351,14 @@ class WebLoginController extends Controller
         try {
             $snapToken = \Midtrans\Snap::getSnapToken($midtransConfig);
 
-            // Save pending transaction
             DB::table('app_midtrans_transaction')->insert([
-                'order_id'    => $orderId,
-                'user_id'     => $request->user_id,
-                'gross_amount'=> $totalAmount,
-                'status'      => 'pending',
-                'snap_token'  => $snapToken,
-                'kode_event'  => $request->kode_event,
-                'created_at'  => now(),
+                'order_id'     => $orderId,
+                'user_id'      => $request->user_id,
+                'gross_amount' => $totalAmount,
+                'status'       => 'pending',
+                'snap_token'   => $snapToken,
+                'kode_event'   => $request->kode_event,
+                'created_at'   => now(),
             ]);
 
             return response()->json(['success' => true, 'snap_token' => $snapToken, 'order_id' => $orderId]);
@@ -383,7 +395,6 @@ class WebLoginController extends Controller
 
         $midtransResult = json_decode($request->midtrans_result, true);
 
-        // Update transaction status
         if (!empty($midtransResult['order_id'])) {
             DB::table('app_midtrans_transaction')
                 ->where('order_id', $midtransResult['order_id'])
@@ -404,13 +415,11 @@ class WebLoginController extends Controller
      */
     private function enrollUser($userId, $kodeEvent, $packages = [])
     {
-        // Activate user account
         DB::table('app_user')->where('id_user', $userId)->update([
             'status_user' => 1,
             'updated_at'  => now(),
         ]);
 
-        // Update registration status to CONFIRMED
         DB::table('t_event_registrasi')
             ->where('id_user', $userId)
             ->where('kode_event', $kodeEvent)
@@ -420,7 +429,6 @@ class WebLoginController extends Controller
                 'updated_at'        => now(),
             ]);
 
-        // Save selected packages to t_event_addon
         if (!empty($packages)) {
             foreach ($packages as $kode_paket) {
                 $existing = DB::table('t_event_addon')

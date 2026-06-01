@@ -39,6 +39,18 @@ Route::prefix('society-event')->group(function () {
     Route::get('/otpLogin/{otp}', [App\Http\Controllers\WebLoginController::class, 'otpLogin'])->name('otpLogin');
     Route::post('/verifyOtpAction', [App\Http\Controllers\WebLoginController::class, 'verifyOtpAction'])->name('verifyOtpAction');
 
+    // ── Multi-step Event Registration ──
+    Route::get('/register-event/otp',      [App\Http\Controllers\WebRegisterEventController::class, 'showOtp'])->name('register-event.otp');
+    Route::post('/register-event/verify-otp', [App\Http\Controllers\WebRegisterEventController::class, 'verifyOtp'])->name('register-event.verify-otp');
+    Route::get('/register-event/addon',    [App\Http\Controllers\WebRegisterEventController::class, 'showAddon'])->name('register-event.addon');
+    Route::post('/register-event/addon',   [App\Http\Controllers\WebRegisterEventController::class, 'saveAddon'])->name('register-event.save-addon');
+    Route::get('/register-event/payment',  [App\Http\Controllers\WebRegisterEventController::class, 'showPayment'])->name('register-event.payment');
+    Route::post('/register-event/payment', [App\Http\Controllers\WebRegisterEventController::class, 'processPayment'])->name('register-event.process-payment');
+    Route::get('/register-event/success',  [App\Http\Controllers\WebRegisterEventController::class, 'success'])->name('register-event.success');
+    Route::post('/register-event/resend-otp', [App\Http\Controllers\WebRegisterEventController::class, 'resendOtp'])->name('register-event.resend-otp');
+    Route::post('/register-event/midtrans-callback', [App\Http\Controllers\WebRegisterEventController::class, 'midtransCallback'])->name('register-event.midtrans-callback');
+    // ── End Multi-step ──
+
     Route::get('/list', [App\Http\Controllers\WebDataController::class, 'index'])->name('list');
     Route::get('/listData', [App\Http\Controllers\WebDataController::class, 'getDataList'])->name('listData');
     Route::get('/detail-data/{url_data}', [App\Http\Controllers\WebDataController::class, 'detailData'])->name('detail-data');
@@ -76,7 +88,6 @@ Route::prefix('society-event')->group(function () {
     // end front end 
 
     Route::get('admin-panel', [App\Http\Controllers\DashboardController::class, 'index'])->name('admin-panel');
-    // route menu  referensi dashboard
     Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('ref-sponsor', [App\Http\Controllers\ReffSponsorController::class, 'index'])->name('ref-sponsor');

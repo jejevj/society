@@ -40,7 +40,6 @@
                                                 </div>
                                                 <div class="fs-slide-home-detail fw-bold mb-2">
                                                     <img src="{{ asset('images/calendar.png') }}" alt="{{ $e->lokasi_event }}" height="50" width="60">
-
                                                     {{ date('d M Y', strtotime($e->tanggal_awal_event)) }}
                                                     -
                                                     {{ date('d M Y', strtotime($e->tanggal_akhir_event)) }}
@@ -55,23 +54,20 @@
                                                             <span>{{ $kolaborasi->nama_kolaborasi }}</span>
                                                         @endforeach
                                                     </div>
-
                                                 </div>
-                                                
 
                                                 <div class="fs-5 text-gray-200 mb-8">
                                                     {!! Str::limit(strip_tags($e->keterangan_event), 250) !!}
                                                 </div>
 
-                                                <a href="#"
-                                                class="btn btn-warning btn-lg px-8">
+                                                {{-- Register Now button passes kode_event as query param --}}
+                                                <a href="{{ route('register') }}?event={{ $e->kode_event }}"
+                                                   class="btn btn-warning btn-lg px-8">
                                                     Register Now
                                                 </a>
 
                                             </div>
-
                                         </div>
-
                                     </div>
 
                                     <div class="position-absolute bottom-0 start-0 w-100 px-20 pb-10">
@@ -93,7 +89,6 @@
                                                             </div>
                                                         </div>
                                                     </div>
-
                                                 </div>
                                             </div>
                                             @endforeach
@@ -101,16 +96,11 @@
                                     </div>
                                 </div>
                             </div>
-
                             @endforeach
-
                         </div>
-
                     </div>
-
                 </div>
             </div>
-
         </div>
     </div>
 

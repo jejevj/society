@@ -43,14 +43,41 @@ class WebLoginController extends Controller
         return view('web.login', $data);
     }
 
+    /**
+     * Show register page.
+     * If ?event={kode_event} is passed in the URL, load event data
+     * so the register view can show event context on the left panel.
+     */
     public function register(Request $request)
     {
         $menu_aktif = 'register';
 
+        // Load event data when kode_event query param is present
+        $event = null;
+        if ($request->filled('event')) {
+            $event = DB::table('t_event as e')
+                ->where('e.kode_event', $request->event)
+                ->where('e.status', 'Y')
+                ->first();
+
+            if ($event) {
+                // Attach kolaborasi
+                $event->kolaborasi = DB::table('t_event_kolaborasi')
+                    ->where('kode_event', $event->kode_event)
+                    ->get();
+
+                // Attach paket
+                $event->paket = DB::table('t_event_paket')
+                    ->where('kode_event', $event->kode_event)
+                    ->get();
+            }
+        }
+
         $data = [
-            'menu' => 'register',
+            'menu'       => 'register',
             'menu_aktif' => $menu_aktif,
-            'set' => DB::table('app_setting')->where('id_setting', 1)->first(),
+            'set'        => DB::table('app_setting')->where('id_setting', 1)->first(),
+            'event'      => $event,
         ];
 
         return view('web.register', $data);
@@ -60,41 +87,45 @@ class WebLoginController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            'nama' => 'required|string|max:200',
-            'email' => 'required|email|max:200|unique:app_user,username_user',
-            'password' => [
+            'nama'         => 'required|string|max:200',
+            'email'        => 'required|email|max:200|unique:app_user,username_user',
+            'password'     => [
                 'required',
                 'string',
                 'min:8',
-                'regex:/[A-Z]/',        
-                'regex:/[a-z]/',        
-                'regex:/[0-9]/',        
-                'regex:/[@$!%*#?&._-]/' 
+                'regex:/[A-Z]/',
+                'regex:/[a-z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&._-]/'
             ],
-            'identitas' => 'required',
-            'file' => 'required|image|mimes:jpg,jpeg,png|max:2048',
-            'pekerjaan' => 'required',
-            'telepon' => 'required',
-            'alamat' => 'required'
+            'identitas'      => 'required',
+            'file'           => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'pekerjaan'      => 'required',
+            'telepon'        => 'required',
+            'alamat'         => 'required',
+            'organisasi'     => 'required|string|max:255',
+            'tipe_organisasi' => 'required|string|max:100',
         ], [
-            'email.email' => 'Format email tidak valid.',
-            'email.unique' => 'Email sudah terdaftar.',
-            'password.min' => 'Password minimal 8 karakter.',
-            'password.regex' => 'Password harus mengandung huruf besar, huruf kecil, angka, dan karakter khusus.',
-            'file.image' => 'File harus berupa gambar.',
-            'file.mimes' => 'Format file harus jpg, jpeg, atau png.',
-            'file.max' => 'Ukuran file maksimal 2MB.',
+            'email.email'     => 'Invalid email format.',
+            'email.unique'    => 'Email is already registered.',
+            'password.min'    => 'Password must be at least 8 characters.',
+            'password.regex'  => 'Password must contain uppercase, lowercase, number, and special character.',
+            'file.image'      => 'File must be an image.',
+            'file.mimes'      => 'File format must be jpg, jpeg, or png.',
+            'file.max'        => 'Maximum file size is 2MB.',
+            'organisasi.required'      => 'Organization name is required.',
+            'tipe_organisasi.required' => 'Organization type is required.',
         ]);
 
         if ($validator->fails()) {
-
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first()
             ], 422);
-
         }
+
         $password = Hash::make($request->password);
+
         if ($request->hasFile('file')) {
             $file_post = $request->file('file');
             $scan = $this->dataService->scanAntivirus($file_post);
@@ -107,98 +138,118 @@ class WebLoginController extends Controller
                 ], $scan['code']);
             }
         }
-        $path = null;
 
+        $path = null;
         if ($request->hasFile('file')) {
             $filename = time() . '_' . $request->file('file')->getClientOriginalName();
-            $path = $request->file('file')->storeAs('user', $filename, 'public' );
-
+            $path = $request->file('file')->storeAs('user', $filename, 'public');
         }
 
         $dt_role = DB::table('reff_role')
             ->where('kode_role', 'PUB')
             ->first();
-        $token = Str::random(64);
-        $insert = DB::table('app_user')->insert([
-            'nama_user' => $request->nama,
-            'role_id' => $dt_role->id_role,
-            'username_user' => $request->email,
-            'password_user' => $password,
-            'identitas_user' => $request->identitas,
+
+        $token  = Str::random(64);
+        $insert = DB::table('app_user')->insertGetId([
+            'nama_user'           => $request->nama,
+            'role_id'             => $dt_role->id_role,
+            'username_user'       => $request->email,
+            'password_user'       => $password,
+            'identitas_user'      => $request->identitas,
             'file_identitas_user' => $path,
-            'status_user' => 0,
-            'telepon_user' => $request->telepon,
-            'pekerjaan_user' => $request->pekerjaan,
-            'alamat_user' => $request->alamat,
-            'verify_token' => $token,
-            'created_at' => now(),
+            'status_user'         => 0,
+            'telepon_user'        => $request->telepon,
+            'pekerjaan_user'      => $request->pekerjaan,
+            'alamat_user'         => $request->alamat,
+            'organisasi_user'     => $request->organisasi,
+            'tipe_organisasi_user' => $request->tipe_organisasi,
+            'verify_token'        => $token,
+            'created_at'          => now(),
         ]);
 
-        if($insert){
+        if ($insert) {
+
+            // If registering for a specific event, insert into t_event_registrasi
+            if ($request->filled('kode_event') && $request->filled('role_event')) {
+                $eventData = DB::table('t_event')
+                    ->where('kode_event', $request->kode_event)
+                    ->where('status', 'Y')
+                    ->first();
+
+                if ($eventData) {
+                    DB::table('t_event_registrasi')->insert([
+                        'kode_event'        => $eventData->kode_event,
+                        'id_user'           => $insert,
+                        'role_peserta'      => $request->role_event,
+                        'status_registrasi' => 'PENDING',
+                        'created_at'        => now(),
+                    ]);
+                }
+            }
+
             $this->dataService->setMailConfig();
             $verificationUrl = url(env('APP_ROUTE') . '/verifikasiAkun/' . $token);
-           
+
             Mail::to($request->email)->queue(
                 new AppMail(
                     'web.email-verifikasi-akun',
                     [
-                        'nama' => $request->nama,
+                        'nama'            => $request->nama,
                         'verificationUrl' => $verificationUrl
                     ],
-                    'Verifikasi Akun Satu Data Pertahanan'
+                    'Account Verification - ' . ($request->filled('kode_event') ? 'Event Registration' : env('APP_NAME', 'Society Event'))
                 )
             );
 
             $this->dataService->createLogWeb(
                 $request,
                 'registrasiAction',
-                'Berhasil registrasi akun'
+                'Registration successful' . ($request->filled('kode_event') ? ' for event ' . $request->kode_event : '')
             );
+
             return response()->json([
                 'success' => true,
-                'message' => 'Registrasi berhasil, silakan cek email untuk konfirmasi akun'
+                'message' => 'Registration successful! Please check your email to verify your account.'
             ]);
 
-        }else{
+        } else {
 
             $this->dataService->createLogWeb(
                 $request,
                 'registrasiAction',
-                'Gagal registrasi akun'
+                'Registration failed'
             );
 
             return response()->json([
                 'success' => false,
-                'message' => 'Registrasi gagal'
+                'message' => 'Registration failed. Please try again.'
             ]);
-
         }
-
     }
 
     public function verifikasiAkun($token)
     {
         $user = DB::table('app_user')->where('verify_token', $token)->first();
 
-        if(!$user){
+        if (!$user) {
             return "Token tidak valid!";
         }
 
         DB::table('app_user')
             ->where('id_user', $user->id_user)
             ->update([
-                'status_user' => 1, 
+                'status_user'  => 1,
                 'verify_token' => null
             ]);
 
-            return redirect()->route('login')->with('success', 'Akun berhasil diverifikasi, silakan login.');
+        return redirect()->route('login')->with('success', 'Account verified successfully. Please login.');
     }
 
     
     public function loginAction(Request $request)
     {
         $request->validate([
-            'email' => 'required',
+            'email'    => 'required',
             'password' => 'required',
         ]);
 
@@ -210,89 +261,68 @@ class WebLoginController extends Controller
 
         if (!$user) {
             return response()->json([
-                'status' => false,
-                'message' => 'User tidak ditemukan'
+                'status'  => false,
+                'message' => 'User not found.'
             ]);
         }
 
         if (!$user->status_user) {
             return response()->json([
-                'status' => false,
-                'message' => 'User tidak aktif, silahkan melakukan verifikasi akun pada saat setelah registrasi'
+                'status'  => false,
+                'message' => 'Account is not active. Please verify your email first.'
             ]);
         }
 
         if (!Hash::check($request->password, $user->password_user)) {
             return response()->json([
-                'status' => false,
-                'message' => 'Password salah'
+                'status'  => false,
+                'message' => 'Incorrect password.'
             ]);
         }
 
         $this->dataService->setMailConfig();
 
-        $otp = str_pad(
-            mt_rand(0, 999999),
-            6,
-            '0',
-            STR_PAD_LEFT
-        );
+        $otp = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
         $upd = DB::table('app_user')
             ->where('id_user', $user->id_user)
-            ->update([
-                'otp_user' => $otp
-            ]);
+            ->update(['otp_user' => $otp]);
 
-        $id_hash = Crypt::encrypt($user->id_user);
-
+        $id_hash  = Crypt::encrypt($user->id_user);
         $data_log = [
             'email' => $request->email,
-            'nama' => $user->nama_user,
-            'otp' => $otp
+            'nama'  => $user->nama_user,
+            'otp'   => $otp
         ];
 
         if ($upd) {
-
             Mail::to($request->email)->queue(
                 new AppMail(
                     'web.email-otp-login',
                     [
                         'nama' => $user->nama_user,
-                        'otp' => $otp
+                        'otp'  => $otp
                     ],
-                    'OTP Login Satu Data Pertahanan'
+                    'OTP Login - ' . env('APP_NAME', 'Society Event')
                 )
             );
 
-            $this->dataService->createLogWeb(
-                $request,
-                'loginAction',
-                'Berhasil mengirimkan kode OTP',
-                '',
-                json_encode($data_log)
-            );
+            $this->dataService->createLogWeb($request, 'loginAction', 'OTP sent successfully', '', json_encode($data_log));
 
             return response()->json([
-                'status' => true,
-                'message' => 'Kode OTP berhasil dikirimkan ke email anda',
-                'key' => $id_hash
+                'status'  => true,
+                'message' => 'OTP code has been sent to your email.',
+                'key'     => $id_hash
             ]);
 
         } else {
 
-            $this->dataService->createLogWeb(
-                $request,
-                'loginAction',
-                'Gagal mengirimkan kode OTP',
-                '',
-                json_encode($data_log)
-            );
+            $this->dataService->createLogWeb($request, 'loginAction', 'Failed to send OTP', '', json_encode($data_log));
 
             return response()->json([
-                'status' => false,
-                'message' => 'Kode OTP gagal dikirimkan ke email anda, silahkan coba login kembali',
-                'key' => ''
+                'status'  => false,
+                'message' => 'Failed to send OTP. Please try again.',
+                'key'     => ''
             ]);
         }
     }
@@ -302,10 +332,10 @@ class WebLoginController extends Controller
         $menu_aktif = 'otp';
        
         $data = [
-            'menu' => 'OTP Login',
+            'menu'       => 'OTP Login',
             'menu_aktif' => $menu_aktif,
-            'key' => $key,
-            'set' =>  DB::table('app_setting')->where('id_setting', 1)->first(),
+            'key'        => $key,
+            'set'        => DB::table('app_setting')->where('id_setting', 1)->first(),
         ];
 
         return view('web.otp-login', $data);
@@ -319,48 +349,45 @@ class WebLoginController extends Controller
             'otp' => 'required',
         ]);
 
-        $id = Crypt::decrypt($request->key);
-
+        $id   = Crypt::decrypt($request->key);
         $user = DB::table('app_user as u')
             ->select('u.*')
             ->where('u.id_user', $id)
             ->first();
 
         if (!$user) {
-            return response()->json(['status' => false, 'message' => 'User tidak ditemukan']);
+            return response()->json(['status' => false, 'message' => 'User not found.']);
         }
 
         if ($request->otp != $user->otp_user) {
-            return response()->json(['status' => false, 'message' => 'Kode OTP salah']);
+            return response()->json(['status' => false, 'message' => 'Invalid OTP code.']);
         }
 
         session([
-            'id_user'   => $user->id_user,
-            'nama_user' => $user->nama_user,
-            'email_user'=> $user->username_user,
-            'identitas_user' => $user->identitas_user,
+            'id_user'             => $user->id_user,
+            'nama_user'           => $user->nama_user,
+            'email_user'          => $user->username_user,
+            'identitas_user'      => $user->identitas_user,
             'file_identitas_user' => $user->file_identitas_user,
-            'jenis_user' => 'publik',
+            'jenis_user'          => 'publik',
         ]);
 
         $data_log = [
             'email' => $user->username_user,
-            'nama' => $user->nama_user,
-            'otp' => $request->otp
+            'nama'  => $user->nama_user,
+            'otp'   => $request->otp
         ];
 
         $upd = DB::table('app_user')
             ->where('id_user', $user->id_user)
-            ->update([
-                'otp_user' => ''
-            ]);
+            ->update(['otp_user' => '']);
 
-        if($upd){
-            $this->dataService->createLogWeb($request,'verifyOtpAction' ,'Berhasil verifikasi kode OTP','',json_encode($data_log));
-            return response()->json(['status' => true, 'message' => 'Kode OTP sesuai']);
-        }else{
-            $this->dataService->createLogWeb($request,'verifyOtpAction' ,'Gagal mengirimkan kode OTP','',json_encode($data_log));
-            return response()->json(['status' => false, 'message' => 'gagal verifikasi OTP, silahkan coba kembali']);
+        if ($upd) {
+            $this->dataService->createLogWeb($request, 'verifyOtpAction', 'OTP verified successfully', '', json_encode($data_log));
+            return response()->json(['status' => true, 'message' => 'OTP verified.']);
+        } else {
+            $this->dataService->createLogWeb($request, 'verifyOtpAction', 'OTP verification failed', '', json_encode($data_log));
+            return response()->json(['status' => false, 'message' => 'OTP verification failed. Please try again.']);
         }
     }
 
@@ -370,9 +397,9 @@ class WebLoginController extends Controller
         $menu_aktif = 'lupa password';
        
         $data = [
-            'menu' => 'Lupa Password',
+            'menu'       => 'Forgot Password',
             'menu_aktif' => $menu_aktif,
-            'set' =>  DB::table('app_setting')->where('id_setting', 1)->first(),
+            'set'        => DB::table('app_setting')->where('id_setting', 1)->first(),
         ];
 
         return view('web.lupa-password', $data);
@@ -383,10 +410,10 @@ class WebLoginController extends Controller
         $menu_aktif = 'password baru';
        
         $data = [
-            'menu' => 'Password Baru',
+            'menu'       => 'New Password',
             'menu_aktif' => $menu_aktif,
-            'token' => $token,
-            'set' =>  DB::table('app_setting')->where('id_setting', 1)->first(),
+            'token'      => $token,
+            'set'        => DB::table('app_setting')->where('id_setting', 1)->first(),
         ];
 
         return view('web.password-baru', $data);
@@ -394,9 +421,8 @@ class WebLoginController extends Controller
 
     public function lupaPasswordAction(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
-            'email'  => 'required|email|max:200',
+            'email' => 'required|email|max:200',
         ]);
 
         if ($validator->fails()) {
@@ -407,44 +433,43 @@ class WebLoginController extends Controller
         }
 
         $user = DB::table('app_user')->where('username_user', $request->email)->count();
-        if($user < 1){
-             return response()->json([
+        if ($user < 1) {
+            return response()->json([
                 'success' => false,
-                'message' => 'email tidak terdaftar'
+                'message' => 'Email is not registered.'
             ], 422);
         }
 
         $user_dt = DB::table('app_user')->where('username_user', $request->email)->first();
-        $token = Str::random(64);
+        $token   = Str::random(64);
+
         $insert = DB::table('app_user')
             ->where('username_user', $request->email)
-            ->update([
-                'verify_token' => $token
-            ]);
+            ->update(['verify_token' => $token]);
 
-        if($insert){
+        if ($insert) {
             $verificationUrl = url(env('APP_ROUTE') . '/password-baru/' . $token);
             Mail::to($request->email)->queue(
                 new AppMail(
                     'web.email-lupa-password',
                     [
-                        'nama' => $user_dt->nama_user,
+                        'nama'            => $user_dt->nama_user,
                         'verificationUrl' => $verificationUrl
                     ],
-                    'Lupa Passowrd Akun Satu Data Pertahanan'
+                    'Forgot Password - ' . env('APP_NAME', 'Society Event')
                 )
             );
 
-            $this->dataService->createLogWeb($request,'lupaPasswordAction' ,'Berhasil mengajukan lupa password');
+            $this->dataService->createLogWeb($request, 'lupaPasswordAction', 'Forgot password request submitted.');
             return response()->json([
                 'success' => true,
-                'message' => 'Pengajuan lupa password berhasil, Silahkan cek email untuk proses selanjutnya'
+                'message' => 'Request submitted. Please check your email for the reset link.'
             ]);
-        }else{
-            $this->dataService->createLogWeb($request,'lupaPasswordAction' ,'Gagal mengajukan lupa password');
+        } else {
+            $this->dataService->createLogWeb($request, 'lupaPasswordAction', 'Forgot password request failed.');
             return response()->json([
                 'success' => false,
-                'message' => 'Pengajuan lupa password gagal'
+                'message' => 'Request failed. Please try again.'
             ]);
         }
     }
@@ -452,11 +477,10 @@ class WebLoginController extends Controller
     
     public function ganitPasswordAction(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
-            'password'  => 'required|max:200',
-            'konfirmasi'  => 'required|max:200',
-            'token' => 'required',
+            'password'   => 'required|max:200',
+            'konfirmasi' => 'required|max:200',
+            'token'      => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -467,40 +491,41 @@ class WebLoginController extends Controller
         }
 
         $user = DB::table('app_user')->where('verify_token', $request->token)->count();
-        if($user < 1){
-             return response()->json([
+        if ($user < 1) {
+            return response()->json([
                 'success' => false,
-                'message' => 'invalid token'
+                'message' => 'Invalid token.'
             ], 422);
         }
 
-        if($request->password != $request->konfirmasi){
+        if ($request->password != $request->konfirmasi) {
             return response()->json([
                 'success' => false,
-                'message' => 'konfirmasi password tidak valid'
+                'message' => 'Password confirmation does not match.'
             ], 422);
         }
 
         $det_user = DB::table('app_user')->where('verify_token', $request->token)->first();
         $password = Hash::make($request->password);
-        $insert = DB::table('app_user')
+
+        $update = DB::table('app_user')
             ->where('id_user', $det_user->id_user)
             ->update([
                 'verify_token' => '',
                 'password_user' => $password
             ]);
 
-        if($insert){
-            $this->dataService->createLogWeb($request,'ganitPasswordAction' ,'Berhasil ganti password');
+        if ($update) {
+            $this->dataService->createLogWeb($request, 'ganitPasswordAction', 'Password changed successfully.');
             return response()->json([
                 'success' => true,
-                'message' => 'Berhasil ganti password'
+                'message' => 'Password changed successfully.'
             ]);
-        }else{
-            $this->dataService->createLogWeb($request,'ganitPasswordAction' ,'Gagal ganti password');
+        } else {
+            $this->dataService->createLogWeb($request, 'ganitPasswordAction', 'Failed to change password.');
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal ganti password'
+                'message' => 'Failed to change password. Please try again.'
             ]);
         }
     }

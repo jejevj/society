@@ -1,5 +1,5 @@
 # Society Event - ScienceBank Platform
-> Project Summary diperbarui: 2026-05-31 | Base commit: b5d16303
+> Project Summary diperbarui: 2026-06-01 | Base commit: b5d16303 | Last update commit: 7619343e
 
 ---
 
@@ -19,6 +19,7 @@ Aplikasi ini adalah platform manajemen event berbasis Laravel untuk **ScienceBan
 | Container | Docker (`Dockerfile` + `docker-compose.yml` + `docker-compose.prod.yml`) |
 | Email | SMTP Gmail (configurable via admin panel) |
 | Auth | Session-based login + OTP, bcrypt password |
+| Payment | Midtrans (SNAP Popup + Charge API) |
 
 ---
 
@@ -55,6 +56,7 @@ Aplikasi ini adalah platform manajemen event berbasis Laravel untuk **ScienceBan
 | `app_setting` | Pengaturan tampilan website | 1 record (social media, gambar, deskripsi) |
 | `app_slider` | Slider halaman web | Kosong (struktur minimal, perlu ALTER TABLE) |
 | `app_log_aktivitas` | Log semua aksi admin | 37+ log entries |
+| `app_midtrans_transaction` | Riwayat transaksi Midtrans | Tabel baru (migration 2026-05-31) |
 | `t_sponsor` | Sponsor event | 2 sponsor: INTELLEGENT SCIENCE, BioNexus |
 
 ### Tabel Event (Inti)
@@ -114,6 +116,7 @@ Aplikasi ini adalah platform manajemen event berbasis Laravel untuk **ScienceBan
 | `EventPaperController` | `EventPaperController.php` | CRUD paper/submission event |
 | `EventRegistrasiController` | `EventRegistrasiController.php` | CRUD registrasi peserta event |
 | `EventTimelineController` | `EventTimelineController.php` | CRUD timeline event |
+| `MidtransController` | `MidtransController.php` | Konfigurasi Midtrans, Snap Token, Charge API, fetch transaksi |
 
 ### Web Publik Controllers
 
@@ -148,6 +151,8 @@ Content Web (Master)
   - Settings
   - Slider
   - Tautan/Link
+Payment
+  - Midtrans (Konfigurasi, Create Order, Transaksi)
 Logs
   - Log Aktivitas
 ```
@@ -165,7 +170,39 @@ Logs
 
 ---
 
-## 8. Gap Analysis - Fitur Belum / Perlu Diperbaiki
+## 8. Fitur Baru: Midtrans Payment Integration
+
+> Ditambahkan: 2026-05-31 | Commits: `cca4007d` sampai `7619343e`
+
+### Deskripsi
+Integrasi payment gateway **Midtrans** ke dalam admin panel. Fitur ini memungkinkan admin untuk membuat order, memproses pembayaran via SNAP Popup, dan memantau status transaksi langsung dari halaman konfigurasi Midtrans.
+
+### Komponen Baru
+
+| Komponen | Detail |
+|---|---|
+| Migration | `2026_05_31_000003_create_app_midtrans_transaction_full_table.php` - tabel `app_midtrans_transaction` |
+| Controller | `MidtransController.php` - actions: `createSnapTokenAction`, `createChargeAction`, `fetchMidtransTransactionsAction`, `getMidtransStatusAction` |
+| View | `resources/views/admin-panel/midtrans/main.blade.php` - halaman dengan tab nav (Konfigurasi, Create Order, Transaksi) |
+| Route | Route baru: `fetchMidtransTransactionsAction`, `createSnapTokenAction`, `createChargeAction`, `getMidtransStatusAction` |
+
+### Alur Kerja Midtrans
+
+1. Admin membuka halaman **Midtrans** di admin panel
+2. Tab **Create Order**: admin isi data order, klik tombol untuk generate Snap Token
+3. SNAP Popup tampil di atas halaman (Midtrans hosted payment page)
+4. Setelah pembayaran, callback otomatis menyimpan data transaksi ke `app_midtrans_transaction`
+5. Tab **Transaksi**: admin bisa fetch dan lihat riwayat transaksi dari DB maupun dari Midtrans API
+
+### Perbaikan Teknis (dalam rangkaian commit yang sama)
+
+- **CSRF fix**: tambah `$.ajaxSetup` dengan header `X-CSRF-TOKEN` agar semua AJAX request ke Midtrans tidak 419
+- **Migration conflict fix**: sinkronisasi kolom `snap_token` dan `redirect_url` yang sudah ada di DB aktual
+- **UI fix**: tab nav dipindahkan ke dalam `card-header` (pola Metronic) agar tidak tertimpa toolbar
+
+---
+
+## 9. Gap Analysis - Fitur Belum / Perlu Diperbaiki
 
 | Fitur | Tabel DB | Controller | Status |
 |---|---|---|---|
@@ -179,10 +216,11 @@ Logs
 | Halaman Paper Publik | - | Parsial di `WebDataController` | **Perlu dikembangkan lebih lanjut** |
 | Data konten real | - | - | **Event masih pakai Lorem Ipsum** |
 | App setting | `app_setting` | `SettingController.php` | **Masih ada konten "Satu Data Pertahanan"** |
+| Midtrans webhook/notification | `app_midtrans_transaction` | `MidtransController.php` | **Endpoint notifikasi Midtrans belum dikonfirmasi ada** |
 
 ---
 
-## 9. Halaman Web Publik
+## 10. Halaman Web Publik
 
 Navigasi yang sudah ada di header:
 - **About** - route `about`
@@ -193,7 +231,7 @@ Navigasi yang sudah ada di header:
 
 ---
 
-## 10. Catatan Penting
+## 11. Catatan Penting
 
 1. **SMTP credentials** tersimpan plaintext di DB (`app_email`) - pertimbangkan enkripsi.
 2. `app_slider` hanya punya kolom `id_slider` - belum ada kolom konten (**perlu ALTER TABLE**).
@@ -203,3 +241,5 @@ Navigasi yang sudah ada di header:
 6. `app_setting` masih menyimpan konten lama **"Satu Data Pertahanan"** - perlu di-update ke ScienceBank Society.
 7. `EventController.php` berukuran **50KB** - sangat besar, pertimbangkan dipecah per domain (Paket, Program, Kolaborasi) agar maintainable.
 8. Database dump tersedia di **`society_event_db.sql`** di root project - gunakan untuk setup fresh install.
+9. **Midtrans Sandbox/Production**: pastikan key Midtrans di `.env` sudah benar sebelum go-live. Lihat `.env.example` untuk nama variable yang dipakai.
+10. **Midtrans webhook**: pastikan URL notifikasi di Midtrans Dashboard diarahkan ke endpoint yang benar di aplikasi ini agar status transaksi ter-update otomatis.

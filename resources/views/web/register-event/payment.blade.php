@@ -98,16 +98,16 @@
             @if(($data['total_harga'] ?? 0) == 0)
                 {{-- Gratis: langsung enroll --}}
                 <div class="free-note">
-                    <i class="fa-solid fa-circle-check"></i>
+                    <i class="fa-solid fa-circle-check" style="font-size:1.2rem;"></i>
                     <span>Event ini <strong>gratis</strong>. Klik konfirmasi untuk menyelesaikan pendaftaran.</span>
                 </div>
                 <form action="{{ route('register-event.process-payment') }}" method="POST">
                     @csrf
                     <button type="submit" class="btn-pay">
-                        <i class="fa-solid fa-check-circle"></i> Konfirmasi & Daftar Sekarang
+                        <i class="fa-solid fa-check-circle"></i> Konfirmasi &amp; Daftar Sekarang
                     </button>
                 </form>
-            @elseif($snapToken)
+            @elseif(!empty($snapToken))
                 {{-- Midtrans Snap --}}
                 <button id="btnPay" class="btn-pay">
                     <i class="fa-solid fa-credit-card"></i> Bayar Sekarang
@@ -120,20 +120,47 @@
                         onSuccess: function (result) {
                             fetch('{{ route("register-event.midtrans-callback") }}', {
                                 method: 'POST',
-                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
                                 body: JSON.stringify(result)
                             })
                             .then(r => r.json())
-                            .then(res => { if (res.redirect) window.location.href = res.redirect; });
+                            .then(res => {
+                                if (res.redirect) window.location.href = res.redirect;
+                            });
                         },
-                        onPending: function (result) { alert('Pembayaran pending. Cek email untuk instruksi selanjutnya.'); },
-                        onError:   function (result) { alert('Pembayaran gagal. Silakan coba lagi.'); },
-                        onClose:   function ()       { /* user menutup popup */ }
+                        onPending: function () {
+                            alert('Pembayaran pending. Cek email untuk instruksi pembayaran.');
+                        },
+                        onError: function () {
+                            alert('Pembayaran gagal. Silakan coba lagi.');
+                        },
+                        onClose: function () {}
                     });
                 });
                 </script>
             @else
-                {{-- Fallback jika Midtrans tidak terkonfigurasi --}}
-                <div class="alert alert-warning" style="font-size:0.85rem;">
+                {{-- Fallback jika Midtrans belum dikonfigurasi --}}
+                <div class="alert alert-warning" style="font-size:0.85rem;border-radius:10px;">
                     <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                    Gateway pembayaran belum dikonfiguras
+                    Gateway pembayaran belum dikonfigurasi. Hubungi administrator.
+                </div>
+                <form action="{{ route('register-event.process-payment') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn-pay" style="background:#6b7280;">
+                        <i class="fa-solid fa-check"></i> Selesaikan Pendaftaran (Manual)
+                    </button>
+                </form>
+            @endif
+        </div>
+    </div>
+
+</div>
+</div>
+</div>
+</div>
+
+@include('layouts.footer-v2')

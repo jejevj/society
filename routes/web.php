@@ -39,6 +39,15 @@ Route::prefix('society-event')->group(function () {
     Route::get('/otpLogin/{otp}', [App\Http\Controllers\WebLoginController::class, 'otpLogin'])->name('otpLogin');
     Route::post('/verifyOtpAction', [App\Http\Controllers\WebLoginController::class, 'verifyOtpAction'])->name('verifyOtpAction');
 
+    // ── Registration OTP & Payment Steps (WebLoginController) ──
+    Route::post('/verifyOtpRegistrasi', [App\Http\Controllers\WebLoginController::class, 'verifyOtpRegistrasi'])->name('verifyOtpRegistrasi');
+    Route::post('/resendOtpRegistrasi', [App\Http\Controllers\WebLoginController::class, 'resendOtpRegistrasi'])->name('resendOtpRegistrasi');
+    Route::post('/getEventPackages', [App\Http\Controllers\WebLoginController::class, 'getEventPackages'])->name('getEventPackages');
+    Route::post('/getRegistrationSnapToken', [App\Http\Controllers\WebLoginController::class, 'getRegistrationSnapToken'])->name('getRegistrationSnapToken');
+    Route::post('/enrollEventFree', [App\Http\Controllers\WebLoginController::class, 'enrollEventFree'])->name('enrollEventFree');
+    Route::post('/paymentRegistrationCallback', [App\Http\Controllers\WebLoginController::class, 'paymentRegistrationCallback'])->name('paymentRegistrationCallback');
+    // ── End Registration OTP & Payment Steps ──
+
     // ── Multi-step Event Registration ──
     Route::get('/register-event/otp',      [App\Http\Controllers\WebRegisterEventController::class, 'showOtp'])->name('register-event.otp');
     Route::post('/register-event/verify-otp', [App\Http\Controllers\WebRegisterEventController::class, 'verifyOtp'])->name('register-event.verify-otp');

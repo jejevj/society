@@ -57,18 +57,18 @@ class WebLoginController extends Controller
         if ($request->filled('event')) {
             $event = DB::table('t_event as e')
                 ->where('e.kode_event', $request->event)
-                ->where('e.status', 'Y')
+                ->where('e.status_event', 'Y')
                 ->first();
 
             if ($event) {
                 // Attach kolaborasi
                 $event->kolaborasi = DB::table('t_event_kolaborasi')
-                    ->where('kode_event', $event->kode_event)
+                    ->where('event_kode_kolaborasi', $event->kode_event)
                     ->get();
 
                 // Attach paket
                 $event->paket = DB::table('t_event_paket')
-                    ->where('kode_event', $event->kode_event)
+                    ->where('event_kode_paket', $event->kode_event)
                     ->get();
             }
         }
@@ -173,7 +173,7 @@ class WebLoginController extends Controller
             if ($request->filled('kode_event') && $request->filled('role_event')) {
                 $eventData = DB::table('t_event')
                     ->where('kode_event', $request->kode_event)
-                    ->where('status', 'Y')
+                    ->where('status_event', 'Y')
                     ->first();
 
                 if ($eventData) {

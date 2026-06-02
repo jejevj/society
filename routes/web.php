@@ -10,8 +10,8 @@ Route::prefix('society-event')->group(function () {
     Route::get('/about', [App\Http\Controllers\WebHomeController::class, 'index'])->name('about');
     Route::get('/home', [App\Http\Controllers\WebHomeController::class, 'index'])->name('home');
 
-    // Halaman list event publik
-    Route::get('/event', [App\Http\Controllers\WebEventPublicController::class, 'index'])->name('list-event');
+    // Halaman list event publik (path /list-event agar tidak bentrok dengan backend admin /event)
+    Route::get('/list-event', [App\Http\Controllers\WebEventPublicController::class, 'index'])->name('list-event');
 
     Route::get('/countDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getCountData'])->name('countDataDashboard');
     Route::get('/listDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getListData'])->name('listDataDashboard');
@@ -198,6 +198,7 @@ Route::prefix('society-event')->group(function () {
     Route::post('updatePasswordAction', [App\Http\Controllers\ProfilController::class, 'updatePasswordAction'])->name('updatePasswordAction');
     Route::get('ganti-password', [App\Http\Controllers\ProfilController::class, 'gantiPassword'])->name('ganti-password');
 
+    // Backend admin: manajemen event
     Route::get('event', [App\Http\Controllers\EventController::class, 'index'])->name('event');
     Route::get('/getTableEvent', [App\Http\Controllers\EventController::class, 'getTableEvent'])->name('getTableEvent');
     Route::get('tambah-event', [App\Http\Controllers\EventController::class, 'tambah'])->name('tambah-event');

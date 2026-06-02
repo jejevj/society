@@ -39,26 +39,25 @@ Route::prefix('society-event')->group(function () {
     Route::get('/otpLogin/{otp}', [App\Http\Controllers\WebLoginController::class, 'otpLogin'])->name('otpLogin');
     Route::post('/verifyOtpAction', [App\Http\Controllers\WebLoginController::class, 'verifyOtpAction'])->name('verifyOtpAction');
 
-    // ── Registration OTP & Payment Steps (WebLoginController) ──
+    // Registration OTP & Payment Steps (WebLoginController)
     Route::post('/verifyOtpRegistrasi', [App\Http\Controllers\WebLoginController::class, 'verifyOtpRegistrasi'])->name('verifyOtpRegistrasi');
     Route::post('/resendOtpRegistrasi', [App\Http\Controllers\WebLoginController::class, 'resendOtpRegistrasi'])->name('resendOtpRegistrasi');
     Route::post('/getEventPackages', [App\Http\Controllers\WebLoginController::class, 'getEventPackages'])->name('getEventPackages');
     Route::post('/getRegistrationSnapToken', [App\Http\Controllers\WebLoginController::class, 'getRegistrationSnapToken'])->name('getRegistrationSnapToken');
     Route::post('/enrollEventFree', [App\Http\Controllers\WebLoginController::class, 'enrollEventFree'])->name('enrollEventFree');
     Route::post('/paymentRegistrationCallback', [App\Http\Controllers\WebLoginController::class, 'paymentRegistrationCallback'])->name('paymentRegistrationCallback');
-    // ── End Registration OTP & Payment Steps ──
 
-    // ── Multi-step Event Registration ──
-    Route::get('/register-event/otp',      [App\Http\Controllers\WebRegisterEventController::class, 'showOtp'])->name('register-event.otp');
-    Route::post('/register-event/verify-otp', [App\Http\Controllers\WebRegisterEventController::class, 'verifyOtp'])->name('register-event.verify-otp');
-    Route::get('/register-event/addon',    [App\Http\Controllers\WebRegisterEventController::class, 'showAddon'])->name('register-event.addon');
-    Route::post('/register-event/addon',   [App\Http\Controllers\WebRegisterEventController::class, 'saveAddon'])->name('register-event.save-addon');
-    Route::get('/register-event/payment',  [App\Http\Controllers\WebRegisterEventController::class, 'showPayment'])->name('register-event.payment');
-    Route::post('/register-event/payment', [App\Http\Controllers\WebRegisterEventController::class, 'processPayment'])->name('register-event.process-payment');
-    Route::get('/register-event/success',  [App\Http\Controllers\WebRegisterEventController::class, 'success'])->name('register-event.success');
-    Route::post('/register-event/resend-otp', [App\Http\Controllers\WebRegisterEventController::class, 'resendOtp'])->name('register-event.resend-otp');
-    Route::post('/register-event/midtrans-callback', [App\Http\Controllers\WebRegisterEventController::class, 'midtransCallback'])->name('register-event.midtrans-callback');
-    // ── End Multi-step ──
+    // Multi-step Event Registration
+    Route::get('/register-event/otp',            [App\Http\Controllers\WebRegisterEventController::class, 'showOtp'])->name('register-event.otp');
+    Route::post('/register-event/verify-otp',    [App\Http\Controllers\WebRegisterEventController::class, 'verifyOtp'])->name('register-event.verify-otp');
+    Route::get('/register-event/addon',          [App\Http\Controllers\WebRegisterEventController::class, 'showAddon'])->name('register-event.addon');
+    Route::post('/register-event/addon',         [App\Http\Controllers\WebRegisterEventController::class, 'saveAddon'])->name('register-event.save-addon');
+    Route::get('/register-event/payment',        [App\Http\Controllers\WebRegisterEventController::class, 'showPayment'])->name('register-event.payment');
+    Route::post('/register-event/check-payment', [App\Http\Controllers\WebRegisterEventController::class, 'checkPaymentStatus'])->name('register-event.check-payment');
+    Route::get('/register-event/success',        [App\Http\Controllers\WebRegisterEventController::class, 'success'])->name('register-event.success');
+    Route::post('/register-event/resend-otp',    [App\Http\Controllers\WebRegisterEventController::class, 'resendOtp'])->name('register-event.resend-otp');
+    Route::post('/register-event/midtrans-callback', [App\Http\Controllers\WebRegisterEventController::class, 'midtransCallback'])->name('register-event.midtrans-callback')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+    // End Multi-step
 
     Route::get('/list', [App\Http\Controllers\WebDataController::class, 'index'])->name('list');
     Route::get('/listData', [App\Http\Controllers\WebDataController::class, 'getDataList'])->name('listData');
@@ -94,7 +93,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/test-captcha', function() {
         return captcha_img();
     });
-    // end front end 
 
     Route::get('admin-panel', [App\Http\Controllers\DashboardController::class, 'index'])->name('admin-panel');
     Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
@@ -169,7 +167,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/editSlider/{id_slider}', [App\Http\Controllers\SettingController::class, 'editSlider'])->name('editSlider');
     Route::post('/updateSliderAction', [App\Http\Controllers\SettingController::class, 'updateSliderAction'])->name('updateSliderAction');
 
-    // route menu midtrans configurations
     Route::get('midtrans-config', [App\Http\Controllers\MidtransConfigController::class, 'index'])->name('midtrans-config');
     Route::post('/updateMidtransConfigAction', [App\Http\Controllers\MidtransConfigController::class, 'updateMidtransConfigAction'])->name('updateMidtransConfigAction');
     Route::post('/testMidtransConnectionAction', [App\Http\Controllers\MidtransConfigController::class, 'testConnectionAction'])->name('testMidtransConnectionAction');
@@ -189,7 +186,6 @@ Route::prefix('society-event')->group(function () {
     Route::post('updatePasswordAction', [App\Http\Controllers\ProfilController::class, 'updatePasswordAction'])->name('updatePasswordAction');
     Route::get('ganti-password', [App\Http\Controllers\ProfilController::class, 'gantiPassword'])->name('ganti-password');
 
-    // route menu event
     Route::get('event', [App\Http\Controllers\EventController::class, 'index'])->name('event');
     Route::get('/getTableEvent', [App\Http\Controllers\EventController::class, 'getTableEvent'])->name('getTableEvent');
     Route::get('tambah-event', [App\Http\Controllers\EventController::class, 'tambah'])->name('tambah-event');
@@ -213,14 +209,12 @@ Route::prefix('society-event')->group(function () {
     Route::get('/editProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'editProgramEvent'])->name('editProgramEvent');
     Route::post('/addProgramEventAction', [App\Http\Controllers\EventController::class, 'addProgramEventAction'])->name('addProgramEventAction');
 
-    // route menu event registrasi peserta
     Route::get('event-registrasi', [App\Http\Controllers\EventRegistrasiController::class, 'index'])->name('event-registrasi');
     Route::get('/getTableRegistrasi', [App\Http\Controllers\EventRegistrasiController::class, 'getTableRegistrasi'])->name('getTableRegistrasi');
     Route::post('/updateStatusRegistrasiAction', [App\Http\Controllers\EventRegistrasiController::class, 'updateStatusRegistrasiAction'])->name('updateStatusRegistrasiAction');
     Route::post('/deleteRegistrasiAction', [App\Http\Controllers\EventRegistrasiController::class, 'deleteRegistrasiAction'])->name('deleteRegistrasiAction');
     Route::get('/detailPaperRegistrasi/{id_registrasi}', [App\Http\Controllers\EventRegistrasiController::class, 'detailPaperRegistrasi'])->name('detailPaperRegistrasi');
 
-    // route menu event paper
     Route::get('event-paper', [App\Http\Controllers\EventPaperController::class, 'index'])->name('event-paper');
     Route::get('/getTablePaper', [App\Http\Controllers\EventPaperController::class, 'getTablePaper'])->name('getTablePaper');
     Route::get('/getTablePaperByRegistrasi', [App\Http\Controllers\EventPaperController::class, 'getTablePaperByRegistrasi'])->name('getTablePaperByRegistrasi');

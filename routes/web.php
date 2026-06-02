@@ -10,6 +10,9 @@ Route::prefix('society-event')->group(function () {
     Route::get('/about', [App\Http\Controllers\WebHomeController::class, 'index'])->name('about');
     Route::get('/home', [App\Http\Controllers\WebHomeController::class, 'index'])->name('home');
 
+    // Halaman list event publik
+    Route::get('/event', [App\Http\Controllers\WebEventPublicController::class, 'index'])->name('list-event');
+
     Route::get('/countDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getCountData'])->name('countDataDashboard');
     Route::get('/listDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getListData'])->name('listDataDashboard');
     Route::get('/topikDashboard', [App\Http\Controllers\WebDashboardController::class, 'getTopik'])->name('topikDashboard');

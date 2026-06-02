@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Mail\AppMail;
 
@@ -68,7 +70,6 @@ class WebLoginController extends Controller
             }
         }
 
-        // Ambil midtrans config aktif (kolom is_active = 'Y', id_midtrans = 1)
         $midtransConfig = DB::table('app_midtrans_config')
             ->where('id_midtrans', 1)
             ->where('is_active', 'Y')
@@ -301,7 +302,7 @@ class WebLoginController extends Controller
     }
 
     /**
-     * STEP 4a: Generate Midtrans Snap Token.
+     * STEP 4a: Generate Midtrans Snap Token via HTTP (tanpa package midtrans-php).
      * Jika totalAmount = 0, kembalikan free:true agar frontend enroll langsung.
      */
     public function getRegistrationSnapToken(Request $request)
@@ -361,26 +362,24 @@ class WebLoginController extends Controller
             ]);
         }
 
-        // Ada nominal: baca config dari DB (kolom is_active & environment)
+        // Ada nominal: baca config dari DB
         $midtransConfig = DB::table('app_midtrans_config')
             ->where('id_midtrans', 1)
             ->where('is_active', 'Y')
             ->first();
 
-        if (!$midtransConfig) {
+        if (!$midtransConfig || empty($midtransConfig->server_key)) {
             return response()->json(['success' => false, 'message' => 'Konfigurasi Midtrans belum diatur. Hubungi administrator.']);
         }
 
         $isProduction = $midtransConfig->environment === 'production';
-
-        \Midtrans\Config::$serverKey    = $midtransConfig->server_key;
-        \Midtrans\Config::$isProduction = $isProduction;
-        \Midtrans\Config::$isSanitized  = true;
-        \Midtrans\Config::$is3ds        = true;
+        $snapApiUrl   = $isProduction
+            ? 'https://api.midtrans.com/snap/v1/transactions'
+            : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
         $orderId = 'REG-' . $request->user_id . '-' . time();
 
-        $params = [
+        $payload = [
             'transaction_details' => [
                 'order_id'     => $orderId,
                 'gross_amount' => (int) $totalAmount,
@@ -391,22 +390,47 @@ class WebLoginController extends Controller
                 'phone'      => $user->telepon_user ?? '',
             ],
         ];
+
         if (!empty($itemDetails)) {
-            $params['item_details'] = $itemDetails;
+            $payload['item_details'] = $itemDetails;
+        }
+
+        // Tambahkan enabled_payments jika dikonfigurasi
+        if (!empty($midtransConfig->payment_types)) {
+            $types = json_decode($midtransConfig->payment_types, true);
+            if (!empty($types)) {
+                $payload['enabled_payments'] = $types;
+            }
         }
 
         try {
-            $snapToken = \Midtrans\Snap::getSnapToken($params);
+            $response = Http::withBasicAuth($midtransConfig->server_key, '')
+                ->timeout(30)
+                ->post($snapApiUrl, $payload);
 
-            if (DB::getSchemaBuilder()->hasTable('app_midtrans_transaction')) {
+            $res = $response->json();
+
+            if ($response->failed() || !isset($res['token'])) {
+                $errMsg = isset($res['error_messages'])
+                    ? implode(', ', (array) $res['error_messages'])
+                    : ($res['message'] ?? 'Gagal mendapatkan SNAP token dari Midtrans.');
+                return response()->json(['success' => false, 'message' => $errMsg]);
+            }
+
+            $snapToken = $res['token'];
+
+            if (Schema::hasTable('app_midtrans_transaction')) {
                 DB::table('app_midtrans_transaction')->insert([
-                    'order_id'     => $orderId,
-                    'user_id'      => $request->user_id,
-                    'gross_amount' => $totalAmount,
-                    'status'       => 'pending',
-                    'snap_token'   => $snapToken,
-                    'kode_event'   => $request->kode_event,
-                    'created_at'   => now(),
+                    'order_id'           => $orderId,
+                    'transaction_status' => 'pending',
+                    'payment_type'       => 'snap',
+                    'gross_amount'       => (float) $totalAmount,
+                    'currency'           => 'IDR',
+                    'snap_token'         => $snapToken,
+                    'redirect_url'       => $res['redirect_url'] ?? null,
+                    'status_message'     => 'SNAP token created - event registration',
+                    'created_at'         => now(),
+                    'updated_at'         => now(),
                 ]);
             }
 
@@ -455,13 +479,13 @@ class WebLoginController extends Controller
         $midtransResult = json_decode($request->midtrans_result, true);
 
         if (!empty($midtransResult['order_id'])) {
-            if (DB::getSchemaBuilder()->hasTable('app_midtrans_transaction')) {
+            if (Schema::hasTable('app_midtrans_transaction')) {
                 DB::table('app_midtrans_transaction')
                     ->where('order_id', $midtransResult['order_id'])
                     ->update([
-                        'status'       => $midtransResult['transaction_status'] ?? 'settlement',
-                        'payment_type' => $midtransResult['payment_type'] ?? null,
-                        'updated_at'   => now(),
+                        'transaction_status' => $midtransResult['transaction_status'] ?? 'settlement',
+                        'payment_type'       => $midtransResult['payment_type'] ?? null,
+                        'updated_at'         => now(),
                     ]);
             }
         }

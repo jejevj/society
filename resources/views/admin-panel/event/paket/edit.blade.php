@@ -13,7 +13,6 @@
 										<span class="page-desc opacity-50 fs-6 fw-bold pt-4"></span>
 										</h1>
 									</div>
-									
 								</div>
 							</div>
 						</div>
@@ -22,13 +21,12 @@
 						<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
 							<div class="d-flex flex-column flex-column-fluid">
 								<div id="kt_app_content" class="app-content">
-									
 									<div class="card card-flush">
 										<div class="card-body">
                                             <div class="mb-4">
                                                 <div class="d-flex justify-content-end">
                                                     <a class="btn btn-warning btn-sm" href="{{ route('paketEvent', $detail->event_kode_paket) }}">
-                                                        <i class="fa fa-backward"></i> back
+                                                        <i class="fa fa-backward"></i> Back
                                                     </a>
                                                 </div>
                                             </div>
@@ -38,15 +36,23 @@
 												<div class="row">
 													<div class="col-md-6">
 														<label class="fs-4 opacity-75 mb-4">Title:</label>
-														<input type="text" value="{{$detail->judul_paket}}" class="form-control py-4" name="judul" placeholder="Title" >
+														<input type="text" value="{{$detail->judul_paket}}" class="form-control py-4" name="judul" placeholder="Title">
 													</div>
 													<div class="col-md-6">
 														<label class="fs-4 opacity-75 mb-4">Sub Title:</label>
-														<input type="text" value="{{$detail->sub_judul_paket}}" class="form-control py-4" name="sub_judul" placeholder="Sub Title" >
+														<input type="text" value="{{$detail->sub_judul_paket}}" class="form-control py-4" name="sub_judul" placeholder="Sub Title">
 													</div>
                                                     <div class="col-md-6 mt-4">
 														<label class="fs-4 opacity-75 mb-4">Location:</label>
-														<input type="text" value="{{$detail->lokasi_paket}}" class="form-control py-4" name="lokasi" placeholder="Location" >
+														<input type="text" value="{{$detail->lokasi_paket}}" class="form-control py-4" name="lokasi" placeholder="Location">
+													</div>
+                                                    <div class="col-md-6 mt-4">
+														<label class="fs-4 opacity-75 mb-4">Package Price (Rp):</label>
+														<div class="input-group">
+															<span class="input-group-text">Rp</span>
+															<input type="number" class="form-control py-4" name="harga" placeholder="0" min="0" value="{{ $detail->harga_paket ?? 0 }}">
+														</div>
+														<small class="text-muted">Set to 0 if this package is free / included</small>
 													</div>
                                                     <div class="col-md-6 mt-4">
 														<label class="fs-4 opacity-75 mb-4">Description:</label>
@@ -54,26 +60,27 @@
 													</div>
                                                     <div class="col-md-6 mt-4">
 														<label class="fs-4 opacity-75 mb-4">Images:</label><br>
-                                                        <img src="{{ url('storage/'.$detail->gambar_paket) }}" class="img-fluid rounded" alt="Preview" style="max-height:150px;">
-														<input type="file" class="form-control py-4" name="gambar" placeholder="Images" accept=".jpg,.jpeg,.png" >
+                                                        @if(!empty($detail->gambar_paket))
+                                                        <img src="{{ url('storage/'.$detail->gambar_paket) }}" class="img-fluid rounded mb-2" alt="Preview" style="max-height:150px;">
+                                                        @endif
+														<input type="file" class="form-control py-4" name="gambar" placeholder="Images" accept=".jpg,.jpeg,.png">
 													</div>
                                                     <div class="col-md-6 mt-4">
 														<label class="fs-4 opacity-75 mb-4">Icon:</label><br>
-                                                        <img src="{{ url('storage/'.$detail->icon_paket) }}" class="img-fluid rounded" alt="Preview" style="max-height:150px;">
-														<input type="file" class="form-control py-4" name="icon" placeholder="icon" accept=".jpg,.jpeg,.png" >
+                                                        @if(!empty($detail->icon_paket))
+                                                        <img src="{{ url('storage/'.$detail->icon_paket) }}" class="img-fluid rounded mb-2" alt="Preview" style="max-height:150px;">
+                                                        @endif
+														<input type="file" class="form-control py-4" name="icon" placeholder="icon" accept=".jpg,.jpeg,.png">
 													</div>
-                                                    
-																								
 												</div>
-												<div class="row">													
+												<div class="row">
 													<div class="col-md-12 mt-4">
-														<button type="submit" id="btn-save" class="btn btn-marron-submit w-100"><i class="fa fa-save text-white"></i>Save</button>
+														<button type="submit" id="btn-save" class="btn btn-marron-submit w-100"><i class="fa fa-save text-white"></i> Save</button>
 													</div>
 												</div>
 											</form>
 										</div>
 									</div>
-									
 								</div>
 							</div>							
 						</div>
@@ -101,11 +108,9 @@
 					beforeSend: function () {
                         Swal.fire({
                             title: 'Loading...',
-                            text: 'Is saving data',
+                            text: 'Saving data',
                             allowOutsideClick: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
+                            didOpen: () => { Swal.showLoading(); }
                         });
                     },
 					success: function (response) {
@@ -118,22 +123,11 @@
 						});
 					},
 					error: function (xhr) {
-						let message = 'Terjadi kesalahan.';
-						if (xhr.responseJSON && xhr.responseJSON.message) {
-							message = xhr.responseJSON.message;
-						}
-
-						Swal.fire({
-							icon: 'error',
-							title: 'Failed',
-							text: message
-						});
+						let message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'An error occurred.';
+						Swal.fire({ icon: 'error', title: 'Failed', text: message });
 					}
 				});
 			});
-
-
-			
 		</script>
 
 @include('admin-panel.layouts.footer')

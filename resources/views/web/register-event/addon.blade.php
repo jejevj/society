@@ -23,6 +23,13 @@
 .reg-card h2 { font-size:1.2rem;font-weight:800;color:#1a1a1a;margin-bottom:4px; }
 .reg-card .subtitle { color:#999;font-size:0.82rem;margin-bottom:20px; }
 
+/* Baris harga event */
+.event-fee-row { display:flex;justify-content:space-between;align-items:center;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:0.88rem; }
+.event-fee-row.paid { background:#fff5f5;border-color:#fca5a5; }
+.event-fee-label { color:#555;font-weight:600; }
+.event-fee-value { font-weight:800;color:#E62020; }
+.event-fee-value.free { color:#16a34a; }
+
 .paket-card {
     border:2px solid #e8e8e8; border-radius:14px; padding:16px; cursor:pointer;
     transition:border-color 0.2s, box-shadow 0.2s, background 0.2s; position:relative; margin-bottom:12px;
@@ -42,7 +49,7 @@
 
 .btn-primary-red { background:#E62020;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:0.94rem;width:100%;cursor:pointer;transition:background 0.2s;display:flex;align-items:center;justify-content:center;gap:8px; }
 .btn-primary-red:hover { background:#c41a1a;color:#fff; }
-.btn-skip { background:transparent;border:1.5px solid #e0e0e0;color:#888;border-radius:10px;padding:11px;font-size:0.88rem;font-weight:600;width:100%;cursor:pointer;transition:all 0.2s; margin-top:8px; }
+.btn-skip { background:transparent;border:1.5px solid #e0e0e0;color:#888;border-radius:10px;padding:11px;font-size:0.88rem;font-weight:600;width:100%;cursor:pointer;transition:all 0.2s;margin-top:8px; }
 .btn-skip:hover { border-color:#aaa;color:#555; }
 
 @media (max-width:767.98px) { .reg-content{padding-top:80px;} .reg-card{padding:22px 14px;} .left-col{display:none;} }
@@ -83,21 +90,34 @@
             <h2>Pilih Add-on Paket</h2>
             <p class="subtitle">Tambahkan paket aktivitas yang ingin Anda ikuti (opsional)</p>
 
+            {{-- Baris harga dasar event --}}
+            @php $hargaEventBase = (float) ($event->harga_event ?? 0); @endphp
+            <div class="event-fee-row {{ $hargaEventBase > 0 ? 'paid' : '' }}">
+                <span class="event-fee-label"><i class="fa-solid fa-ticket me-1"></i>Biaya Pendaftaran Event</span>
+                @if($hargaEventBase > 0)
+                    <span class="event-fee-value">Rp {{ number_format($hargaEventBase, 0, ',', '.') }}</span>
+                @else
+                    <span class="event-fee-value free"><i class="fa-solid fa-circle-check me-1"></i>Gratis</span>
+                @endif
+            </div>
+
             <form action="{{ route('register-event.save-addon') }}" method="POST" id="formAddon">
                 @csrf
 
                 @if($paket && $paket->count())
+                    <div style="font-size:0.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#aaa;margin-bottom:10px;">Paket Add-on (opsional)</div>
                     @foreach($paket as $p)
-                    <div class="paket-card" data-kode="{{ $p->kode_paket }}" data-harga="{{ $p->harga_paket ?? 0 }}" onclick="togglePaket(this)">
+                    @php $hargaPaket = (float) ($p->harga_paket ?? 0); @endphp
+                    <div class="paket-card" data-kode="{{ $p->kode_paket }}" data-harga="{{ $hargaPaket }}" onclick="togglePaket(this)">
                         <div class="check-icon"><i class="fa-solid fa-check"></i></div>
                         @if(!empty($p->icon_paket))
                             <img src="{{ asset('storage/' . $p->icon_paket) }}" alt="" class="paket-img">
                         @endif
                         <div class="paket-name">{{ $p->judul_paket }}</div>
-                        <div class="paket-desc">{{ $p->deskripsi_paket ?? '' }}</div>
+                        <div class="paket-desc">{{ $p->keterangan_paket ?? '' }}</div>
                         <div class="paket-price">
-                            @if(($p->harga_paket ?? 0) > 0)
-                                Rp {{ number_format($p->harga_paket, 0, ',', '.') }}
+                            @if($hargaPaket > 0)
+                                Rp {{ number_format($hargaPaket, 0, ',', '.') }}
                             @else
                                 <span style="color:#22c55e;">Gratis</span>
                             @endif
@@ -105,17 +125,13 @@
                         <input type="checkbox" name="selected_paket[]" value="{{ $p->kode_paket }}" style="display:none;" class="paket-check">
                     </div>
                     @endforeach
-
-                    <div class="total-bar">
-                        <span class="tl"><i class="fa-solid fa-wallet me-1"></i>Total Add-on</span>
-                        <span class="tr" id="totalHarga">Rp 0</span>
-                    </div>
-                @else
-                    <div style="text-align:center;padding:32px 16px;color:#bbb;">
-                        <i class="fa-solid fa-box-open" style="font-size:2.5rem;margin-bottom:12px;display:block;"></i>
-                        <div style="font-size:0.9rem;">Tidak ada paket add-on untuk event ini.</div>
-                    </div>
                 @endif
+
+                {{-- Total: harga event + add-on yang dipilih --}}
+                <div class="total-bar">
+                    <span class="tl"><i class="fa-solid fa-receipt me-1"></i>Total Pembayaran</span>
+                    <span class="tr" id="totalHarga">{{ $hargaEventBase > 0 ? 'Rp ' . number_format($hargaEventBase, 0, ',', '.') : 'Rp 0' }}</span>
+                </div>
 
                 <button type="submit" class="btn-primary-red mt-2">
                     <i class="fa-solid fa-arrow-right"></i> Lanjut ke Pembayaran
@@ -135,23 +151,31 @@
 </div>
 
 <script>
+var BASE_HARGA_EVENT = {{ (float) ($event->harga_event ?? 0) }};
+
 function formatRp(n) {
     return 'Rp ' + Math.round(n).toLocaleString('id-ID');
 }
+
 function togglePaket(card) {
     card.classList.toggle('selected');
     const chk = card.querySelector('.paket-check');
     chk.checked = card.classList.contains('selected');
     updateTotal();
 }
+
 function updateTotal() {
-    let total = 0;
-    document.querySelectorAll('.paket-card.selected').forEach(c => { total += parseFloat(c.dataset.harga || 0); });
-    document.getElementById('totalHarga').textContent = formatRp(total);
+    let totalAddon = 0;
+    document.querySelectorAll('.paket-card.selected').forEach(function(c) {
+        totalAddon += parseFloat(c.dataset.harga || 0);
+    });
+    var grand = BASE_HARGA_EVENT + totalAddon;
+    document.getElementById('totalHarga').textContent = formatRp(grand);
 }
+
 function skipAddon() {
-    document.querySelectorAll('.paket-check').forEach(c => c.checked = false);
-    document.querySelectorAll('.paket-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.paket-check').forEach(function(c) { c.checked = false; });
+    document.querySelectorAll('.paket-card').forEach(function(c) { c.classList.remove('selected'); });
     document.getElementById('formAddon').submit();
 }
 </script>

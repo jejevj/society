@@ -24,9 +24,9 @@ class WebRegisterEventController extends Controller
         $set   = DB::table('app_setting')->first();
         $event = null;
         if (!empty($data['kode_event'])) {
-            $event = DB::table('t_event as e')
-                ->where('e.kode_event', $data['kode_event'])
-                ->where('e.status_event', 'Y')
+            $event = DB::table('t_event')
+                ->where('kode_event', $data['kode_event'])
+                ->where('status_event', 'Y')
                 ->first();
         }
 
@@ -53,10 +53,8 @@ class WebRegisterEventController extends Controller
             return back()->with('error', 'Kode OTP sudah kedaluwarsa. Klik Kirim Ulang OTP.');
         }
 
-        // Tandai OTP sudah terverifikasi
         session(['reg_pending' => array_merge($data, ['otp_verified' => true])]);
 
-        // Jika tidak ada event, langsung buat akun dan selesai
         if (empty($data['kode_event'])) {
             $this->createUserAccount($data);
             session()->forget('reg_pending');
@@ -102,15 +100,19 @@ class WebRegisterEventController extends Controller
             return redirect()->route('register')->with('error', 'Akses tidak valid.');
         }
 
-        $set   = DB::table('app_setting')->first();
-        $event = DB::table('t_event as e')
-            ->where('e.kode_event', $data['kode_event'])
-            ->where('e.status_event', 'Y')
+        $set = DB::table('app_setting')->first();
+
+        $event = DB::table('t_event')
+            ->where('kode_event', $data['kode_event'])
+            ->where('status_event', 'Y')
             ->first();
 
+        // Ambil semua paket milik event ini — tanpa filter status_paket
+        // karena kolom status_paket mungkin belum ada pada semua record lama
         $paket = DB::table('t_event_paket')
             ->where('event_kode_paket', $data['kode_event'])
-            ->where('status_paket', 'Y')
+            ->orderBy('urutan_paket')
+            ->orderBy('id_event_paket')
             ->get();
 
         return view('web.register-event.addon', compact('set', 'event', 'paket', 'data'));
@@ -128,35 +130,39 @@ class WebRegisterEventController extends Controller
 
         $selectedPaket = $request->input('selected_paket', []);
 
-        // Ambil harga event sebagai base price
+        // Ambil harga event langsung dari DB — jangan andalkan session lama
         $event = DB::table('t_event')
             ->where('kode_event', $data['kode_event'])
             ->first();
         $hargaEvent = (float) ($event->harga_event ?? 0);
 
-        // Hitung total = harga event + semua harga paket yang dipilih
-        $totalHarga = $hargaEvent;
+        // Total = harga event (base) + harga paket yang dipilih dan berbayar
+        $totalHarga  = $hargaEvent;
+        $paketTerpilih = collect();
+
         if (!empty($selectedPaket)) {
-            $paketData = DB::table('t_event_paket')
+            $paketTerpilih = DB::table('t_event_paket')
                 ->whereIn('kode_paket', $selectedPaket)
                 ->where('event_kode_paket', $data['kode_event'])
                 ->get();
 
-            foreach ($paketData as $p) {
+            foreach ($paketTerpilih as $p) {
                 $totalHarga += (float) ($p->harga_paket ?? 0);
             }
         }
 
-        session(['reg_pending' => array_merge($data, [
+        // Update session dengan data lengkap sebelum apapun dilakukan
+        $updatedData = array_merge($data, [
             'selected_paket' => $selectedPaket,
             'harga_event'    => $hargaEvent,
             'total_harga'    => $totalHarga,
-        ])]);
+        ]);
+        session(['reg_pending' => $updatedData]);
 
         // Jika total 0: skip payment, langsung enroll dan aktifkan user
         if ($totalHarga <= 0) {
-            $userId = $this->createUserAccount($data);
-            $this->enrollEvent(session('reg_pending'), $userId);
+            $userId = $this->createUserAccount($updatedData);
+            $this->enrollEvent($updatedData, $userId);
             session()->forget('reg_pending');
             return redirect()->route('register-event.success');
         }
@@ -174,7 +180,7 @@ class WebRegisterEventController extends Controller
             return redirect()->route('register')->with('error', 'Akses tidak valid.');
         }
 
-        // Jika total 0, tidak boleh akses halaman payment — redirect langsung sukses
+        // Guard: jika total 0 (user manipulasi URL), langsung enroll
         if (($data['total_harga'] ?? 0) <= 0) {
             $userId = $this->createUserAccount($data);
             $this->enrollEvent($data, $userId);
@@ -182,10 +188,11 @@ class WebRegisterEventController extends Controller
             return redirect()->route('register-event.success');
         }
 
-        $set   = DB::table('app_setting')->first();
-        $event = DB::table('t_event as e')
-            ->where('e.kode_event', $data['kode_event'])
-            ->where('e.status_event', 'Y')
+        $set = DB::table('app_setting')->first();
+
+        $event = DB::table('t_event')
+            ->where('kode_event', $data['kode_event'])
+            ->where('status_event', 'Y')
             ->first();
 
         $selectedPaket = collect();
@@ -195,7 +202,7 @@ class WebRegisterEventController extends Controller
                 ->get();
         }
 
-        // Midtrans Snap Token
+        // ── Midtrans Snap Token ──
         $snapToken      = null;
         $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
 
@@ -206,16 +213,15 @@ class WebRegisterEventController extends Controller
             \Midtrans\Config::$is3ds        = true;
 
             $orderId = 'REG-' . strtoupper(Str::random(8)) . '-' . time();
-            session(['reg_pending' => array_merge(session('reg_pending'), ['order_id' => $orderId])]);
 
-            // Buat item details: harga event + tiap paket
+            // item_details — harga event sebagai item pertama
             $itemDetails = [];
             if (($data['harga_event'] ?? 0) > 0) {
                 $itemDetails[] = [
                     'id'       => $data['kode_event'],
                     'price'    => (int) $data['harga_event'],
                     'quantity' => 1,
-                    'name'     => substr($event->judul_event ?? 'Event', 0, 50),
+                    'name'     => mb_substr($event->judul_event ?? 'Event Registration', 0, 50),
                 ];
             }
             foreach ($selectedPaket as $p) {
@@ -224,7 +230,7 @@ class WebRegisterEventController extends Controller
                         'id'       => $p->kode_paket,
                         'price'    => (int) $p->harga_paket,
                         'quantity' => 1,
-                        'name'     => substr($p->judul_paket ?? $p->kode_paket, 0, 50),
+                        'name'     => mb_substr($p->judul_paket ?? $p->kode_paket, 0, 50),
                     ];
                 }
             }
@@ -247,17 +253,24 @@ class WebRegisterEventController extends Controller
 
             try {
                 $snapToken = \Midtrans\Snap::getSnapToken($params);
-                session(['reg_pending' => array_merge(session('reg_pending'), ['snap_token' => $snapToken])]);
+                // Simpan order_id dan snap_token ke session SETELAH berhasil
+                session(['reg_pending' => array_merge(session('reg_pending'), [
+                    'order_id'   => $orderId,
+                    'snap_token' => $snapToken,
+                ])]);
             } catch (\Exception $e) {
-                // Lanjutkan tanpa Snap — tampilan view akan handle fallback
+                // Lanjutkan — view akan tampilkan fallback manual
+                \Log::error('Midtrans getSnapToken error: ' . $e->getMessage());
             }
         }
 
-        return view('web.register-event.payment', compact('set', 'event', 'selectedPaket', 'data', 'snapToken', 'midtransConfig'));
+        return view('web.register-event.payment', compact(
+            'set', 'event', 'selectedPaket', 'data', 'snapToken', 'midtransConfig'
+        ));
     }
 
     // ─────────────────────────────────────────────────
-    // STEP 4 – Proses Payment gratis / manual
+    // STEP 4 – Proses Payment gratis / manual / fallback
     // ─────────────────────────────────────────────────
     public function processPayment(Request $request)
     {
@@ -295,7 +308,7 @@ class WebRegisterEventController extends Controller
                     'updated_at'        => now(),
                 ]);
 
-            // Aktifkan user jika belum aktif
+            // Aktifkan user
             $reg = DB::table('t_event_registrasi')->where('midtrans_order_id', $orderId)->first();
             if ($reg) {
                 DB::table('app_user')
@@ -309,10 +322,7 @@ class WebRegisterEventController extends Controller
         if (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
             DB::table('t_event_registrasi')
                 ->where('midtrans_order_id', $orderId)
-                ->update([
-                    'payment_status' => 'FAILED',
-                    'updated_at'     => now(),
-                ]);
+                ->update(['payment_status' => 'FAILED', 'updated_at' => now()]);
         }
 
         return response()->json(['status' => 'pending', 'transaction_status' => $transactionStatus]);
@@ -344,13 +354,12 @@ class WebRegisterEventController extends Controller
     }
 
     // ─────────────────────────────────────────────────
-    // Helper: Buat akun user dari data sesi
+    // Helper: Buat akun user
     // ─────────────────────────────────────────────────
     private function createUserAccount(array $data): int
     {
         $existing = DB::table('app_user')->where('email_user', $data['email'])->first();
         if ($existing) {
-            // Aktifkan jika belum aktif
             if (($existing->status_user ?? '') !== 'Y') {
                 DB::table('app_user')
                     ->where('id_user', $existing->id_user)
@@ -375,7 +384,7 @@ class WebRegisterEventController extends Controller
     }
 
     // ─────────────────────────────────────────────────
-    // Helper: Enroll event + simpan paket
+    // Helper: Enroll event + simpan paket add-on
     // ─────────────────────────────────────────────────
     private function enrollEvent(array $data, int $userId, ?string $orderId = null, string $paymentStatus = 'UNPAID'): void
     {
@@ -383,18 +392,16 @@ class WebRegisterEventController extends Controller
         $usedOrderId    = $orderId ?? ($data['order_id'] ?? null);
         $totalHarga     = (float) ($data['total_harga'] ?? 0);
 
-        // Jika total 0, status FREE dan langsung aktif
         if ($totalHarga <= 0) {
             $paymentStatus = 'FREE';
         }
 
-        $statusRegistrasi = ($paymentStatus === 'PAID' || $paymentStatus === 'FREE') ? 'A' : 'P';
+        $statusRegistrasi = in_array($paymentStatus, ['PAID', 'FREE']) ? 'A' : 'P';
         $confirmedAt      = ($statusRegistrasi === 'A') ? now() : null;
 
-        // Ambil kode_paket pertama jika ada
         $kodePaket = !empty($data['selected_paket']) ? $data['selected_paket'][0] : null;
 
-        // Cek sudah terdaftar sebelumnya
+        // Cegah duplikasi registrasi
         $alreadyRegistered = DB::table('t_event_registrasi')
             ->where('kode_event', $data['kode_event'])
             ->where('id_user', $userId)
@@ -418,9 +425,16 @@ class WebRegisterEventController extends Controller
                 'created_at'        => now(),
                 'updated_at'        => now(),
             ]);
+        } else {
+            // Ambil kode_registrasi yang sudah ada agar addon tetap bisa disimpan
+            $existing = DB::table('t_event_registrasi')
+                ->where('kode_event', $data['kode_event'])
+                ->where('id_user', $userId)
+                ->first();
+            $kodeRegistrasi = $existing->kode_registrasi ?? $kodeRegistrasi;
         }
 
-        // Simpan semua paket yang dipilih ke t_event_addon
+        // Simpan semua paket berbayar yang dipilih ke t_event_addon
         if (!empty($data['selected_paket'])) {
             foreach ($data['selected_paket'] as $kPaket) {
                 $paket = DB::table('t_event_paket')->where('kode_paket', $kPaket)->first();
@@ -437,7 +451,7 @@ class WebRegisterEventController extends Controller
                         'kode_event'      => $data['kode_event'],
                         'kode_registrasi' => $kodeRegistrasi,
                         'kode_paket'      => $kPaket,
-                        'nama_addon'      => $paket->nama_paket ?? $kPaket,
+                        'nama_addon'      => $paket->judul_paket ?? $kPaket,
                         'harga_addon'     => (float) ($paket->harga_paket ?? 0),
                         'qty'             => 1,
                         'subtotal'        => (float) ($paket->harga_paket ?? 0),

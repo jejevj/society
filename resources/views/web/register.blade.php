@@ -104,12 +104,8 @@
     font-size: 0.87rem;
     transition: color 0.3s;
 }
-.reg-steps-sidebar li.active {
-    color: rgba(255,255,255,0.95);
-}
-.reg-steps-sidebar li.done {
-    color: #6ee7b7;
-}
+.reg-steps-sidebar li.active { color: rgba(255,255,255,0.95); }
+.reg-steps-sidebar li.done   { color: #6ee7b7; }
 .step-circle {
     width: 28px;
     height: 28px;
@@ -323,13 +319,17 @@
     transition: border-color 0.2s, background 0.2s;
     position: relative;
 }
-.package-card:hover {
+.package-card:hover:not(.locked) {
     border-color: #E62020;
     background: #fff5f5;
 }
 .package-card.selected {
     border-color: #E62020;
     background: #fff5f5;
+}
+.package-card.locked {
+    cursor: default;
+    opacity: 0.75;
 }
 .package-card input[type="checkbox"] {
     position: absolute;
@@ -353,6 +353,11 @@
     border-color: #E62020;
     color: #fff;
 }
+.package-card.locked.selected .package-check {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+}
 .package-img {
     width: 44px;
     height: 44px;
@@ -373,11 +378,15 @@
     font-size: 0.78rem;
     margin-top: 1px;
 }
-.package-price {
-    font-weight: 800;
-    color: #E62020;
-    font-size: 0.9rem;
+.pkg-badge-free {
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: #d1fae5;
+    color: #065f46;
+    padding: 2px 8px;
+    border-radius: 20px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 .skip-link {
     text-align: center;
@@ -392,38 +401,18 @@
 }
 
 /* ── Payment step ── */
-.order-summary {
+.payment-info-box {
     background: #f8f8f8;
     border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
+    padding: 18px 16px;
+    margin-bottom: 16px;
     border: 1px solid #efefef;
+    text-align: center;
 }
-.order-summary .os-title {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: #aaa;
-    margin-bottom: 10px;
-}
-.order-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    color: #555;
-    padding: 4px 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-.order-row:last-child { border-bottom: none; }
-.order-row.total {
-    font-weight: 800;
-    font-size: 0.95rem;
-    color: #1a1a1a;
-    margin-top: 6px;
-    padding-top: 8px;
-    border-top: 2px solid #e0e0e0;
-    border-bottom: none;
+.payment-info-box p {
+    color: #666;
+    font-size: 0.88rem;
+    margin: 0;
 }
 .payment-note {
     font-size: 0.78rem;
@@ -518,9 +507,6 @@
                                 </span>
                             </div>
                         </div>
-
-                        @include('web.partials.register-event-pricing')
-
                     @else
                         <span class="event-badge">{{ $set->nama_app ?? env('APP_NAME', 'Society Event') }}</span>
                         <h1>Create Your<br>Account</h1>
@@ -545,8 +531,8 @@
                         <li data-step="3">
                             <span class="step-circle">3</span>
                             <span class="step-label">
-                                <strong>Add-On Packages</strong>
-                                Select optional event packages
+                                <strong>Select Packages</strong>
+                                Choose event packages
                             </span>
                         </li>
                         <li data-step="4">
@@ -738,12 +724,12 @@
                         </div>
 
                         {{-- ─────────────────────────────── --}}
-                        {{-- STEP 3: Add-On Packages         --}}
+                        {{-- STEP 3: Package Selection       --}}
                         {{-- ─────────────────────────────── --}}
                         <div id="step3" style="display:none;">
                             <div class="step-header">
-                                <h2>Add-On Packages</h2>
-                                <div class="step-sub">Step 3 of 4 &mdash; Select optional packages (can skip)</div>
+                                <h2>Select Packages</h2>
+                                <div class="step-sub">Step 3 of 4 &mdash; Choose the packages for this event</div>
                             </div>
 
                             <div class="package-grid" id="packageGrid">
@@ -758,11 +744,6 @@
                                         <i class="fa-solid fa-arrow-right"></i> Continue to Payment
                                     </button>
                                 </div>
-                                <div class="col-12">
-                                    <div class="skip-link">
-                                        <a id="btnSkipPackage">Skip, go to payment without add-ons</a>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -775,17 +756,9 @@
                                 <div class="step-sub">Step 4 of 4 &mdash; Complete your payment</div>
                             </div>
 
-                            <div class="order-summary">
-                                <div class="os-title">Order Summary</div>
-                                <div class="order-row">
-                                    <span>Event Registration</span>
-                                    <span id="payBasePrice">Rp 0</span>
-                                </div>
-                                <div id="payAddonRows"></div>
-                                <div class="order-row total">
-                                    <span>Total</span>
-                                    <span id="payTotal">Rp 0</span>
-                                </div>
+                            <div class="payment-info-box">
+                                <i class="fa-solid fa-shield-halved fa-2x text-success mb-2"></i>
+                                <p>Click the button below to proceed. Payment details will appear in the secure Midtrans popup.</p>
                             </div>
 
                             <button class="btn-reg-primary" id="btnPayNow">
@@ -830,13 +803,9 @@
 <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
 
 <script>
-// ── Global CSRF setup for all $.ajax calls ──
 let _csrfToken = '{{ csrf_token() }}';
-$.ajaxSetup({
-    headers: { 'X-CSRF-TOKEN': _csrfToken }
-});
+$.ajaxSetup({ headers: { 'X-CSRF-TOKEN': _csrfToken } });
 
-// ── State ──
 let regState = {
     userId: null,
     kodeEvent: '{{ isset($event) && $event ? $event->kode_event : '' }}',
@@ -846,7 +815,6 @@ let regState = {
     snapToken: null
 };
 
-// ── Helpers ──
 function goToStep(n) {
     ['step1','step2','step3','step4','stepSuccess'].forEach(function(id) {
         document.getElementById(id).style.display = 'none';
@@ -855,14 +823,11 @@ function goToStep(n) {
     if (el) el.style.display = 'block';
     else document.getElementById('stepSuccess').style.display = 'block';
 
-    // Update sidebar
     document.querySelectorAll('#sidebarSteps li').forEach(function(li) {
         let s = parseInt(li.dataset.step);
         li.classList.remove('active','done');
         if (s < n) li.classList.add('done');
         else if (s === n) li.classList.add('active');
-
-        // Render check icon in done steps
         let circle = li.querySelector('.step-circle');
         if (s < n) circle.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.7rem;"></i>';
         else circle.innerHTML = s;
@@ -873,13 +838,11 @@ function formatRupiah(num) {
     return 'Rp ' + parseInt(num).toLocaleString('id-ID');
 }
 
-// ── STEP 1: Submit form → create user + send OTP ──
+// ── STEP 1 ──
 $('#formStep1').on('submit', function(e) {
     e.preventDefault();
     let fd = new FormData(this);
-
     Swal.fire({ title: 'Processing...', text: 'Please wait', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() });
-
     $.ajax({
         url: '{{ route("registrasiAction") }}',
         type: 'POST',
@@ -906,19 +869,14 @@ $('#formStep1').on('submit', function(e) {
     });
 });
 
-// ── OTP digit boxes ──
+// ── OTP boxes ──
 $(document).on('input', '.otp-digit', function() {
     this.value = this.value.replace(/[^0-9]/g,'');
-    if (this.value.length === 1) {
-        let next = $(this).nextAll('.otp-digit').first();
-        if (next.length) next.focus();
-    }
+    if (this.value.length === 1) $(this).nextAll('.otp-digit').first().focus();
     syncOtpValue();
 });
 $(document).on('keydown', '.otp-digit', function(e) {
-    if (e.key === 'Backspace' && !this.value) {
-        $(this).prevAll('.otp-digit').first().focus();
-    }
+    if (e.key === 'Backspace' && !this.value) $(this).prevAll('.otp-digit').first().focus();
 });
 function syncOtpValue() {
     let val = '';
@@ -934,17 +892,11 @@ $('#btnVerifyOtp').on('click', function() {
         Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please enter all 6 digits.' });
         return;
     }
-
     Swal.fire({ title: 'Verifying...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
     $.ajax({
         url: '{{ route("verifyOtpRegistrasi") }}',
         type: 'POST',
-        data: {
-            _token:  _csrfToken,
-            user_id: regState.userId,
-            otp:     otp
-        },
+        data: { _token: _csrfToken, user_id: regState.userId, otp: otp },
         success: function(r) {
             Swal.close();
             if (r.success) {
@@ -967,12 +919,9 @@ $('#btnVerifyOtp').on('click', function() {
     });
 });
 
-// ── Back to Step 1 ──
-$('#btnBackStep1').on('click', function() {
-    goToStep(1);
-});
+$('#btnBackStep1').on('click', function() { goToStep(1); });
 
-// ── Resend OTP timer ──
+// ── Resend OTP ──
 let resendInterval;
 function startResendTimer() {
     let count = 60;
@@ -1008,6 +957,10 @@ $('#resendOtp').on('click', function() {
 });
 
 // ── STEP 3: Load packages ──
+// Logic:
+// - harga_paket = 0  → checkbox checked + disabled (locked/free, always included)
+// - harga_paket > 0  → checkbox unchecked + enabled (user picks manually)
+// - Harga TIDAK ditampilkan di sini, hanya nama & sub-judul
 function loadPackages() {
     if (!regState.hasEvent) return;
     $('#packageLoading').show();
@@ -1020,22 +973,32 @@ function loadPackages() {
             let html = '';
             if (r.packages && r.packages.length > 0) {
                 r.packages.forEach(function(pkg) {
-                    let iconUrl = pkg.icon_paket ? '/storage/' + pkg.icon_paket : '';
-                    let imgTag = iconUrl
+                    let isFree   = !pkg.harga_paket || parseInt(pkg.harga_paket) === 0;
+                    let iconUrl  = pkg.icon_paket ? '/storage/' + pkg.icon_paket : '';
+                    let imgTag   = iconUrl
                         ? '<img src="' + iconUrl + '" class="package-img" alt="' + pkg.judul_paket + '">'
                         : '<div class="package-img d-flex align-items-center justify-content-center bg-light text-muted" style="font-size:1.3rem;"><i class="fa-solid fa-cube"></i></div>';
-                    html += '<div class="package-card" data-id="' + pkg.kode_paket + '" data-name="' + pkg.judul_paket + '" data-price="' + (pkg.harga_paket || 0) + '">';
-                    html += '<input type="checkbox" class="pkg-checkbox" value="' + pkg.kode_paket + '">';
+
+                    // free = locked + auto selected; paid = selectable, not selected
+                    let cardClass  = 'package-card' + (isFree ? ' selected locked' : '');
+                    let checkAttr  = isFree ? 'checked disabled' : '';
+                    let badgeHtml  = isFree ? '<span class="pkg-badge-free">Free</span>' : '';
+
+                    html += '<div class="' + cardClass + '" data-id="' + pkg.kode_paket + '" data-name="' + pkg.judul_paket + '" data-price="' + (pkg.harga_paket || 0) + '" data-free="' + (isFree ? '1' : '0') + '">';
+                    html += '<input type="checkbox" class="pkg-checkbox" value="' + pkg.kode_paket + '" ' + checkAttr + '>';
                     html += '<div class="package-check"><i class="fa-solid fa-check" style="font-size:0.75rem;"></i></div>';
                     html += imgTag;
-                    html += '<div class="package-info"><div class="pkg-name">' + pkg.judul_paket + '</div><div class="pkg-sub">' + (pkg.lokasi_paket || '') + '</div></div>';
-                    html += '<div class="package-price">' + (pkg.harga_paket ? formatRupiah(pkg.harga_paket) : 'Free') + '</div>';
+                    html += '<div class="package-info"><div class="pkg-name">' + pkg.judul_paket + '</div>';
+                    if (pkg.lokasi_paket) html += '<div class="pkg-sub">' + pkg.lokasi_paket + '</div>';
+                    html += '</div>';
+                    html += badgeHtml;
                     html += '</div>';
                 });
             } else {
-                html = '<div class="text-center text-muted py-3">No additional packages available for this event.</div>';
+                html = '<div class="text-center text-muted py-3">No packages available for this event.</div>';
             }
             $('#packageGrid').html(html);
+            updateSelectedPackages();
         },
         error: function() {
             $('#packageGrid').html('<div class="text-center text-muted py-3">Failed to load packages.</div>');
@@ -1043,12 +1006,14 @@ function loadPackages() {
     });
 }
 
-// Toggle package selection
+// Only non-locked cards are togglable
 $(document).on('click', '.package-card', function() {
+    if ($(this).hasClass('locked')) return;
     $(this).toggleClass('selected');
     $(this).find('.pkg-checkbox').prop('checked', $(this).hasClass('selected'));
     updateSelectedPackages();
 });
+
 function updateSelectedPackages() {
     regState.selectedPackages = [];
     $('.package-card.selected').each(function() {
@@ -1061,32 +1026,12 @@ function updateSelectedPackages() {
 }
 
 // ── STEP 3 → STEP 4 ──
-$('#btnStep3Next, #btnSkipPackage').on('click', function() {
-    if ($(this).attr('id') === 'btnSkipPackage') {
-        regState.selectedPackages = [];
-        $('.package-card').removeClass('selected');
-    }
-    buildOrderSummary();
+$('#btnStep3Next').on('click', function() {
     goToStep(4);
     getSnapToken();
 });
 
-// ── Back Step 3 ──
 $('#btnBackStep3').on('click', function() { goToStep(3); });
-
-// ── Build order summary ──
-function buildOrderSummary() {
-    let addonTotal = 0;
-    let addonHtml = '';
-    regState.selectedPackages.forEach(function(pkg) {
-        addonTotal += pkg.price;
-        addonHtml += '<div class="order-row"><span>' + pkg.name + '</span><span>' + formatRupiah(pkg.price) + '</span></div>';
-    });
-    $('#payAddonRows').html(addonHtml);
-    $('#payBasePrice').text('Rp 0 (included)');
-    let total = addonTotal;
-    $('#payTotal').text(formatRupiah(total));
-}
 
 // ── Get Snap Token ──
 function getSnapToken() {
@@ -1160,10 +1105,10 @@ $('#btnPayNow').on('click', function() {
                 }
             });
         },
-        onPending: function(result) {
+        onPending: function() {
             Swal.fire({ icon: 'info', title: 'Payment Pending', text: 'Your payment is pending. You will be enrolled once payment is confirmed.' });
         },
-        onError: function(result) {
+        onError: function() {
             Swal.fire({ icon: 'error', title: 'Payment Failed', text: 'Payment could not be processed. Please try again.' });
         },
         onClose: function() {

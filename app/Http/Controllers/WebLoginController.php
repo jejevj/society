@@ -45,9 +45,6 @@ class WebLoginController extends Controller
         return view('web.login', $data);
     }
 
-    /**
-     * Show register page.
-     */
     public function register(Request $request)
     {
         $menu_aktif = 'register';
@@ -86,9 +83,6 @@ class WebLoginController extends Controller
         return view('web.register', $data);
     }
 
-    /**
-     * Generate a unique kode_registrasi.
-     */
     private function generateKodeRegistrasi(): string
     {
         do {
@@ -98,9 +92,6 @@ class WebLoginController extends Controller
         return $kode;
     }
 
-    /**
-     * STEP 1: Create user account + send OTP.
-     */
     public function registrasiAction(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -188,7 +179,7 @@ class WebLoginController extends Controller
                     'kode_registrasi'   => $this->generateKodeRegistrasi(),
                     'kode_event'        => $ev->kode_event,
                     'id_user'           => $userId,
-                    'role_peserta'      => $request->role_event ?? 'participant',
+                    'role_peserta'      => 'participant',
                     'status_registrasi' => 'PENDING_OTP',
                     'created_at'        => now(),
                 ]);
@@ -214,9 +205,6 @@ class WebLoginController extends Controller
         ]);
     }
 
-    /**
-     * STEP 2: Verify OTP.
-     */
     public function verifyOtpRegistrasi(Request $request)
     {
         $request->validate([
@@ -259,9 +247,6 @@ class WebLoginController extends Controller
         ]);
     }
 
-    /**
-     * Resend OTP.
-     */
     public function resendOtpRegistrasi(Request $request)
     {
         $request->validate(['user_id' => 'required|integer']);
@@ -286,9 +271,6 @@ class WebLoginController extends Controller
         return response()->json(['success' => true, 'message' => 'New OTP sent.']);
     }
 
-    /**
-     * STEP 3: Return packages for an event.
-     */
     public function getEventPackages(Request $request)
     {
         $request->validate(['kode_event' => 'required|string']);
@@ -301,10 +283,6 @@ class WebLoginController extends Controller
         return response()->json(['success' => true, 'packages' => $packages]);
     }
 
-    /**
-     * STEP 4a: Generate Midtrans Snap Token via HTTP (tanpa package midtrans-php).
-     * Jika totalAmount = 0, kembalikan free:true agar frontend enroll langsung.
-     */
     public function getRegistrationSnapToken(Request $request)
     {
         $request->validate([
@@ -350,7 +328,6 @@ class WebLoginController extends Controller
             }
         }
 
-        // Semua gratis: langsung enroll tanpa snap popup
         if ($totalAmount <= 0) {
             return response()->json([
                 'success'        => true,
@@ -362,7 +339,6 @@ class WebLoginController extends Controller
             ]);
         }
 
-        // Ada nominal: baca config dari DB
         $midtransConfig = DB::table('app_midtrans_config')
             ->where('id_midtrans', 1)
             ->where('is_active', 'Y')
@@ -395,7 +371,6 @@ class WebLoginController extends Controller
             $payload['item_details'] = $itemDetails;
         }
 
-        // Tambahkan enabled_payments jika dikonfigurasi
         if (!empty($midtransConfig->payment_types)) {
             $types = json_decode($midtransConfig->payment_types, true);
             if (!empty($types)) {
@@ -451,9 +426,6 @@ class WebLoginController extends Controller
         }
     }
 
-    /**
-     * STEP 4b: Free enrollment.
-     */
     public function enrollEventFree(Request $request)
     {
         $request->validate([
@@ -466,9 +438,6 @@ class WebLoginController extends Controller
         return response()->json(['success' => true, 'message' => 'Enrolled successfully.']);
     }
 
-    /**
-     * STEP 4c: Midtrans payment callback.
-     */
     public function paymentRegistrationCallback(Request $request)
     {
         $request->validate([
@@ -495,9 +464,6 @@ class WebLoginController extends Controller
         return response()->json(['success' => true, 'message' => 'Payment confirmed. Enrolled successfully.']);
     }
 
-    /**
-     * Internal: enroll user + activate account.
-     */
     private function enrollUser($userId, $kodeEvent, $packages = [])
     {
         DB::table('app_user')->where('id_user', $userId)->update([

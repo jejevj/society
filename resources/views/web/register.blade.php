@@ -664,24 +664,6 @@
                                     </div>
                                 </div>
 
-                                @if(isset($event) && $event)
-                                <div class="section-divider">Role in Event</div>
-                                <div class="row g-3">
-                                    <div class="col-12">
-                                        <label class="form-label">Participation Role <span class="text-danger">*</span></label>
-                                        <select name="role_event" class="form-select">
-                                            <option value="" disabled selected>-- Select your role --</option>
-                                            <option value="participant">Participant</option>
-                                            <option value="speaker">Speaker / Presenter</option>
-                                            <option value="sponsor">Sponsor Representative</option>
-                                            <option value="committee">Organizing Committee</option>
-                                            <option value="media">Media / Press</option>
-                                            <option value="observer">Observer</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                @endif
-
                                 <div class="row g-3 mt-2">
                                     <div class="col-12">
                                         <button type="submit" class="btn-reg-primary" id="btnStep1">
@@ -832,7 +814,7 @@ var _hasEvent  = {{ isset($event) && $event ? 'true' : 'false' }};
 // Midtrans config dari DB (diisi setelah getRegistrationSnapToken berhasil)
 var _snapToken    = null;
 var _clientKey    = '{{ $midtransConfig->client_key ?? '' }}';
-var _isProduction = {{ ($midtransConfig->is_production ?? false) ? 'true' : 'false' }};
+var _isProduction = {{ isset($midtransConfig) && $midtransConfig && $midtransConfig->environment === 'production' ? 'true' : 'false' }};
 var _snapUrl      = _isProduction
     ? 'https://app.midtrans.com/snap/snap.js'
     : 'https://app.sandbox.midtrans.com/snap/snap.js';
@@ -1057,7 +1039,6 @@ $('#btnStep3Next').on('click', function() {
             _totalAmount = r.total_amount || 0;
             _orderId     = r.order_id    || '';
 
-            // Jika client_key dikembalikan dari server (ada di response), update
             if (r.client_key) {
                 _clientKey    = r.client_key;
                 _isProduction = r.is_production === true;
@@ -1066,12 +1047,10 @@ $('#btnStep3Next').on('click', function() {
                     : 'https://app.sandbox.midtrans.com/snap/snap.js';
             }
 
-            // Bangun struk
             buildStruk(r);
             goToStep(4);
 
             if (_isFree) {
-                // Semua gratis: langsung enroll tanpa snap
                 document.getElementById('btnPayNow').style.display = 'none';
                 enrollFree();
             } else {
@@ -1092,14 +1071,12 @@ function buildStruk(r) {
     document.getElementById('strukOrderId').textContent = _orderId || '-';
 
     var items = '';
-    // Harga event
     var hargaEv = parseFloat(r.harga_event || 0);
     if (hargaEv > 0) {
         items += '<div class="struk-row"><span class="sk"><i class="fa-solid fa-ticket me-1" style="color:#E62020"></i>Event Registration</span><span class="sv red">' + formatRp(hargaEv) + '</span></div>';
     } else {
         items += '<div class="struk-row"><span class="sk"><i class="fa-solid fa-ticket me-1" style="color:#16a34a"></i>Event Registration</span><span class="sv green">Free</span></div>';
     }
-    // Paket dipilih
     (r.selected_paket || []).forEach(function(p) {
         var harga = parseFloat(p.harga_paket || 0);
         var hargaHtml = harga > 0 ? '<span class="sv red">' + formatRp(harga) + '</span>' : '<span class="sv green">Free</span>';
@@ -1182,7 +1159,6 @@ $('#btnPayNow').on('click', function() {
                         $('#successMsg').text('Payment successful! You are now enrolled in the event.');
                     },
                     error: function(){
-                        // enroll gagal — tetap beri tahu user sukses bayar
                         goToStep('Success');
                         $('#successMsg').text('Payment received. Our team will confirm your enrollment shortly.');
                     }

@@ -44,16 +44,16 @@ class EventController extends Controller
             'cek_permit' => $cek,
             'topik_count' => DB::table('reff_topik')->count(),
             'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-										<li class="breadcrumb-item  fw-bold lh-1">
-											<a class=" text-hover-primary">
-												<i class="ki-outline ki-home  fs-3"></i>
-											</a>
-										</li>
-										<li class="breadcrumb-item">
-											<i class="ki-outline ki-right fs-4  mx-n1"></i>
-										</li>
-										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
-									</ul>'
+								<li class="breadcrumb-item  fw-bold lh-1">
+									<a class=" text-hover-primary">
+										<i class="ki-outline ki-home  fs-3"></i>
+									</a>
+								</li>
+								<li class="breadcrumb-item">
+									<i class="ki-outline ki-right fs-4  mx-n1"></i>
+								</li>
+								<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+							</ul>'
         ];
         if (!$cek['r']) {
              return view('admin-panel.error_page.403-page', $data);
@@ -122,9 +122,13 @@ class EventController extends Controller
                 ->addColumn('info2', function ($row) {
                         $tglAwal  = Carbon::parse($row->tanggal_awal_event)->translatedFormat('j F Y');
                         $tglAkhir = Carbon::parse($row->tanggal_akhir_event)->translatedFormat('j F Y');
+                        $harga = isset($row->harga_event) && $row->harga_event > 0
+                            ? 'Rp ' . number_format($row->harga_event, 0, ',', '.')
+                            : '<span class="badge badge-light-success">Free</span>';
                         return '
                             <span class="text-dark fs-6">Date: '.$tglAwal.' - '.$tglAkhir.'</span><br>
                             <span class="text-dark fs-6">Location: '.$row->lokasi_event.'</span><br>
+                            <span class="text-dark fs-6">Price: '.$harga.'</span>
                         ';
                     })
                 
@@ -148,12 +152,12 @@ class EventController extends Controller
             'menu_aktif' => $menu_aktif,
             'navbar' => $navbar,
             'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"> <i class="ki-outline ki-home  fs-3"></i></span></li>
-										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Add Events</li>
-									</ul>'
+								<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"> <i class="ki-outline ki-home  fs-3"></i></span></li>
+								<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Add Events</li>
+							</ul>'
         ];
         if (!$cek['c']) {
              return view('admin-panel.error_page.403-page', $data);
@@ -176,12 +180,13 @@ class EventController extends Controller
                 
             $validator = Validator::make($request->all(), [
                 'judul'       => 'required|string|max:255',
-                'sub_judul'       => 'required|string|max:255',
-                'awal'       => 'required',
+                'sub_judul'   => 'required|string|max:255',
+                'awal'        => 'required',
                 'akhir'       => 'required',
-                'keterangan'       => 'required',
-                'lokasi'       => 'required|string|max:255',
-                'gambar'     => 'required|image|mimes:jpg,jpeg,png|max:5048',
+                'keterangan'  => 'required',
+                'lokasi'      => 'required|string|max:255',
+                'harga'       => 'nullable|numeric|min:0',
+                'gambar'      => 'required|image|mimes:jpg,jpeg,png|max:5048',
             ]);
 
             if ($validator->fails()) {
@@ -200,17 +205,18 @@ class EventController extends Controller
 
             $kode = 'EV'.date('ymdhis');
             $data = [
-                'kode_event'      => $kode,
-                'judul_event'      => $request->judul,
-                'sub_judul_event'      => $request->sub_judul,
-                'keterangan_event'      => $request->keterangan,
-                'lokasi_event'      => $request->lokasi,
-                'tanggal_awal_event'      => $request->awal,
-                'tanggal_akhir_event'      => $request->akhir,
-                'background_event'      => $path,
-                'status_event'      => 'N',
-                'created_by_event'      => session('nama'),
-                'created_at_event'            => now(),
+                'kode_event'          => $kode,
+                'judul_event'         => $request->judul,
+                'sub_judul_event'     => $request->sub_judul,
+                'keterangan_event'    => $request->keterangan,
+                'lokasi_event'        => $request->lokasi,
+                'harga_event'         => $request->filled('harga') ? (int) $request->harga : 0,
+                'tanggal_awal_event'  => $request->awal,
+                'tanggal_akhir_event' => $request->akhir,
+                'background_event'    => $path,
+                'status_event'        => 'N',
+                'created_by_event'    => session('nama'),
+                'created_at_event'    => now(),
             ];
             
             $insert = DB::table('t_event')->insert($data);
@@ -247,12 +253,12 @@ class EventController extends Controller
             'menu_aktif' => $menu_aktif,
             'navbar' => $navbar,
             'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
-										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Edit Events</li>
-									</ul>',
+								<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+								<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Edit Events</li>
+							</ul>',
             'kode_event' => $kode_event,
             'detail' => $detail
         ];
@@ -276,13 +282,14 @@ class EventController extends Controller
             }
                 
             $validator = Validator::make($request->all(), [
-                'key'       => 'required',
-                'judul'       => 'required|string|max:255',
-                'sub_judul'       => 'required|string|max:255',
+                'key'        => 'required',
+                'judul'      => 'required|string|max:255',
+                'sub_judul'  => 'required|string|max:255',
                 'awal'       => 'required',
-                'akhir'       => 'required',
-                'keterangan'       => 'required',
-                'lokasi'       => 'required|string|max:255',
+                'akhir'      => 'required',
+                'keterangan' => 'required',
+                'lokasi'     => 'required|string|max:255',
+                'harga'      => 'nullable|numeric|min:0',
                 'gambar'     => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
             ]);
 
@@ -293,13 +300,14 @@ class EventController extends Controller
                 ], 422);
             }
             $updateData = [
-                'judul_event'      => $request->judul,
-                'sub_judul_event'      => $request->sub_judul,
-                'keterangan_event'      => $request->keterangan,
-                'lokasi_event'      => $request->lokasi,
-                'tanggal_awal_event'      => $request->awal,
-                'tanggal_akhir_event'      => $request->akhir,
-                'updated_at_event'            => now(),
+                'judul_event'         => $request->judul,
+                'sub_judul_event'     => $request->sub_judul,
+                'keterangan_event'    => $request->keterangan,
+                'lokasi_event'        => $request->lokasi,
+                'harga_event'         => $request->filled('harga') ? (int) $request->harga : 0,
+                'tanggal_awal_event'  => $request->awal,
+                'tanggal_akhir_event' => $request->akhir,
+                'updated_at_event'    => now(),
             ];
             if ($request->hasFile('gambar')) {
                 $filename = time() . '_' . $request->file('gambar')->getClientOriginalName();
@@ -384,12 +392,12 @@ class EventController extends Controller
             'navbar' => $navbar,
             'cek_permit' => $cek,
             'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
-										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Packages Event</li>
-									</ul>',
+								<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+								<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Packages Event</li>
+							</ul>',
             'kode_event' => $kode_event,
             'detail' => $detail
         ];
@@ -444,8 +452,12 @@ class EventController extends Controller
                 })
 
                 ->addColumn('info2', function ($row) {
+                        $harga = isset($row->harga_paket) && $row->harga_paket > 0
+                            ? 'Rp ' . number_format($row->harga_paket, 0, ',', '.')
+                            : '<span class="badge badge-light-success">Free</span>';
                         return '
                             <span class="text-dark fs-6"><b>Location</b>: '.$row->lokasi_paket.'</span><br>
+                            <span class="text-dark fs-6"><b>Price</b>: '.$harga.'</span><br>
                             <span class="text-dark fs-6"><b>Description</b>: '.$row->keterangan_paket.'</span><br>
                         ';
                     })
@@ -472,14 +484,14 @@ class EventController extends Controller
             'navbar' => $navbar,
             'cek_permit' => $cek,
             'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
-										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-                                        <li class="breadcrumb-item  fw-bold lh-1">Packages Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Add Packages Event</li>
-									</ul>',
+								<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+								<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+                                <li class="breadcrumb-item  fw-bold lh-1">Packages Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Add Packages Event</li>
+							</ul>',
             'kode_event' => $kode_event,
             'detail' => $detail
         ];
@@ -503,13 +515,14 @@ class EventController extends Controller
             }
                 
             $validator = Validator::make($request->all(), [
-                'judul'       => 'required|string|max:255',
-                'sub_judul'       => 'required|string|max:255',
-                'key'       => 'required',
-                'keterangan'       => 'required',
-                'lokasi'       => 'required|string|max:255',
+                'judul'      => 'required|string|max:255',
+                'sub_judul'  => 'required|string|max:255',
+                'key'        => 'required',
+                'keterangan' => 'required',
+                'lokasi'     => 'required|string|max:255',
+                'harga'      => 'nullable|numeric|min:0',
                 'gambar'     => 'required|image|mimes:jpg,jpeg,png|max:5048',
-                'icon'     => 'required|image|mimes:jpg,jpeg,png|max:5048',
+                'icon'       => 'required|image|mimes:jpg,jpeg,png|max:5048',
             ]);
 
             if ($validator->fails()) {
@@ -520,14 +533,12 @@ class EventController extends Controller
             }
 
             $path = null;
-            $filename = null;
             if ($request->hasFile('gambar')) {
                 $filename = 'pkg_' .time() . '_' . $request->file('gambar')->getClientOriginalName();
                 $path = $request->file('gambar')->storeAs('event', $filename, 'public');
             }
 
             $path2 = null;
-            $filename2 = null;
             if ($request->hasFile('icon')) {
                 $filename2 = 'pki_' .time() . '_' . $request->file('icon')->getClientOriginalName();
                 $path2 = $request->file('icon')->storeAs('event', $filename2, 'public');
@@ -535,15 +546,16 @@ class EventController extends Controller
 
             $kode = $request->key.date('is');
             $data = [
-                'kode_paket'      => $kode,
-                'event_kode_paket'      => $request->key,
+                'kode_paket'       => $kode,
+                'event_kode_paket' => $request->key,
                 'judul_paket'      => $request->judul,
-                'sub_judul_paket'      => $request->sub_judul,
-                'keterangan_paket'      => $request->keterangan,
-                'lokasi_paket'      => $request->lokasi,
-                'gambar_paket'      => $path,
-                'icon_paket'      => $path2,
-                'created_at_paket'            => now(),
+                'sub_judul_paket'  => $request->sub_judul,
+                'keterangan_paket' => $request->keterangan,
+                'lokasi_paket'     => $request->lokasi,
+                'harga_paket'      => $request->filled('harga') ? (int) $request->harga : 0,
+                'gambar_paket'     => $path,
+                'icon_paket'       => $path2,
+                'created_at_paket' => now(),
             ];
             
             $insert = DB::table('t_event_paket')->insert($data);
@@ -581,14 +593,14 @@ class EventController extends Controller
             'navbar' => $navbar,
             'cek_permit' => $cek,
             'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
-										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-                                        <li class="breadcrumb-item  fw-bold lh-1">Packages Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Edit Packages Event</li>
-									</ul>',
+								<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+								<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+                                <li class="breadcrumb-item  fw-bold lh-1">Packages Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Edit Packages Event</li>
+							</ul>',
             'kode_paket' => $kode_paket,
             'detail' => $detail
         ];
@@ -612,13 +624,14 @@ class EventController extends Controller
             }
                 
             $validator = Validator::make($request->all(), [
-                'key'       => 'required',
-                'judul'       => 'required|string|max:255',
-                'sub_judul'       => 'required|string|max:255',
-                'keterangan'       => 'required',
-                'lokasi'       => 'required|string|max:255',
+                'key'        => 'required',
+                'judul'      => 'required|string|max:255',
+                'sub_judul'  => 'required|string|max:255',
+                'keterangan' => 'required',
+                'lokasi'     => 'required|string|max:255',
+                'harga'      => 'nullable|numeric|min:0',
                 'gambar'     => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
-                'icon'     => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
+                'icon'       => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
             ]);
 
             if ($validator->fails()) {
@@ -629,10 +642,11 @@ class EventController extends Controller
             }
             $updateData = [
                 'judul_paket'      => $request->judul,
-                'sub_judul_paket'      => $request->sub_judul,
-                'keterangan_paket'      => $request->keterangan,
-                'lokasi_paket'      => $request->lokasi,
-                'updated_at_paket'            => now(),
+                'sub_judul_paket'  => $request->sub_judul,
+                'keterangan_paket' => $request->keterangan,
+                'lokasi_paket'     => $request->lokasi,
+                'harga_paket'      => $request->filled('harga') ? (int) $request->harga : 0,
+                'updated_at_paket' => now(),
             ];
             if ($request->hasFile('gambar')) {
                 $filename = 'pkg_' .time() . '_' . $request->file('gambar')->getClientOriginalName();
@@ -716,12 +730,12 @@ class EventController extends Controller
             'navbar' => $navbar,
             'cek_permit' => $cek,
             'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
-										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Program Event</li>
-									</ul>',
+								<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+								<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Program Event</li>
+							</ul>',
             'kode_event' => $kode_event,
             'detail' => $detail
         ];
@@ -799,14 +813,14 @@ class EventController extends Controller
             'navbar' => $navbar,
             'cek_permit' => $cek,
             'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
-										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
-										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-                                        <li class="breadcrumb-item  fw-bold lh-1">Program Events</li>
-                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
-										<li class="breadcrumb-item  fw-bold lh-1">Add Program Event</li>
-									</ul>',
+								<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+								<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+                                <li class="breadcrumb-item  fw-bold lh-1">Program Events</li>
+                                <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+								<li class="breadcrumb-item  fw-bold lh-1">Add Program Event</li>
+							</ul>',
             'kode_event' => $kode_event,
             'detail' => $detail
         ];
@@ -830,17 +844,17 @@ class EventController extends Controller
             }
                 
             $validator = Validator::make($request->all(), [
-                'hari'       => 'required|string|max:255',
-                'tanggal'       => 'required|string|max:255',
-                'key'       => 'required',
-                'sesi' => 'required|array|min:1',
-                'sesi.*' => 'required|string',
-                'keterangan' => 'required|array|min:1',
+                'hari'         => 'required|string|max:255',
+                'tanggal'      => 'required|string|max:255',
+                'key'          => 'required',
+                'sesi'         => 'required|array|min:1',
+                'sesi.*'       => 'required|string',
+                'keterangan'   => 'required|array|min:1',
                 'keterangan.*' => 'required|string',
-                'jam_awal' => 'required|array|min:1',
-                'jam_awal.*' => 'required',
-                'jam_akhir' => 'required|array|min:1',
-                'jam_akhir.*' => 'required',
+                'jam_awal'     => 'required|array|min:1',
+                'jam_awal.*'   => 'required',
+                'jam_akhir'    => 'required|array|min:1',
+                'jam_akhir.*'  => 'required',
             ]);
             if ($validator->fails()) {
                 return response()->json([
@@ -852,11 +866,11 @@ class EventController extends Controller
             
             $kode = $request->key.date('is');
             $data = [
-                'kode_event_program'      => $kode,
-                'event_kode_program'      => $request->key,
-                'hari_program'      => $request->hari,
-                'tanggal_program'      => $request->tanggal,
-                'created_at_program'            => now(),
+                'kode_event_program'  => $kode,
+                'event_kode_program'  => $request->key,
+                'hari_program'        => $request->hari,
+                'tanggal_program'     => $request->tanggal,
+                'created_at_program'  => now(),
             ];
             
             $insert = DB::table('t_event_program')->insert($data);
@@ -866,12 +880,12 @@ class EventController extends Controller
 
                     DB::table('t_event_program_detail')->insert([
                         'kode_event_program_detail' => $kode . sprintf('%03d', $i + 1),
-                        'event_program_kode' => $kode,
-                        'event_kode' => $request->key,
-                        'sesi_program_detail' => $request->sesi[$i],
+                        'event_program_kode'        => $kode,
+                        'event_kode'                => $request->key,
+                        'sesi_program_detail'       => $request->sesi[$i],
                         'keterangan_program_detail' => $request->keterangan[$i],
-                        'awal_program_detail' => $request->jam_awal[$i],
-                        'akhir_program_detail' => $request->jam_akhir[$i],
+                        'awal_program_detail'       => $request->jam_awal[$i],
+                        'akhir_program_detail'      => $request->jam_akhir[$i],
                         'created_at_program_detail' => now(),
                     ]);
                 }

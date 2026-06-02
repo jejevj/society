@@ -24,15 +24,13 @@ class WebEventPublicController extends Controller
         if ($request->filled('q')) {
             $q = $request->q;
             $query->where(function ($sub) use ($q) {
-                $sub->where('e.judul_event', 'ILIKE', "%{$q}%")
-                    ->orWhere('e.sub_judul_event', 'ILIKE', "%{$q}%")
-                    ->orWhere('e.lokasi_event', 'ILIKE', "%{$q}%");
+                $sub->where('e.judul_event', 'LIKE', "%{$q}%")
+                    ->orWhere('e.sub_judul_event', 'LIKE', "%{$q}%")
+                    ->orWhere('e.lokasi_event', 'LIKE', "%{$q}%");
             });
         }
 
         // Filter: status pendaftaran
-        // open  = tanggal_akhir_event >= today
-        // closed = tanggal_akhir_event < today
         if ($request->filled('status')) {
             if ($request->status === 'open') {
                 $query->where('e.tanggal_akhir_event', '>=', now()->toDateString());
@@ -66,7 +64,6 @@ class WebEventPublicController extends Controller
             'e.tanggal_awal_event',
             'e.tanggal_akhir_event',
             'e.harga_event',
-            'e.gambar_event',
             'e.background_event',
             'e.keterangan_event'
         )->paginate(9)->appends($request->all());

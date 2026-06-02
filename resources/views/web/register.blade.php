@@ -518,6 +518,9 @@
                                 </span>
                             </div>
                         </div>
+
+                        @include('web.partials.register-event-pricing')
+
                     @else
                         <span class="event-badge">{{ $set->nama_app ?? env('APP_NAME', 'Society Event') }}</span>
                         <h1>Create Your<br>Account</h1>

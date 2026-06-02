@@ -369,8 +369,8 @@
 
                     {{-- Thumbnail --}}
                     <div class="ev-card-thumb">
-                        @if($e->gambar_event)
-                            <img src="{{ asset('storage/' . $e->gambar_event) }}" alt="{{ $e->judul_event }}">
+                        @if($e->background_event)
+                            <img src="{{ asset('storage/' . $e->background_event) }}" alt="{{ $e->judul_event }}">
                         @else
                             <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background:#f1f5f9;">
                                 <i class="fa-solid fa-calendar-days fa-3x" style="color:#cbd5e1;"></i>

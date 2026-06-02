@@ -73,7 +73,7 @@
 
 									{{-- Event --}}
 									<div class="menu-item me-0 me-lg-2">
-										<a href="{{ route('about') }}" class="menu-link">
+										<a href="{{ route('list-event') }}" class="menu-link">
 											<span class="menu-title fs-5">
 												<span class="fw-bold {{ $menu_aktif == 'event' ? 'text-maroon-active' : 'text-white' }}">Event</span>
 											</span>

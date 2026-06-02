@@ -45,7 +45,6 @@ class WebLoginController extends Controller
 
     /**
      * Show register page.
-     * If ?event={kode_event} is passed, load event context for the left panel.
      */
     public function register(Request $request)
     {
@@ -69,8 +68,11 @@ class WebLoginController extends Controller
             }
         }
 
-        // Ambil midtrans config untuk client key di frontend
-        $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+        // Ambil midtrans config aktif (kolom is_active = 'Y', id_midtrans = 1)
+        $midtransConfig = DB::table('app_midtrans_config')
+            ->where('id_midtrans', 1)
+            ->where('is_active', 'Y')
+            ->first();
 
         $data = [
             'menu'           => 'register',
@@ -96,7 +98,7 @@ class WebLoginController extends Controller
     }
 
     /**
-     * STEP 1: Create user account + send OTP registration code.
+     * STEP 1: Create user account + send OTP.
      */
     public function registrasiAction(Request $request)
     {
@@ -284,7 +286,7 @@ class WebLoginController extends Controller
     }
 
     /**
-     * STEP 3: Return available packages for an event.
+     * STEP 3: Return packages for an event.
      */
     public function getEventPackages(Request $request)
     {
@@ -300,8 +302,7 @@ class WebLoginController extends Controller
 
     /**
      * STEP 4a: Generate Midtrans Snap Token.
-     * Jika semua paket gratis (totalAmount = 0), kembalikan snap_token null
-     * dan free=true agar frontend langsung enroll gratis tanpa popup.
+     * Jika totalAmount = 0, kembalikan free:true agar frontend enroll langsung.
      */
     public function getRegistrationSnapToken(Request $request)
     {
@@ -319,8 +320,7 @@ class WebLoginController extends Controller
         $totalAmount = 0;
         $itemDetails = [];
 
-        // Harga event base
-        $event = DB::table('t_event')->where('kode_event', $request->kode_event)->first();
+        $event      = DB::table('t_event')->where('kode_event', $request->kode_event)->first();
         $hargaEvent = (float) ($event->harga_event ?? 0);
         if ($hargaEvent > 0) {
             $totalAmount += $hargaEvent;
@@ -332,7 +332,6 @@ class WebLoginController extends Controller
             ];
         }
 
-        // Harga paket yang dipilih
         $selectedPaketData = [];
         foreach ($packages as $kode_paket) {
             $pkg = DB::table('t_event_paket')->where('kode_paket', $kode_paket)->first();
@@ -350,25 +349,32 @@ class WebLoginController extends Controller
             }
         }
 
-        // Kalau semua gratis: tidak perlu snap, langsung enroll
+        // Semua gratis: langsung enroll tanpa snap popup
         if ($totalAmount <= 0) {
             return response()->json([
-                'success'       => true,
-                'free'          => true,
-                'snap_token'    => null,
-                'total_amount'  => 0,
-                'selected_paket'=> $selectedPaketData,
+                'success'        => true,
+                'free'           => true,
+                'snap_token'     => null,
+                'total_amount'   => 0,
+                'harga_event'    => $hargaEvent,
+                'selected_paket' => $selectedPaketData,
             ]);
         }
 
-        // Ada nominal: generate snap token dari config DB
-        $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+        // Ada nominal: baca config dari DB (kolom is_active & environment)
+        $midtransConfig = DB::table('app_midtrans_config')
+            ->where('id_midtrans', 1)
+            ->where('is_active', 'Y')
+            ->first();
+
         if (!$midtransConfig) {
             return response()->json(['success' => false, 'message' => 'Konfigurasi Midtrans belum diatur. Hubungi administrator.']);
         }
 
+        $isProduction = $midtransConfig->environment === 'production';
+
         \Midtrans\Config::$serverKey    = $midtransConfig->server_key;
-        \Midtrans\Config::$isProduction = (bool) ($midtransConfig->is_production ?? false);
+        \Midtrans\Config::$isProduction = $isProduction;
         \Midtrans\Config::$isSanitized  = true;
         \Midtrans\Config::$is3ds        = true;
 
@@ -392,7 +398,6 @@ class WebLoginController extends Controller
         try {
             $snapToken = \Midtrans\Snap::getSnapToken($params);
 
-            // Simpan transaksi ke DB
             if (DB::getSchemaBuilder()->hasTable('app_midtrans_transaction')) {
                 DB::table('app_midtrans_transaction')->insert([
                     'order_id'     => $orderId,
@@ -414,7 +419,7 @@ class WebLoginController extends Controller
                 'harga_event'    => $hargaEvent,
                 'selected_paket' => $selectedPaketData,
                 'client_key'     => $midtransConfig->client_key,
-                'is_production'  => (bool) ($midtransConfig->is_production ?? false),
+                'is_production'  => $isProduction,
             ]);
 
         } catch (\Exception $e) {
@@ -423,7 +428,7 @@ class WebLoginController extends Controller
     }
 
     /**
-     * STEP 4b: Handle free enrollment.
+     * STEP 4b: Free enrollment.
      */
     public function enrollEventFree(Request $request)
     {
@@ -467,7 +472,7 @@ class WebLoginController extends Controller
     }
 
     /**
-     * Internal: enroll user into event + activate account.
+     * Internal: enroll user + activate account.
      */
     private function enrollUser($userId, $kodeEvent, $packages = [])
     {

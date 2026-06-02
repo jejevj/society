@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Redirect;
 use App\Models\ReffMenu;
 use App\Models\ReffStatus;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;       
-use Illuminate\Support\Facades\Crypt;   
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Crypt;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -69,11 +69,15 @@ class WebLoginController extends Controller
             }
         }
 
+        // Ambil midtrans config untuk client key di frontend
+        $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+
         $data = [
-            'menu'       => 'register',
-            'menu_aktif' => $menu_aktif,
-            'set'        => DB::table('app_setting')->where('id_setting', 1)->first(),
-            'event'      => $event,
+            'menu'           => 'register',
+            'menu_aktif'     => $menu_aktif,
+            'set'            => DB::table('app_setting')->where('id_setting', 1)->first(),
+            'event'          => $event,
+            'midtransConfig' => $midtransConfig,
         ];
 
         return view('web.register', $data);
@@ -81,7 +85,6 @@ class WebLoginController extends Controller
 
     /**
      * Generate a unique kode_registrasi.
-     * Format: REG-{YmdHis}-{random4}
      */
     private function generateKodeRegistrasi(): string
     {
@@ -94,7 +97,6 @@ class WebLoginController extends Controller
 
     /**
      * STEP 1: Create user account + send OTP registration code.
-     * Returns user_id on success so frontend can proceed to OTP step.
      */
     public function registrasiAction(Request $request)
     {
@@ -151,7 +153,6 @@ class WebLoginController extends Controller
 
         $dt_role = DB::table('reff_role')->where('kode_role', 'PUB')->first();
 
-        // Generate OTP for registration verification
         $otp_reg = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
         $token   = Str::random(64);
 
@@ -177,7 +178,6 @@ class WebLoginController extends Controller
             return response()->json(['success' => false, 'message' => 'Registration failed. Please try again.']);
         }
 
-        // Save role_event to t_event_registrasi (pending, before payment)
         if ($request->filled('kode_event')) {
             $ev = DB::table('t_event')->where('kode_event', $request->kode_event)->where('status_event', 'Y')->first();
             if ($ev) {
@@ -192,7 +192,6 @@ class WebLoginController extends Controller
             }
         }
 
-        // Send OTP email
         $this->dataService->setMailConfig();
         Mail::to($request->email)->queue(
             new AppMail(
@@ -213,11 +212,7 @@ class WebLoginController extends Controller
     }
 
     /**
-     * STEP 2: Verify OTP entered by user during registration.
-     *
-     * Behaviour:
-     *  - With event  : status_user stays 0 (activated after payment)
-     *  - Without event: status_user set to 1 immediately (no payment needed)
+     * STEP 2: Verify OTP.
      */
     public function verifyOtpRegistrasi(Request $request)
     {
@@ -237,10 +232,8 @@ class WebLoginController extends Controller
             return response()->json(['success' => false, 'message' => 'Invalid OTP. Please check your email and try again.']);
         }
 
-        // If no event context: activate user immediately after OTP verified
-        // If has event: keep status_user = 0 until payment is completed
-        $hasEvent   = filter_var($request->has_event ?? false, FILTER_VALIDATE_BOOLEAN);
-        $newStatus  = $hasEvent ? 0 : 1;
+        $hasEvent  = filter_var($request->has_event ?? false, FILTER_VALIDATE_BOOLEAN);
+        $newStatus = $hasEvent ? 0 : 1;
 
         DB::table('app_user')->where('id_user', $request->user_id)->update([
             'otp_user'     => null,
@@ -249,13 +242,12 @@ class WebLoginController extends Controller
             'updated_at'   => now(),
         ]);
 
-        // Update registrasi status if event row exists
         DB::table('t_event_registrasi')
             ->where('id_user', $request->user_id)
             ->where('status_registrasi', 'PENDING_OTP')
             ->update(['status_registrasi' => 'PENDING_PAYMENT', 'updated_at' => now()]);
 
-        $this->dataService->createLogWeb($request, 'verifyOtpRegistrasi', 'OTP verified for user_id=' . $request->user_id . ' | activated=' . ($newStatus ? 'yes' : 'no'));
+        $this->dataService->createLogWeb($request, 'verifyOtpRegistrasi', 'OTP verified for user_id=' . $request->user_id);
 
         return response()->json([
             'success'   => true,
@@ -265,7 +257,7 @@ class WebLoginController extends Controller
     }
 
     /**
-     * Resend registration OTP.
+     * Resend OTP.
      */
     public function resendOtpRegistrasi(Request $request)
     {
@@ -307,7 +299,9 @@ class WebLoginController extends Controller
     }
 
     /**
-     * STEP 4a: Generate Midtrans Snap Token for registration payment.
+     * STEP 4a: Generate Midtrans Snap Token.
+     * Jika semua paket gratis (totalAmount = 0), kembalikan snap_token null
+     * dan free=true agar frontend langsung enroll gratis tanpa popup.
      */
     public function getRegistrationSnapToken(Request $request)
     {
@@ -325,65 +319,111 @@ class WebLoginController extends Controller
         $totalAmount = 0;
         $itemDetails = [];
 
+        // Harga event base
+        $event = DB::table('t_event')->where('kode_event', $request->kode_event)->first();
+        $hargaEvent = (float) ($event->harga_event ?? 0);
+        if ($hargaEvent > 0) {
+            $totalAmount += $hargaEvent;
+            $itemDetails[] = [
+                'id'       => $request->kode_event,
+                'price'    => (int) $hargaEvent,
+                'quantity' => 1,
+                'name'     => mb_substr($event->judul_event ?? 'Event Registration', 0, 50),
+            ];
+        }
+
+        // Harga paket yang dipilih
+        $selectedPaketData = [];
         foreach ($packages as $kode_paket) {
             $pkg = DB::table('t_event_paket')->where('kode_paket', $kode_paket)->first();
-            if ($pkg && $pkg->harga_paket > 0) {
-                $totalAmount += $pkg->harga_paket;
-                $itemDetails[] = [
-                    'id'       => $pkg->kode_paket,
-                    'price'    => (int) $pkg->harga_paket,
-                    'quantity' => 1,
-                    'name'     => substr($pkg->judul_paket, 0, 50),
-                ];
+            if ($pkg) {
+                $selectedPaketData[] = $pkg;
+                if ($pkg->harga_paket > 0) {
+                    $totalAmount += (float) $pkg->harga_paket;
+                    $itemDetails[] = [
+                        'id'       => $pkg->kode_paket,
+                        'price'    => (int) $pkg->harga_paket,
+                        'quantity' => 1,
+                        'name'     => mb_substr($pkg->judul_paket, 0, 50),
+                    ];
+                }
             }
         }
 
+        // Kalau semua gratis: tidak perlu snap, langsung enroll
         if ($totalAmount <= 0) {
-            return response()->json(['success' => false, 'message' => 'No paid packages selected.', 'snap_token' => null]);
+            return response()->json([
+                'success'       => true,
+                'free'          => true,
+                'snap_token'    => null,
+                'total_amount'  => 0,
+                'selected_paket'=> $selectedPaketData,
+            ]);
         }
+
+        // Ada nominal: generate snap token dari config DB
+        $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+        if (!$midtransConfig) {
+            return response()->json(['success' => false, 'message' => 'Konfigurasi Midtrans belum diatur. Hubungi administrator.']);
+        }
+
+        \Midtrans\Config::$serverKey    = $midtransConfig->server_key;
+        \Midtrans\Config::$isProduction = (bool) ($midtransConfig->is_production ?? false);
+        \Midtrans\Config::$isSanitized  = true;
+        \Midtrans\Config::$is3ds        = true;
 
         $orderId = 'REG-' . $request->user_id . '-' . time();
 
-        $midtransConfig = [
+        $params = [
             'transaction_details' => [
                 'order_id'     => $orderId,
-                'gross_amount' => $totalAmount,
+                'gross_amount' => (int) $totalAmount,
             ],
             'customer_details' => [
                 'first_name' => $user->nama_user,
                 'email'      => $user->username_user,
-                'phone'      => $user->telepon_user,
+                'phone'      => $user->telepon_user ?? '',
             ],
-            'item_details' => $itemDetails,
         ];
-
-        \Midtrans\Config::$serverKey    = env('MIDTRANS_SERVER_KEY');
-        \Midtrans\Config::$isProduction = env('MIDTRANS_PRODUCTION', false);
-        \Midtrans\Config::$isSanitized  = true;
-        \Midtrans\Config::$is3ds        = true;
+        if (!empty($itemDetails)) {
+            $params['item_details'] = $itemDetails;
+        }
 
         try {
-            $snapToken = \Midtrans\Snap::getSnapToken($midtransConfig);
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
 
-            DB::table('app_midtrans_transaction')->insert([
-                'order_id'     => $orderId,
-                'user_id'      => $request->user_id,
-                'gross_amount' => $totalAmount,
-                'status'       => 'pending',
-                'snap_token'   => $snapToken,
-                'kode_event'   => $request->kode_event,
-                'created_at'   => now(),
+            // Simpan transaksi ke DB
+            if (DB::getSchemaBuilder()->hasTable('app_midtrans_transaction')) {
+                DB::table('app_midtrans_transaction')->insert([
+                    'order_id'     => $orderId,
+                    'user_id'      => $request->user_id,
+                    'gross_amount' => $totalAmount,
+                    'status'       => 'pending',
+                    'snap_token'   => $snapToken,
+                    'kode_event'   => $request->kode_event,
+                    'created_at'   => now(),
+                ]);
+            }
+
+            return response()->json([
+                'success'        => true,
+                'free'           => false,
+                'snap_token'     => $snapToken,
+                'order_id'       => $orderId,
+                'total_amount'   => $totalAmount,
+                'harga_event'    => $hargaEvent,
+                'selected_paket' => $selectedPaketData,
+                'client_key'     => $midtransConfig->client_key,
+                'is_production'  => (bool) ($midtransConfig->is_production ?? false),
             ]);
 
-            return response()->json(['success' => true, 'snap_token' => $snapToken, 'order_id' => $orderId]);
-
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to create payment: ' . $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Gagal membuat token pembayaran: ' . $e->getMessage()]);
         }
     }
 
     /**
-     * STEP 4b: Handle free enrollment (no packages or all free).
+     * STEP 4b: Handle free enrollment.
      */
     public function enrollEventFree(Request $request)
     {
@@ -398,7 +438,7 @@ class WebLoginController extends Controller
     }
 
     /**
-     * STEP 4c: Midtrans payment callback after successful payment.
+     * STEP 4c: Midtrans payment callback.
      */
     public function paymentRegistrationCallback(Request $request)
     {
@@ -410,13 +450,15 @@ class WebLoginController extends Controller
         $midtransResult = json_decode($request->midtrans_result, true);
 
         if (!empty($midtransResult['order_id'])) {
-            DB::table('app_midtrans_transaction')
-                ->where('order_id', $midtransResult['order_id'])
-                ->update([
-                    'status'       => $midtransResult['transaction_status'] ?? 'settlement',
-                    'payment_type' => $midtransResult['payment_type'] ?? null,
-                    'updated_at'   => now(),
-                ]);
+            if (DB::getSchemaBuilder()->hasTable('app_midtrans_transaction')) {
+                DB::table('app_midtrans_transaction')
+                    ->where('order_id', $midtransResult['order_id'])
+                    ->update([
+                        'status'       => $midtransResult['transaction_status'] ?? 'settlement',
+                        'payment_type' => $midtransResult['payment_type'] ?? null,
+                        'updated_at'   => now(),
+                    ]);
+            }
         }
 
         $this->enrollUser($request->user_id, $request->kode_event, $request->packages ?? []);

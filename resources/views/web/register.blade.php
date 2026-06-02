@@ -242,6 +242,7 @@
     gap: 8px;
 }
 .btn-reg-primary:hover { background: #c41a1a; }
+.btn-reg-primary:disabled { background: #9ca3af; cursor: not-allowed; }
 .btn-reg-secondary {
     background: #f5f5f5;
     color: #555;
@@ -260,7 +261,7 @@
 }
 .btn-reg-secondary:hover { background: #ebebeb; }
 
-/* ── OTP Inputs ── */
+/* ── OTP ── */
 .otp-boxes {
     display: flex;
     gap: 10px;
@@ -388,40 +389,87 @@
     white-space: nowrap;
     flex-shrink: 0;
 }
-.skip-link {
-    text-align: center;
-    font-size: 0.82rem;
-    color: #aaa;
-    margin-top: 6px;
+.pkg-badge-paid {
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
-.skip-link a {
-    color: #888;
-    cursor: pointer;
-    text-decoration: underline;
+.event-fee-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f0fdf4;
+    border: 1.5px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
 }
+.event-fee-row.paid { background: #fff5f5; border-color: #fca5a5; }
+.event-fee-label { color: #555; font-weight: 600; }
+.event-fee-value.free { color: #16a34a; font-weight: 700; }
+.event-fee-value.paid-price { color: #E62020; font-weight: 700; }
 
-/* ── Payment step ── */
-.payment-info-box {
-    background: #f8f8f8;
+/* ── Struk Payment ── */
+.struk-box {
+    background: #fafafa;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 14px;
+    padding: 16px 14px;
+    margin-bottom: 14px;
+}
+.struk-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.struk-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-bottom: 1px dashed #eee;
+    font-size: 0.85rem;
+    gap: 8px;
+}
+.struk-row:last-child { border-bottom: none; }
+.struk-row .sk { color: #666; flex: 1; min-width: 0; }
+.struk-row .sv { font-weight: 700; color: #1a1a1a; text-align: right; white-space: nowrap; }
+.struk-row .sv.red { color: #E62020; }
+.struk-row .sv.green { color: #16a34a; }
+.struk-divider { border: none; border-top: 2px dashed #ddd; margin: 8px 0; }
+.total-bar {
+    background: #1a1a2e;
     border-radius: 12px;
-    padding: 18px 16px;
-    margin-bottom: 16px;
-    border: 1px solid #efefef;
-    text-align: center;
+    padding: 13px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 14px 0;
 }
-.payment-info-box p {
-    color: #666;
-    font-size: 0.88rem;
-    margin: 0;
-}
-.payment-note {
-    font-size: 0.78rem;
-    color: #aaa;
-    text-align: center;
-    margin-top: 8px;
-}
+.total-bar .tl { color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 600; }
+.total-bar .tr { color: #f8ee93; font-size: 1.2rem; font-weight: 800; }
 
-/* ── Success step ── */
+/* ── Pay status ── */
+.pay-status-box { margin-top: 10px; padding: 11px 14px; border-radius: 10px; font-size: 0.85rem; display: none; align-items: center; gap: 8px; }
+.pay-status-box.pending { background: #fefce8; border: 1.5px solid #fde047; color: #854d0e; display: flex; }
+.pay-status-box.error   { background: #fef2f2; border: 1.5px solid #fca5a5; color: #dc2626; display: flex; }
+.pay-status-box.ok      { background: #f0fdf4; border: 1.5px solid #bbf7d0; color: #166534; display: flex; }
+.spinner { width: 15px; height: 15px; border: 2.5px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Success ── */
 .success-container {
     display: flex;
     flex-direction: column;
@@ -447,11 +495,7 @@
     color: #1a1a1a;
     margin-bottom: 6px;
 }
-.success-container p {
-    color: #888;
-    font-size: 0.85rem;
-    max-width: 280px;
-}
+.success-container p { color: #888; font-size: 0.85rem; max-width: 280px; }
 
 .register-switch-link {
     text-align: center;
@@ -459,17 +503,8 @@
     font-size: 0.84rem;
     color: #888;
 }
-.register-switch-link a {
-    color: #E62020;
-    font-weight: 600;
-    text-decoration: none;
-}
-.register-footer-text {
-    text-align: center;
-    color: #ccc;
-    font-size: 0.74rem;
-    margin-top: 12px;
-}
+.register-switch-link a { color: #E62020; font-weight: 600; text-decoration: none; }
+.register-footer-text { text-align: center; color: #ccc; font-size: 0.74rem; margin-top: 12px; }
 
 @media (max-width: 767.98px) {
     .event-info-col { display: none; }
@@ -484,11 +519,8 @@
         <div class="container">
             <div class="row align-items-start justify-content-center g-5">
 
-                {{-- ═══════════════════════════════════════ --}}
-                {{-- LEFT: Event Info + Step Tracker        --}}
-                {{-- ═══════════════════════════════════════ --}}
+                {{-- LEFT --}}
                 <div class="col-md-7 col-lg-6 event-info-col">
-
                     @if(isset($event) && $event)
                         <span class="event-badge">You are registering for</span>
                         <h1>{{ $event->judul_event }}</h1>
@@ -515,56 +547,36 @@
                     <ul class="reg-steps-sidebar" id="sidebarSteps">
                         <li class="active" data-step="1">
                             <span class="step-circle">1</span>
-                            <span class="step-label">
-                                <strong>Fill in Your Details</strong>
-                                Personal, identity &amp; organization data
-                            </span>
+                            <span class="step-label"><strong>Fill in Your Details</strong>Personal, identity &amp; organization data</span>
                         </li>
                         <li data-step="2">
                             <span class="step-circle">2</span>
-                            <span class="step-label">
-                                <strong>Verify Email (OTP)</strong>
-                                Enter the code sent to your email
-                            </span>
+                            <span class="step-label"><strong>Verify Email (OTP)</strong>Enter the code sent to your email</span>
                         </li>
                         @if(isset($event) && $event)
                         <li data-step="3">
                             <span class="step-circle">3</span>
-                            <span class="step-label">
-                                <strong>Select Packages</strong>
-                                Choose event packages
-                            </span>
+                            <span class="step-label"><strong>Select Packages</strong>Choose event packages</span>
                         </li>
                         <li data-step="4">
                             <span class="step-circle">4</span>
-                            <span class="step-label">
-                                <strong>Payment</strong>
-                                Complete payment to confirm your seat
-                            </span>
+                            <span class="step-label"><strong>Payment</strong>Complete payment to confirm your seat</span>
                         </li>
                         @else
                         <li data-step="3">
                             <span class="step-circle">3</span>
-                            <span class="step-label">
-                                <strong>Account Active</strong>
-                                You're all set!
-                            </span>
+                            <span class="step-label"><strong>Account Active</strong>You're all set!</span>
                         </li>
                         @endif
                     </ul>
                 </div>
 
-                {{-- ═══════════════════════════════════════ --}}
-                {{-- RIGHT: Multi-step Card                 --}}
-                {{-- ═══════════════════════════════════════ --}}
+                {{-- RIGHT --}}
                 <div class="col-md-5 col-lg-5 col-11">
                     <div class="register-card">
-
                         <img src="{{ asset('images/logo.png') }}" alt="Logo" class="card-logo">
 
-                        {{-- ─────────────────────────── --}}
-                        {{-- STEP 1: Registration Form   --}}
-                        {{-- ─────────────────────────── --}}
+                        {{-- STEP 1 --}}
                         <div id="step1">
                             <div class="step-header">
                                 <h2>Create New Account</h2>
@@ -614,7 +626,7 @@
                                 <div class="section-divider">Identity Verification</div>
                                 <div class="row g-3">
                                     <div class="col-12">
-                                        <label class="form-label">ID Number (National ID / Student ID / Employee ID) <span class="text-danger">*</span></label>
+                                        <label class="form-label">ID Number <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" name="identitas" placeholder="Enter your ID number" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                                     </div>
                                     <div class="col-12">
@@ -684,20 +696,16 @@
                             </div>
                         </div>
 
-                        {{-- ─────────────────────────── --}}
-                        {{-- STEP 2: OTP Verification   --}}
-                        {{-- ─────────────────────────── --}}
+                        {{-- STEP 2: OTP --}}
                         <div id="step2" style="display:none;">
                             <div class="step-header">
                                 <h2>Email Verification</h2>
                                 <div class="step-sub">Step 2 of {{ isset($event) && $event ? '4' : '3' }} &mdash; Check your inbox</div>
                             </div>
-
                             <div class="otp-email-hint">
                                 We sent a 6-digit OTP to<br>
                                 <strong id="otpEmailDisplay" style="color:#1a1a1a;"></strong>
                             </div>
-
                             <div class="otp-boxes">
                                 <input type="text" maxlength="1" class="otp-digit" inputmode="numeric">
                                 <input type="text" maxlength="1" class="otp-digit" inputmode="numeric">
@@ -706,30 +714,35 @@
                                 <input type="text" maxlength="1" class="otp-digit" inputmode="numeric">
                                 <input type="text" maxlength="1" class="otp-digit" inputmode="numeric">
                             </div>
-
                             <input type="hidden" id="otpValue">
-
                             <button class="btn-reg-primary" id="btnVerifyOtp">
                                 <i class="fa-solid fa-check-circle"></i> Verify OTP
                             </button>
-
                             <div class="otp-resend mt-2">
                                 Didn't receive the code? <a id="resendOtp">Resend</a>
                                 <span id="resendTimer" style="display:none;"> (<span id="timerCount">60</span>s)</span>
                             </div>
-
                             <button class="btn-reg-secondary mt-3" id="btnBackStep1">
                                 <i class="fa-solid fa-arrow-left"></i> Back
                             </button>
                         </div>
 
-                        {{-- ─────────────────────────────── --}}
-                        {{-- STEP 3: Package Selection       --}}
-                        {{-- ─────────────────────────────── --}}
+                        {{-- STEP 3: Package Selection --}}
                         <div id="step3" style="display:none;">
                             <div class="step-header">
                                 <h2>Select Packages</h2>
                                 <div class="step-sub">Step 3 of 4 &mdash; Choose the packages for this event</div>
+                            </div>
+
+                            {{-- Baris harga dasar event --}}
+                            @php $hargaEventBase = (float) ($event->harga_event ?? 0); @endphp
+                            <div class="event-fee-row {{ $hargaEventBase > 0 ? 'paid' : '' }}">
+                                <span class="event-fee-label"><i class="fa-solid fa-ticket me-1"></i>Event Registration Fee</span>
+                                @if($hargaEventBase > 0)
+                                    <span class="event-fee-value paid-price">Rp {{ number_format($hargaEventBase, 0, ',', '.') }}</span>
+                                @else
+                                    <span class="event-fee-value free"><i class="fa-solid fa-circle-check me-1"></i>Free</span>
+                                @endif
                             </div>
 
                             <div class="package-grid" id="packageGrid">
@@ -747,41 +760,53 @@
                             </div>
                         </div>
 
-                        {{-- ─────────────────────────── --}}
-                        {{-- STEP 4: Payment             --}}
-                        {{-- ─────────────────────────── --}}
+                        {{-- STEP 4: Payment (struk + snap) --}}
                         <div id="step4" style="display:none;">
                             <div class="step-header">
-                                <h2>Payment</h2>
-                                <div class="step-sub">Step 4 of 4 &mdash; Complete your payment</div>
+                                <h2>Payment Summary</h2>
+                                <div class="step-sub">Step 4 of 4 &mdash; Review your order then pay</div>
                             </div>
 
-                            <div class="payment-info-box">
-                                <i class="fa-solid fa-shield-halved fa-2x text-success mb-2"></i>
-                                <p>Click the button below to proceed. Payment details will appear in the secure Midtrans popup.</p>
+                            {{-- Struk --}}
+                            <div class="struk-box" id="strukBox">
+                                <div class="struk-title"><i class="fa-solid fa-receipt"></i> Transaction Detail</div>
+                                <div class="struk-row">
+                                    <span class="sk">Name</span>
+                                    <span class="sv" id="strukNama"></span>
+                                </div>
+                                <div class="struk-row">
+                                    <span class="sk">Email</span>
+                                    <span class="sv" id="strukEmail"></span>
+                                </div>
+                                <hr class="struk-divider">
+                                <div id="strukItems"></div>
+                                <hr class="struk-divider">
+                                <div class="struk-row">
+                                    <span class="sk">Order ID</span>
+                                    <span class="sv" style="font-size:.75rem;color:#999" id="strukOrderId">-</span>
+                                </div>
+                            </div>
+
+                            <div class="total-bar">
+                                <span class="tl"><i class="fa-solid fa-money-bill-wave me-1"></i>Total Payment</span>
+                                <span class="tr" id="strukTotal">Rp 0</span>
                             </div>
 
                             <button class="btn-reg-primary" id="btnPayNow">
-                                <i class="fa-solid fa-credit-card"></i> Pay Now via Midtrans
+                                <i class="fa-solid fa-credit-card"></i> Pay Now
                             </button>
 
-                            <div class="payment-note mt-2">
-                                Payment is processed securely by Midtrans.
-                            </div>
+                            <div id="payStatusBox" class="pay-status-box"></div>
 
                             <button class="btn-reg-secondary mt-3" id="btnBackStep3">
                                 <i class="fa-solid fa-arrow-left"></i> Back to Packages
                             </button>
                         </div>
 
-                        {{-- ─────────────────────────── --}}
-                        {{-- STEP SUCCESS               --}}
-                        {{-- ─────────────────────────── --}}
+                        {{-- SUCCESS --}}
                         <div id="stepSuccess" style="display:none;">
                             <div class="success-container">
-                                <div class="success-icon">
-                                    <i class="fa-solid fa-check"></i>
-                                </div>
+                                <div class="success-icon"><i class="fa-solid fa-check"></i></div>
                                 <h3>Registration Complete!</h3>
                                 <p id="successMsg">You are now enrolled in the event. A confirmation email has been sent.</p>
                                 <a href="{{ route('login') }}" class="btn-reg-primary mt-4" style="text-decoration:none;max-width:220px;">
@@ -799,50 +824,62 @@
     </div>
 </div>
 
-{{-- Midtrans Snap JS --}}
-<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
-
 <script>
-let _csrfToken = '{{ csrf_token() }}';
-$.ajaxSetup({ headers: { 'X-CSRF-TOKEN': _csrfToken } });
+var _csrf      = '{{ csrf_token() }}';
+var _kodeEvent = '{{ isset($event) && $event ? $event->kode_event : '' }}';
+var _hasEvent  = {{ isset($event) && $event ? 'true' : 'false' }};
 
-let regState = {
-    userId: null,
-    kodeEvent: '{{ isset($event) && $event ? $event->kode_event : '' }}',
-    hasEvent: {{ isset($event) && $event ? 'true' : 'false' }},
-    email: '',
-    selectedPackages: [],
-    snapToken: null
-};
+// Midtrans config dari DB (diisi setelah getRegistrationSnapToken berhasil)
+var _snapToken    = null;
+var _clientKey    = '{{ $midtransConfig->client_key ?? '' }}';
+var _isProduction = {{ ($midtransConfig->is_production ?? false) ? 'true' : 'false' }};
+var _snapUrl      = _isProduction
+    ? 'https://app.midtrans.com/snap/snap.js'
+    : 'https://app.sandbox.midtrans.com/snap/snap.js';
+
+var _userId        = null;
+var _userName      = '';
+var _userEmail     = '';
+var _totalAmount   = 0;
+var _isFree        = false;
+var _orderId       = '';
+var _selectedPkgs  = [];
+
+$.ajaxSetup({ headers: { 'X-CSRF-TOKEN': _csrf } });
+
+function formatRp(n) {
+    return 'Rp ' + parseInt(n).toLocaleString('id-ID');
+}
+
+function setPayStatus(type, html) {
+    var box = document.getElementById('payStatusBox');
+    box.className = 'pay-status-box ' + type;
+    box.innerHTML = html;
+}
 
 function goToStep(n) {
     ['step1','step2','step3','step4','stepSuccess'].forEach(function(id) {
-        document.getElementById(id).style.display = 'none';
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
     });
-    let el = document.getElementById('step' + n);
-    if (el) el.style.display = 'block';
-    else document.getElementById('stepSuccess').style.display = 'block';
+    var target = document.getElementById('step' + n) || document.getElementById('stepSuccess');
+    if (target) target.style.display = 'block';
 
     document.querySelectorAll('#sidebarSteps li').forEach(function(li) {
-        let s = parseInt(li.dataset.step);
+        var s = parseInt(li.dataset.step);
         li.classList.remove('active','done');
-        if (s < n) li.classList.add('done');
-        else if (s === n) li.classList.add('active');
-        let circle = li.querySelector('.step-circle');
-        if (s < n) circle.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.7rem;"></i>';
-        else circle.innerHTML = s;
+        if (s < n)      li.classList.add('done');
+        else if (s===n) li.classList.add('active');
+        var circle = li.querySelector('.step-circle');
+        circle.innerHTML = s < n ? '<i class="fa-solid fa-check" style="font-size:0.7rem;"></i>' : s;
     });
-}
-
-function formatRupiah(num) {
-    return 'Rp ' + parseInt(num).toLocaleString('id-ID');
 }
 
 // ── STEP 1 ──
 $('#formStep1').on('submit', function(e) {
     e.preventDefault();
-    let fd = new FormData(this);
-    Swal.fire({ title: 'Processing...', text: 'Please wait', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading() });
+    var fd = new FormData(this);
+    Swal.fire({ title: 'Processing...', text: 'Please wait', allowOutsideClick: false, allowEscapeKey: false, didOpen: function() { Swal.showLoading(); } });
     $.ajax({
         url: '{{ route("registrasiAction") }}',
         type: 'POST',
@@ -852,9 +889,10 @@ $('#formStep1').on('submit', function(e) {
         success: function(r) {
             Swal.close();
             if (r.success) {
-                regState.userId = r.user_id;
-                regState.email  = $('#formStep1 [name=email]').val();
-                $('#otpEmailDisplay').text(regState.email);
+                _userId     = r.user_id;
+                _userEmail  = $('#formStep1 [name=email]').val();
+                _userName   = $('#formStep1 [name=nama]').val();
+                $('#otpEmailDisplay').text(_userEmail);
                 goToStep(2);
                 startResendTimer();
             } else {
@@ -863,68 +901,58 @@ $('#formStep1').on('submit', function(e) {
         },
         error: function(xhr) {
             Swal.close();
-            let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'An error occurred.';
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'An error occurred.';
             Swal.fire({ icon: 'error', title: 'Failed', text: msg });
         }
     });
 });
 
-// ── OTP boxes ──
+// ── OTP ──
 $(document).on('input', '.otp-digit', function() {
     this.value = this.value.replace(/[^0-9]/g,'');
-    if (this.value.length === 1) $(this).nextAll('.otp-digit').first().focus();
-    syncOtpValue();
+    if (this.value.length===1) $(this).nextAll('.otp-digit').first().focus();
+    syncOtp();
 });
 $(document).on('keydown', '.otp-digit', function(e) {
-    if (e.key === 'Backspace' && !this.value) $(this).prevAll('.otp-digit').first().focus();
+    if (e.key==='Backspace' && !this.value) $(this).prevAll('.otp-digit').first().focus();
 });
-function syncOtpValue() {
-    let val = '';
-    $('.otp-digit').each(function() { val += this.value; });
+function syncOtp() {
+    var val='';
+    $('.otp-digit').each(function(){ val+=this.value; });
     $('#otpValue').val(val);
 }
 
 // ── STEP 2: Verify OTP ──
 $('#btnVerifyOtp').on('click', function() {
-    syncOtpValue();
-    let otp = $('#otpValue').val();
-    if (otp.length !== 6) {
-        Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please enter all 6 digits.' });
-        return;
-    }
-    Swal.fire({ title: 'Verifying...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    syncOtp();
+    var otp = $('#otpValue').val();
+    if (otp.length!==6) { Swal.fire({ icon:'warning', title:'Incomplete', text:'Please enter all 6 digits.' }); return; }
+    Swal.fire({ title: 'Verifying...', allowOutsideClick: false, didOpen: function(){ Swal.showLoading(); } });
     $.ajax({
         url: '{{ route("verifyOtpRegistrasi") }}',
         type: 'POST',
-        data: { _token: _csrfToken, user_id: regState.userId, otp: otp },
+        data: { _token: _csrf, user_id: _userId, otp: otp, has_event: _hasEvent ? 1 : 0 },
         success: function(r) {
             Swal.close();
             if (r.success) {
-                if (regState.hasEvent) {
-                    loadPackages();
-                    goToStep(3);
-                } else {
-                    goToStep('Success');
-                    $('#successMsg').text('Your account has been verified. Please wait for admin activation before logging in.');
-                }
-            } else {
-                Swal.fire({ icon: 'error', title: 'Invalid OTP', text: r.message });
-            }
+                if (_hasEvent) { loadPackages(); goToStep(3); }
+                else { goToStep('Success'); $('#successMsg').text('Your account has been verified. Please wait for admin activation before logging in.'); }
+            } else { Swal.fire({ icon:'error', title:'Invalid OTP', text: r.message }); }
         },
         error: function(xhr) {
             Swal.close();
-            let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Verification failed.';
-            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Verification failed.';
+            Swal.fire({ icon:'error', title:'Error', text: msg });
         }
     });
 });
 
-$('#btnBackStep1').on('click', function() { goToStep(1); });
+$('#btnBackStep1').on('click', function(){ goToStep(1); });
 
-// ── Resend OTP ──
-let resendInterval;
+// Resend OTP
+var resendInterval;
 function startResendTimer() {
-    let count = 60;
+    var count=60;
     $('#resendOtp').css('pointer-events','none').css('opacity','0.4');
     $('#resendTimer').show();
     $('#timerCount').text(count);
@@ -932,57 +960,47 @@ function startResendTimer() {
     resendInterval = setInterval(function() {
         count--;
         $('#timerCount').text(count);
-        if (count <= 0) {
-            clearInterval(resendInterval);
-            $('#resendOtp').css('pointer-events','').css('opacity','1');
-            $('#resendTimer').hide();
-        }
+        if (count<=0) { clearInterval(resendInterval); $('#resendOtp').css('pointer-events','').css('opacity','1'); $('#resendTimer').hide(); }
     }, 1000);
 }
 $('#resendOtp').on('click', function() {
     $.ajax({
         url: '{{ route("resendOtpRegistrasi") }}',
         type: 'POST',
-        data: { _token: _csrfToken, user_id: regState.userId },
+        data: { _token: _csrf, user_id: _userId },
         success: function(r) {
             if (r.success) {
-                $('.otp-digit').val('');
-                $('#otpValue').val('');
-                $('.otp-digit').first().focus();
+                $('.otp-digit').val(''); $('#otpValue').val(''); $('.otp-digit').first().focus();
                 startResendTimer();
-                Swal.fire({ icon: 'success', title: 'OTP Sent', text: 'A new OTP has been sent to your email.', timer: 2000, showConfirmButton: false });
+                Swal.fire({ icon:'success', title:'OTP Sent', text:'A new OTP has been sent.', timer:2000, showConfirmButton:false });
             }
         }
     });
 });
 
 // ── STEP 3: Load packages ──
-// Logic:
-// - harga_paket = 0  → checkbox checked + disabled (locked/free, always included)
-// - harga_paket > 0  → checkbox unchecked + enabled (user picks manually)
-// - Harga TIDAK ditampilkan di sini, hanya nama & sub-judul
 function loadPackages() {
-    if (!regState.hasEvent) return;
+    if (!_hasEvent) return;
     $('#packageLoading').show();
     $.ajax({
         url: '{{ route("getEventPackages") }}',
         type: 'POST',
-        data: { _token: _csrfToken, kode_event: regState.kodeEvent },
+        data: { _token: _csrf, kode_event: _kodeEvent },
         success: function(r) {
             $('#packageLoading').hide();
-            let html = '';
+            var html = '';
             if (r.packages && r.packages.length > 0) {
                 r.packages.forEach(function(pkg) {
-                    let isFree   = !pkg.harga_paket || parseInt(pkg.harga_paket) === 0;
-                    let iconUrl  = pkg.icon_paket ? '/storage/' + pkg.icon_paket : '';
-                    let imgTag   = iconUrl
+                    var isFree = !pkg.harga_paket || parseInt(pkg.harga_paket) === 0;
+                    var iconUrl = pkg.icon_paket ? '/storage/' + pkg.icon_paket : '';
+                    var imgTag  = iconUrl
                         ? '<img src="' + iconUrl + '" class="package-img" alt="' + pkg.judul_paket + '">'
                         : '<div class="package-img d-flex align-items-center justify-content-center bg-light text-muted" style="font-size:1.3rem;"><i class="fa-solid fa-cube"></i></div>';
-
-                    // free = locked + auto selected; paid = selectable, not selected
-                    let cardClass  = 'package-card' + (isFree ? ' selected locked' : '');
-                    let checkAttr  = isFree ? 'checked disabled' : '';
-                    let badgeHtml  = isFree ? '<span class="pkg-badge-free">Free</span>' : '';
+                    var cardClass = 'package-card' + (isFree ? ' selected locked' : '');
+                    var checkAttr = isFree ? 'checked disabled' : '';
+                    var badge     = isFree
+                        ? '<span class="pkg-badge-free">Free</span>'
+                        : '<span class="pkg-badge-paid">Rp ' + parseInt(pkg.harga_paket).toLocaleString('id-ID') + '</span>';
 
                     html += '<div class="' + cardClass + '" data-id="' + pkg.kode_paket + '" data-name="' + pkg.judul_paket + '" data-price="' + (pkg.harga_paket || 0) + '" data-free="' + (isFree ? '1' : '0') + '">';
                     html += '<input type="checkbox" class="pkg-checkbox" value="' + pkg.kode_paket + '" ' + checkAttr + '>';
@@ -990,130 +1008,202 @@ function loadPackages() {
                     html += imgTag;
                     html += '<div class="package-info"><div class="pkg-name">' + pkg.judul_paket + '</div>';
                     if (pkg.lokasi_paket) html += '<div class="pkg-sub">' + pkg.lokasi_paket + '</div>';
-                    html += '</div>';
-                    html += badgeHtml;
-                    html += '</div>';
+                    html += '</div>' + badge + '</div>';
                 });
             } else {
                 html = '<div class="text-center text-muted py-3">No packages available for this event.</div>';
             }
             $('#packageGrid').html(html);
-            updateSelectedPackages();
+            updateSelected();
         },
-        error: function() {
-            $('#packageGrid').html('<div class="text-center text-muted py-3">Failed to load packages.</div>');
-        }
+        error: function() { $('#packageGrid').html('<div class="text-center text-muted py-3">Failed to load packages.</div>'); }
     });
 }
 
-// Only non-locked cards are togglable
 $(document).on('click', '.package-card', function() {
     if ($(this).hasClass('locked')) return;
     $(this).toggleClass('selected');
     $(this).find('.pkg-checkbox').prop('checked', $(this).hasClass('selected'));
-    updateSelectedPackages();
+    updateSelected();
 });
 
-function updateSelectedPackages() {
-    regState.selectedPackages = [];
+function updateSelected() {
+    _selectedPkgs = [];
     $('.package-card.selected').each(function() {
-        regState.selectedPackages.push({
-            id:    $(this).data('id'),
-            name:  $(this).data('name'),
-            price: parseInt($(this).data('price')) || 0
-        });
+        _selectedPkgs.push({ id: $(this).data('id'), name: $(this).data('name'), price: parseInt($(this).data('price')) || 0 });
     });
 }
 
-// ── STEP 3 → STEP 4 ──
+// ── STEP 3 -> STEP 4 ──
 $('#btnStep3Next').on('click', function() {
-    goToStep(4);
-    getSnapToken();
-});
+    var btn = $(this);
+    btn.prop('disabled', true).html('<div class="spinner" style="border-color:#fff;border-top-color:transparent"></div> Loading...');
 
-$('#btnBackStep3').on('click', function() { goToStep(3); });
+    var pkgIds = _selectedPkgs.map(function(p){ return p.id; });
 
-// ── Get Snap Token ──
-function getSnapToken() {
-    let pkgIds = regState.selectedPackages.map(function(p) { return p.id; });
     $.ajax({
         url: '{{ route("getRegistrationSnapToken") }}',
         type: 'POST',
-        data: {
-            _token:     _csrfToken,
-            user_id:    regState.userId,
-            kode_event: regState.kodeEvent,
-            packages:   pkgIds
+        data: { _token: _csrf, user_id: _userId, kode_event: _kodeEvent, packages: pkgIds },
+        success: function(r) {
+            btn.prop('disabled', false).html('<i class="fa-solid fa-arrow-right"></i> Continue to Payment');
+            if (!r.success) {
+                Swal.fire({ icon: 'error', title: 'Error', text: r.message });
+                return;
+            }
+
+            _isFree      = r.free === true;
+            _snapToken   = r.snap_token || null;
+            _totalAmount = r.total_amount || 0;
+            _orderId     = r.order_id    || '';
+
+            // Jika client_key dikembalikan dari server (ada di response), update
+            if (r.client_key) {
+                _clientKey    = r.client_key;
+                _isProduction = r.is_production === true;
+                _snapUrl      = _isProduction
+                    ? 'https://app.midtrans.com/snap/snap.js'
+                    : 'https://app.sandbox.midtrans.com/snap/snap.js';
+            }
+
+            // Bangun struk
+            buildStruk(r);
+            goToStep(4);
+
+            if (_isFree) {
+                // Semua gratis: langsung enroll tanpa snap
+                document.getElementById('btnPayNow').style.display = 'none';
+                enrollFree();
+            } else {
+                document.getElementById('btnPayNow').style.display = '';
+            }
         },
+        error: function(xhr) {
+            btn.prop('disabled', false).html('<i class="fa-solid fa-arrow-right"></i> Continue to Payment');
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to prepare payment.';
+            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+        }
+    });
+});
+
+function buildStruk(r) {
+    document.getElementById('strukNama').textContent  = _userName;
+    document.getElementById('strukEmail').textContent = _userEmail;
+    document.getElementById('strukOrderId').textContent = _orderId || '-';
+
+    var items = '';
+    // Harga event
+    var hargaEv = parseFloat(r.harga_event || 0);
+    if (hargaEv > 0) {
+        items += '<div class="struk-row"><span class="sk"><i class="fa-solid fa-ticket me-1" style="color:#E62020"></i>Event Registration</span><span class="sv red">' + formatRp(hargaEv) + '</span></div>';
+    } else {
+        items += '<div class="struk-row"><span class="sk"><i class="fa-solid fa-ticket me-1" style="color:#16a34a"></i>Event Registration</span><span class="sv green">Free</span></div>';
+    }
+    // Paket dipilih
+    (r.selected_paket || []).forEach(function(p) {
+        var harga = parseFloat(p.harga_paket || 0);
+        var hargaHtml = harga > 0 ? '<span class="sv red">' + formatRp(harga) + '</span>' : '<span class="sv green">Free</span>';
+        items += '<div class="struk-row"><span class="sk"><i class="fa-solid fa-box-open me-1" style="color:#6366f1"></i>' + p.judul_paket + '</span>' + hargaHtml + '</div>';
+    });
+    document.getElementById('strukItems').innerHTML = items;
+    document.getElementById('strukTotal').textContent = formatRp(_totalAmount);
+}
+
+$('#btnBackStep3').on('click', function(){ goToStep(3); });
+
+function enrollFree() {
+    setPayStatus('pending', '<div class="spinner"></div><span>Enrolling you in the event...</span>');
+    $.ajax({
+        url: '{{ route("enrollEventFree") }}',
+        type: 'POST',
+        data: { _token: _csrf, user_id: _userId, kode_event: _kodeEvent, packages: _selectedPkgs.map(function(p){ return p.id; }) },
         success: function(r) {
             if (r.success) {
-                regState.snapToken = r.snap_token;
+                setPayStatus('ok', '<i class="fa-solid fa-circle-check"></i><span>Enrolled successfully! Redirecting...</span>');
+                setTimeout(function(){ goToStep('Success'); $('#successMsg').text('Registration complete. You are now enrolled in the event.'); }, 1200);
             } else {
-                Swal.fire({ icon: 'warning', title: 'Payment Notice', text: r.message });
+                setPayStatus('error', '<i class="fa-solid fa-circle-xmark"></i><span>' + r.message + '</span>');
             }
-        }
+        },
+        error: function() { setPayStatus('error', '<i class="fa-solid fa-circle-xmark"></i><span>Failed to enroll. Please try again.</span>'); }
     });
 }
 
 // ── STEP 4: Pay Now ──
+function loadSnapScript(callback) {
+    if (window.snap && typeof window.snap.pay === 'function') { callback(); return; }
+    var s = document.createElement('script');
+    s.src = _snapUrl;
+    s.setAttribute('data-client-key', _clientKey);
+    s.onload = function(){ setTimeout(callback, 150); };
+    s.onerror = function(){
+        setPayStatus('error', '<i class="fa-solid fa-triangle-exclamation"></i><span>Failed to load payment gateway. Check your connection.</span>');
+        document.getElementById('btnPayNow').disabled = false;
+        document.getElementById('btnPayNow').innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay Now';
+    };
+    document.head.appendChild(s);
+}
+
 $('#btnPayNow').on('click', function() {
-    let total = 0;
-    regState.selectedPackages.forEach(function(p) { total += p.price; });
+    var btn = document.getElementById('btnPayNow');
 
-    if (total === 0) {
-        $.ajax({
-            url: '{{ route("enrollEventFree") }}',
-            type: 'POST',
-            data: {
-                _token:     _csrfToken,
-                user_id:    regState.userId,
-                kode_event: regState.kodeEvent,
-                packages:   regState.selectedPackages.map(p => p.id)
-            },
-            success: function(r) {
-                if (r.success) {
-                    goToStep('Success');
-                    $('#successMsg').text('You are now enrolled in the event. Check your email for confirmation.');
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Error', text: r.message });
-                }
-            }
-        });
-        return;
-    }
-
-    if (!regState.snapToken) {
+    if (!_snapToken) {
         Swal.fire({ icon: 'warning', title: 'Please wait', text: 'Payment gateway is loading. Try again in a moment.' });
         return;
     }
 
-    snap.pay(regState.snapToken, {
-        onSuccess: function(result) {
-            $.ajax({
-                url: '{{ route("paymentRegistrationCallback") }}',
-                type: 'POST',
-                data: {
-                    _token:          _csrfToken,
-                    user_id:         regState.userId,
-                    kode_event:      regState.kodeEvent,
-                    packages:        regState.selectedPackages.map(p => p.id),
-                    midtrans_result: JSON.stringify(result)
-                },
-                success: function(r) {
-                    goToStep('Success');
-                    $('#successMsg').text('Payment successful! You are now enrolled in the event.');
-                }
-            });
-        },
-        onPending: function() {
-            Swal.fire({ icon: 'info', title: 'Payment Pending', text: 'Your payment is pending. You will be enrolled once payment is confirmed.' });
-        },
-        onError: function() {
-            Swal.fire({ icon: 'error', title: 'Payment Failed', text: 'Payment could not be processed. Please try again.' });
-        },
-        onClose: function() {
-            Swal.fire({ icon: 'warning', title: 'Payment Cancelled', text: 'You closed the payment window. Your registration is saved but not yet confirmed.' });
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="border-color:#fff;border-top-color:transparent"></div> Loading payment...';
+    setPayStatus('pending', '<div class="spinner"></div><span>Connecting to Midtrans...</span>');
+
+    loadSnapScript(function() {
+        if (!window.snap || typeof window.snap.pay !== 'function') {
+            setPayStatus('error', '<i class="fa-solid fa-triangle-exclamation"></i><span>Midtrans Snap unavailable. Ensure Client Key is set in configuration.</span>');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay Now';
+            return;
         }
+
+        window.snap.pay(_snapToken, {
+            onSuccess: function(result) {
+                setPayStatus('ok', '<i class="fa-solid fa-circle-check"></i><span>Payment successful! Enrolling...</span>');
+                $.ajax({
+                    url: '{{ route("paymentRegistrationCallback") }}',
+                    type: 'POST',
+                    data: {
+                        _token: _csrf,
+                        user_id: _userId,
+                        kode_event: _kodeEvent,
+                        packages: _selectedPkgs.map(function(p){ return p.id; }),
+                        midtrans_result: JSON.stringify(result)
+                    },
+                    success: function(r) {
+                        goToStep('Success');
+                        $('#successMsg').text('Payment successful! You are now enrolled in the event.');
+                    },
+                    error: function(){
+                        // enroll gagal — tetap beri tahu user sukses bayar
+                        goToStep('Success');
+                        $('#successMsg').text('Payment received. Our team will confirm your enrollment shortly.');
+                    }
+                });
+            },
+            onPending: function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay Now';
+                setPayStatus('pending', '<div class="spinner"></div><span>Payment pending. Complete the payment and come back here.</span>');
+            },
+            onError: function(result) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay Now';
+                setPayStatus('error', '<i class="fa-solid fa-circle-xmark"></i><span>Payment failed: ' + (result.status_message || 'Unknown error.') + '</span>');
+            },
+            onClose: function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay Now';
+                setPayStatus('error', '<i class="fa-solid fa-circle-xmark"></i><span>You closed the payment window. Click Pay Now to try again.</span>');
+            }
+        });
     });
 });
 </script>

@@ -108,8 +108,6 @@ class WebRegisterEventController extends Controller
             ->where('e.status_event', 'Y')
             ->first();
 
-        // Paket yang tersedia untuk event ini
-        // t_event_paket kolom: kode_paket, event_kode_paket, nama_paket, harga_paket, status_paket
         $paket = DB::table('t_event_paket')
             ->where('event_kode_paket', $data['kode_event'])
             ->where('status_paket', 'Y')
@@ -130,8 +128,14 @@ class WebRegisterEventController extends Controller
 
         $selectedPaket = $request->input('selected_paket', []);
 
-        // Hitung total harga dari paket yang dipilih
-        $totalHarga = 0;
+        // Ambil harga event sebagai base price
+        $event = DB::table('t_event')
+            ->where('kode_event', $data['kode_event'])
+            ->first();
+        $hargaEvent = (float) ($event->harga_event ?? 0);
+
+        // Hitung total = harga event + semua harga paket yang dipilih
+        $totalHarga = $hargaEvent;
         if (!empty($selectedPaket)) {
             $paketData = DB::table('t_event_paket')
                 ->whereIn('kode_paket', $selectedPaket)
@@ -145,8 +149,17 @@ class WebRegisterEventController extends Controller
 
         session(['reg_pending' => array_merge($data, [
             'selected_paket' => $selectedPaket,
+            'harga_event'    => $hargaEvent,
             'total_harga'    => $totalHarga,
         ])]);
+
+        // Jika total 0: skip payment, langsung enroll dan aktifkan user
+        if ($totalHarga <= 0) {
+            $userId = $this->createUserAccount($data);
+            $this->enrollEvent(session('reg_pending'), $userId);
+            session()->forget('reg_pending');
+            return redirect()->route('register-event.success');
+        }
 
         return redirect()->route('register-event.payment');
     }
@@ -159,6 +172,14 @@ class WebRegisterEventController extends Controller
         $data = session('reg_pending');
         if (!$data || empty($data['otp_verified'])) {
             return redirect()->route('register')->with('error', 'Akses tidak valid.');
+        }
+
+        // Jika total 0, tidak boleh akses halaman payment — redirect langsung sukses
+        if (($data['total_harga'] ?? 0) <= 0) {
+            $userId = $this->createUserAccount($data);
+            $this->enrollEvent($data, $userId);
+            session()->forget('reg_pending');
+            return redirect()->route('register-event.success');
         }
 
         $set   = DB::table('app_setting')->first();
@@ -187,6 +208,27 @@ class WebRegisterEventController extends Controller
             $orderId = 'REG-' . strtoupper(Str::random(8)) . '-' . time();
             session(['reg_pending' => array_merge(session('reg_pending'), ['order_id' => $orderId])]);
 
+            // Buat item details: harga event + tiap paket
+            $itemDetails = [];
+            if (($data['harga_event'] ?? 0) > 0) {
+                $itemDetails[] = [
+                    'id'       => $data['kode_event'],
+                    'price'    => (int) $data['harga_event'],
+                    'quantity' => 1,
+                    'name'     => substr($event->judul_event ?? 'Event', 0, 50),
+                ];
+            }
+            foreach ($selectedPaket as $p) {
+                if (($p->harga_paket ?? 0) > 0) {
+                    $itemDetails[] = [
+                        'id'       => $p->kode_paket,
+                        'price'    => (int) $p->harga_paket,
+                        'quantity' => 1,
+                        'name'     => substr($p->judul_paket ?? $p->kode_paket, 0, 50),
+                    ];
+                }
+            }
+
             $params = [
                 'transaction_details' => [
                     'order_id'     => $orderId,
@@ -198,6 +240,10 @@ class WebRegisterEventController extends Controller
                     'phone'      => $data['no_hp'] ?? '',
                 ],
             ];
+
+            if (!empty($itemDetails)) {
+                $params['item_details'] = $itemDetails;
+            }
 
             try {
                 $snapToken = \Midtrans\Snap::getSnapToken($params);
@@ -232,7 +278,6 @@ class WebRegisterEventController extends Controller
     // ─────────────────────────────────────────────────
     public function midtransCallback(Request $request)
     {
-        // Callback dari Midtrans tidak punya session — gunakan order_id dari payload
         $transactionStatus = $request->input('transaction_status');
         $orderId           = $request->input('order_id');
         $fraudStatus       = $request->input('fraud_status');
@@ -241,15 +286,22 @@ class WebRegisterEventController extends Controller
             && ($fraudStatus === 'accept' || $fraudStatus === null);
 
         if ($isPaid) {
-            // Update payment_status di t_event_registrasi berdasarkan order_id
             DB::table('t_event_registrasi')
                 ->where('midtrans_order_id', $orderId)
                 ->update([
-                    'payment_status' => 'PAID',
+                    'payment_status'    => 'PAID',
                     'status_registrasi' => 'A',
-                    'paid_at'        => now(),
-                    'updated_at'     => now(),
+                    'paid_at'           => now(),
+                    'updated_at'        => now(),
                 ]);
+
+            // Aktifkan user jika belum aktif
+            $reg = DB::table('t_event_registrasi')->where('midtrans_order_id', $orderId)->first();
+            if ($reg) {
+                DB::table('app_user')
+                    ->where('id_user', $reg->id_user)
+                    ->update(['status_user' => 'Y', 'updated_at' => now()]);
+            }
 
             return response()->json(['status' => 'success']);
         }
@@ -296,24 +348,29 @@ class WebRegisterEventController extends Controller
     // ─────────────────────────────────────────────────
     private function createUserAccount(array $data): int
     {
-        // Cek jika email sudah terdaftar
         $existing = DB::table('app_user')->where('email_user', $data['email'])->first();
         if ($existing) {
+            // Aktifkan jika belum aktif
+            if (($existing->status_user ?? '') !== 'Y') {
+                DB::table('app_user')
+                    ->where('id_user', $existing->id_user)
+                    ->update(['status_user' => 'Y', 'updated_at' => now()]);
+            }
             return (int) $existing->id_user;
         }
 
         return (int) DB::table('app_user')->insertGetId([
-            'nama_user'             => $data['nama'],
-            'email_user'            => $data['email'],
-            'no_hp_user'            => $data['no_hp']           ?? null,
-            'organisasi_user'       => $data['organisasi']       ?? null,
-            'tipe_organisasi_user'  => $data['tipe_organisasi']  ?? null,
-            'jabatan_user'          => $data['jabatan']          ?? null,
-            'identitas_user'        => $data['no_identitas']     ?? null,
-            'password_user'         => Hash::make($data['password']),
-            'status_user'           => 'Y',
-            'created_at'            => now(),
-            'updated_at'            => now(),
+            'nama_user'            => $data['nama'],
+            'email_user'           => $data['email'],
+            'no_hp_user'           => $data['no_hp']          ?? null,
+            'organisasi_user'      => $data['organisasi']      ?? null,
+            'tipe_organisasi_user' => $data['tipe_organisasi'] ?? null,
+            'jabatan_user'         => $data['jabatan']         ?? null,
+            'identitas_user'       => $data['no_identitas']    ?? null,
+            'password_user'        => Hash::make($data['password']),
+            'status_user'          => 'Y',
+            'created_at'           => now(),
+            'updated_at'           => now(),
         ]);
     }
 
@@ -326,31 +383,42 @@ class WebRegisterEventController extends Controller
         $usedOrderId    = $orderId ?? ($data['order_id'] ?? null);
         $totalHarga     = (float) ($data['total_harga'] ?? 0);
 
-        // Jika total 0, langsung approved
+        // Jika total 0, status FREE dan langsung aktif
         if ($totalHarga <= 0) {
             $paymentStatus = 'FREE';
         }
 
+        $statusRegistrasi = ($paymentStatus === 'PAID' || $paymentStatus === 'FREE') ? 'A' : 'P';
+        $confirmedAt      = ($statusRegistrasi === 'A') ? now() : null;
+
         // Ambil kode_paket pertama jika ada
         $kodePaket = !empty($data['selected_paket']) ? $data['selected_paket'][0] : null;
 
-        DB::table('t_event_registrasi')->insert([
-            'kode_registrasi'       => $kodeRegistrasi,
-            'kode_event'            => $data['kode_event'],
-            'id_user'               => $userId,
-            'nama_peserta'          => $data['nama'],
-            'email_peserta'         => $data['email'],
-            'instansi_peserta'      => $data['organisasi']  ?? null,
-            'no_hp_peserta'         => $data['no_hp']       ?? null,
-            'kode_paket'            => $kodePaket,
-            'total_bayar'           => $totalHarga,
-            'midtrans_order_id'     => $usedOrderId,
-            'payment_status'        => $paymentStatus,
-            'status_registrasi'     => ($paymentStatus === 'PAID' || $paymentStatus === 'FREE') ? 'A' : 'P',
-            'confirmed_at'          => ($paymentStatus === 'PAID' || $paymentStatus === 'FREE') ? now() : null,
-            'created_at'            => now(),
-            'updated_at'            => now(),
-        ]);
+        // Cek sudah terdaftar sebelumnya
+        $alreadyRegistered = DB::table('t_event_registrasi')
+            ->where('kode_event', $data['kode_event'])
+            ->where('id_user', $userId)
+            ->exists();
+
+        if (!$alreadyRegistered) {
+            DB::table('t_event_registrasi')->insert([
+                'kode_registrasi'   => $kodeRegistrasi,
+                'kode_event'        => $data['kode_event'],
+                'id_user'           => $userId,
+                'nama_peserta'      => $data['nama'],
+                'email_peserta'     => $data['email'],
+                'instansi_peserta'  => $data['organisasi'] ?? null,
+                'no_hp_peserta'     => $data['no_hp']      ?? null,
+                'kode_paket'        => $kodePaket,
+                'total_bayar'       => $totalHarga,
+                'midtrans_order_id' => $usedOrderId,
+                'payment_status'    => $paymentStatus,
+                'status_registrasi' => $statusRegistrasi,
+                'confirmed_at'      => $confirmedAt,
+                'created_at'        => now(),
+                'updated_at'        => now(),
+            ]);
+        }
 
         // Simpan semua paket yang dipilih ke t_event_addon
         if (!empty($data['selected_paket'])) {
@@ -358,18 +426,25 @@ class WebRegisterEventController extends Controller
                 $paket = DB::table('t_event_paket')->where('kode_paket', $kPaket)->first();
                 if (!$paket) continue;
 
-                DB::table('t_event_addon')->insert([
-                    'id_user'       => $userId,
-                    'kode_event'    => $data['kode_event'],
-                    'kode_registrasi' => $kodeRegistrasi,
-                    'kode_paket'    => $kPaket,
-                    'nama_addon'    => $paket->nama_paket ?? $kPaket,
-                    'harga_addon'   => (float) ($paket->harga_paket ?? 0),
-                    'qty'           => 1,
-                    'subtotal'      => (float) ($paket->harga_paket ?? 0),
-                    'created_at'    => now(),
-                    'updated_at'    => now(),
-                ]);
+                $addonExists = DB::table('t_event_addon')
+                    ->where('kode_registrasi', $kodeRegistrasi)
+                    ->where('kode_paket', $kPaket)
+                    ->exists();
+
+                if (!$addonExists) {
+                    DB::table('t_event_addon')->insert([
+                        'id_user'         => $userId,
+                        'kode_event'      => $data['kode_event'],
+                        'kode_registrasi' => $kodeRegistrasi,
+                        'kode_paket'      => $kPaket,
+                        'nama_addon'      => $paket->nama_paket ?? $kPaket,
+                        'harga_addon'     => (float) ($paket->harga_paket ?? 0),
+                        'qty'             => 1,
+                        'subtotal'        => (float) ($paket->harga_paket ?? 0),
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                }
             }
         }
     }

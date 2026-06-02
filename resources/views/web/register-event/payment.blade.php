@@ -31,6 +31,7 @@
 
 .btn-pay { background:#E62020;color:#fff;border:none;border-radius:10px;padding:14px;font-weight:700;font-size:1rem;width:100%;cursor:pointer;transition:background 0.2s;display:flex;align-items:center;justify-content:center;gap:8px; }
 .btn-pay:hover { background:#c41a1a; }
+.btn-pay:disabled { background:#9ca3af;cursor:not-allowed; }
 
 .free-note { background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px;color:#166534;font-size:0.88rem;margin-bottom:16px;display:flex;align-items:center;gap:10px; }
 
@@ -79,13 +80,22 @@
                 @if(isset($event))
                 <div class="order-row"><span class="ok">Event</span><span class="ov">{{ $event->judul_event }}</span></div>
                 @endif
+                @php $hargaEventBase = (float) ($data['harga_event'] ?? ($event->harga_event ?? 0)); @endphp
+                @if($hargaEventBase > 0)
+                <div class="order-row">
+                    <span class="ok">Biaya Pendaftaran</span>
+                    <span class="ov" style="color:#E62020;">Rp {{ number_format($hargaEventBase, 0, ',', '.') }}</span>
+                </div>
+                @endif
                 @if($selectedPaket && count($selectedPaket))
                     <div style="margin-top:8px;font-size:0.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#aaa;margin-bottom:4px;">Paket Add-on</div>
                     @foreach($selectedPaket as $p)
+                    @if(($p->harga_paket ?? 0) > 0)
                     <div class="order-row">
                         <span class="ok">{{ $p->judul_paket }}</span>
-                        <span class="ov" style="color:#E62020;">Rp {{ number_format($p->harga_paket ?? 0, 0, ',', '.') }}</span>
+                        <span class="ov" style="color:#E62020;">Rp {{ number_format($p->harga_paket, 0, ',', '.') }}</span>
                     </div>
+                    @endif
                     @endforeach
                 @endif
             </div>
@@ -107,43 +117,14 @@
                         <i class="fa-solid fa-check-circle"></i> Konfirmasi &amp; Daftar Sekarang
                     </button>
                 </form>
-            @elseif(!empty($snapToken))
-                {{-- Midtrans Snap --}}
+            @elseif($midtransConfig)
+                {{-- Berbayar: tampilkan tombol Bayar, snap.js lazy-load saat diklik --}}
                 <button id="btnPay" class="btn-pay">
                     <i class="fa-solid fa-credit-card"></i> Bayar Sekarang
                 </button>
-                <script src="https://app.{{ ($midtransConfig->is_production ?? '0') == '1' ? '' : 'sandbox.' }}midtrans.com/snap/snap.js"
-                        data-client-key="{{ $midtransConfig->client_key ?? '' }}"></script>
-                <script>
-                document.getElementById('btnPay').addEventListener('click', function () {
-                    snap.pay('{{ $snapToken }}', {
-                        onSuccess: function (result) {
-                            fetch('{{ route("register-event.midtrans-callback") }}', {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify(result)
-                            })
-                            .then(r => r.json())
-                            .then(res => {
-                                if (res.redirect) window.location.href = res.redirect;
-                            });
-                        },
-                        onPending: function () {
-                            alert('Pembayaran pending. Cek email untuk instruksi pembayaran.');
-                        },
-                        onError: function () {
-                            alert('Pembayaran gagal. Silakan coba lagi.');
-                        },
-                        onClose: function () {}
-                    });
-                });
-                </script>
+                <div id="payMsg" style="margin-top:10px;font-size:0.85rem;"></div>
             @else
-                {{-- Fallback jika Midtrans belum dikonfigurasi --}}
+                {{-- Fallback: Midtrans belum dikonfigurasi --}}
                 <div class="alert alert-warning" style="font-size:0.85rem;border-radius:10px;">
                     <i class="fa-solid fa-triangle-exclamation me-1"></i>
                     Gateway pembayaran belum dikonfigurasi. Hubungi administrator.
@@ -162,5 +143,135 @@
 </div>
 </div>
 </div>
+
+@if($midtransConfig && ($data['total_harga'] ?? 0) > 0)
+<script>
+(function () {
+    var SNAP_TOKEN   = '{{ $snapToken ?? '' }}';
+    var CLIENT_KEY   = '{{ $midtransConfig->client_key ?? '' }}';
+    var IS_PROD      = {{ ($midtransConfig->is_production ?? false) ? 'true' : 'false' }};
+    var SNAP_URL     = IS_PROD
+        ? 'https://app.midtrans.com/snap/snap.js'
+        : 'https://app.sandbox.midtrans.com/snap/snap.js';
+    var CALLBACK_URL = '{{ route('register-event.midtrans-callback') }}';
+    var CSRF_TOKEN   = '{{ csrf_token() }}';
+    var SUCCESS_URL  = '{{ route('register-event.success') }}';
+
+    function setMsg(html) {
+        document.getElementById('payMsg').innerHTML = html;
+    }
+
+    function loadSnapScript(callback) {
+        // Jika snap sudah tersedia, langsung pakai
+        if (window.snap && typeof window.snap.pay === 'function') {
+            callback();
+            return;
+        }
+        // Lazy-load snap.js — sama persis dengan midtrans config view
+        var s = document.createElement('script');
+        s.src = SNAP_URL;
+        s.setAttribute('data-client-key', CLIENT_KEY);
+        s.onload = function () {
+            // snap.js async init — tunggu 150ms
+            setTimeout(callback, 150);
+        };
+        s.onerror = function () {
+            setMsg('<div style="color:#dc2626;padding:10px;background:#fef2f2;border-radius:8px;"><i class="fa-solid fa-triangle-exclamation me-1"></i>Gagal memuat Midtrans Snap. Periksa koneksi internet Anda.</div>');
+            document.getElementById('btnPay').disabled = false;
+            document.getElementById('btnPay').innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+        };
+        document.head.appendChild(s);
+    }
+
+    function openSnap(token) {
+        if (!window.snap || typeof window.snap.pay !== 'function') {
+            setMsg('<div style="color:#dc2626;padding:10px;background:#fef2f2;border-radius:8px;"><i class="fa-solid fa-triangle-exclamation me-1"></i>Midtrans Snap tidak tersedia. Pastikan Client Key sudah diisi di konfigurasi.</div>');
+            document.getElementById('btnPay').disabled = false;
+            document.getElementById('btnPay').innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+            return;
+        }
+
+        window.snap.pay(token, {
+            onSuccess: function (result) {
+                setMsg('<div style="color:#166534;padding:10px;background:#f0fdf4;border-radius:8px;"><i class="fa-solid fa-circle-check me-1"></i>Pembayaran berhasil! Mengalihkan...</div>');
+                // Kirim konfirmasi ke server
+                fetch(CALLBACK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': CSRF_TOKEN,
+                        'Content-Type': 'application/json',
+                        'Accept':       'application/json',
+                    },
+                    body: JSON.stringify(result)
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                    window.location.href = res.redirect || SUCCESS_URL;
+                })
+                .catch(function () {
+                    window.location.href = SUCCESS_URL;
+                });
+            },
+            onPending: function () {
+                setMsg('<div style="color:#92400e;padding:10px;background:#fffbeb;border-radius:8px;"><i class="fa-solid fa-clock me-1"></i>Pembayaran pending. Cek email untuk instruksi selanjutnya.</div>');
+            },
+            onError: function (result) {
+                setMsg('<div style="color:#dc2626;padding:10px;background:#fef2f2;border-radius:8px;"><i class="fa-solid fa-circle-xmark me-1"></i>Pembayaran gagal: ' + (result.status_message || 'Error tidak diketahui.') + '</div>');
+                document.getElementById('btnPay').disabled = false;
+                document.getElementById('btnPay').innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+            },
+            onClose: function () {
+                setMsg('<div style="color:#6b7280;padding:10px;background:#f3f4f6;border-radius:8px;"><i class="fa-solid fa-xmark me-1"></i>Popup pembayaran ditutup. Klik Bayar Sekarang untuk mencoba lagi.</div>');
+                document.getElementById('btnPay').disabled = false;
+                document.getElementById('btnPay').innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+            }
+        });
+    }
+
+    document.getElementById('btnPay').addEventListener('click', function () {
+        var btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat pembayaran...';
+        setMsg('');
+
+        if (SNAP_TOKEN && SNAP_TOKEN.length > 10) {
+            // Token sudah ada dari server-side render, langsung buka
+            loadSnapScript(function () {
+                openSnap(SNAP_TOKEN);
+            });
+        } else {
+            // Token belum ada (misal gagal saat render) — minta ke server via AJAX
+            fetch('{{ route('register-event.get-snap-token') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Content-Type': 'application/json',
+                    'Accept':       'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.token) {
+                    SNAP_TOKEN = res.token;
+                    loadSnapScript(function () {
+                        openSnap(SNAP_TOKEN);
+                    });
+                } else {
+                    setMsg('<div style="color:#dc2626;padding:10px;background:#fef2f2;border-radius:8px;"><i class="fa-solid fa-triangle-exclamation me-1"></i>' + (res.message || 'Gagal mendapatkan token pembayaran.') + '</div>');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                }
+            })
+            .catch(function () {
+                setMsg('<div style="color:#dc2626;padding:10px;background:#fef2f2;border-radius:8px;"><i class="fa-solid fa-triangle-excursion me-1"></i>Terjadi kesalahan jaringan. Coba lagi.</div>');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+            });
+        }
+    });
+})();
+</script>
+@endif
 
 @include('layouts.footer-v2')

@@ -47,6 +47,15 @@ Route::prefix('society-event')->group(function () {
     Route::post('/enrollEventFree', [App\Http\Controllers\WebLoginController::class, 'enrollEventFree'])->name('enrollEventFree');
     Route::post('/paymentRegistrationCallback', [App\Http\Controllers\WebLoginController::class, 'paymentRegistrationCallback'])->name('paymentRegistrationCallback');
 
+    // Retry payment dari dashboard (user sudah login)
+    Route::post('/retryPayment', [App\Http\Controllers\WebLoginController::class, 'retryPayment'])->name('retryPayment');
+    Route::post('/retryPaymentCallback', [App\Http\Controllers\WebLoginController::class, 'retryPaymentCallback'])->name('retryPaymentCallback');
+
+    // Midtrans webhook - bypass CSRF
+    Route::post('/midtrans-notification', [App\Http\Controllers\WebLoginController::class, 'midtransNotification'])
+        ->name('midtrans-notification')
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
     // Multi-step Event Registration
     Route::get('/register-event/otp',            [App\Http\Controllers\WebRegisterEventController::class, 'showOtp'])->name('register-event.otp');
     Route::post('/register-event/verify-otp',    [App\Http\Controllers\WebRegisterEventController::class, 'verifyOtp'])->name('register-event.verify-otp');

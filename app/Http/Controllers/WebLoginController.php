@@ -18,10 +18,9 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Mail\AppMail;
-
-
 
 class WebLoginController extends Controller
 {
@@ -35,13 +34,11 @@ class WebLoginController extends Controller
     public function index(Request $request)
     {
         $menu_aktif = 'login';
-       
         $data = [
-            'menu' => 'login',
+            'menu'       => 'login',
             'menu_aktif' => $menu_aktif,
-            'set' =>  DB::table('app_setting')->where('id_setting', 1)->first(),
+            'set'        => DB::table('app_setting')->where('id_setting', 1)->first(),
         ];
-
         return view('web.login', $data);
     }
 
@@ -60,7 +57,6 @@ class WebLoginController extends Controller
                 $event->kolaborasi = DB::table('t_event_kolaborasi')
                     ->where('event_kode_kolaborasi', $event->kode_event)
                     ->get();
-
                 $event->paket = DB::table('t_event_paket')
                     ->where('event_kode_paket', $event->kode_event)
                     ->get();
@@ -79,7 +75,6 @@ class WebLoginController extends Controller
             'event'          => $event,
             'midtransConfig' => $midtransConfig,
         ];
-
         return view('web.register', $data);
     }
 
@@ -88,7 +83,6 @@ class WebLoginController extends Controller
         do {
             $kode = 'REG-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(4));
         } while (DB::table('t_event_registrasi')->where('kode_registrasi', $kode)->exists());
-
         return $kode;
     }
 
@@ -146,7 +140,6 @@ class WebLoginController extends Controller
         }
 
         $dt_role = DB::table('reff_role')->where('kode_role', 'PUB')->first();
-
         $otp_reg = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
         $token   = Str::random(64);
 
@@ -198,10 +191,10 @@ class WebLoginController extends Controller
         $this->dataService->createLogWeb($request, 'registrasiAction', 'User registered, OTP sent. user_id=' . $userId);
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Account created. Please verify your email with the OTP we sent.',
-            'user_id'    => $userId,
-            'has_event'  => $request->filled('kode_event') ? true : false,
+            'success'   => true,
+            'message'   => 'Account created. Please verify your email with the OTP we sent.',
+            'user_id'   => $userId,
+            'has_event' => $request->filled('kode_event') ? true : false,
         ]);
     }
 
@@ -223,13 +216,13 @@ class WebLoginController extends Controller
             return response()->json(['success' => false, 'message' => 'Invalid OTP. Please check your email and try again.']);
         }
 
-        $hasEvent  = filter_var($request->has_event ?? false, FILTER_VALIDATE_BOOLEAN);
-        $newStatus = $hasEvent ? 0 : 1;
-
+        // Opsi A: selalu aktifkan akun setelah OTP verified.
+        // Jika ada event, status registrasi = PENDING_PAYMENT dan user bisa login
+        // lalu retry payment dari halaman riwayat.
         DB::table('app_user')->where('id_user', $request->user_id)->update([
             'otp_user'     => null,
             'verify_token' => null,
-            'status_user'  => $newStatus,
+            'status_user'  => 1,
             'updated_at'   => now(),
         ]);
 
@@ -243,7 +236,7 @@ class WebLoginController extends Controller
         return response()->json([
             'success'   => true,
             'message'   => 'OTP verified successfully.',
-            'activated' => (bool) $newStatus,
+            'activated' => true,
         ]);
     }
 
@@ -283,28 +276,17 @@ class WebLoginController extends Controller
         return response()->json(['success' => true, 'packages' => $packages]);
     }
 
-    public function getRegistrationSnapToken(Request $request)
+    private function buildSnapToken(object $user, string $kodeEvent, array $packages): array
     {
-        $request->validate([
-            'user_id'    => 'required|integer',
-            'kode_event' => 'required|string',
-        ]);
-
-        $user = DB::table('app_user')->where('id_user', $request->user_id)->first();
-        if (!$user) {
-            return response()->json(['success' => false, 'message' => 'User not found.']);
-        }
-
-        $packages    = $request->packages ?? [];
         $totalAmount = 0;
         $itemDetails = [];
 
-        $event      = DB::table('t_event')->where('kode_event', $request->kode_event)->first();
+        $event      = DB::table('t_event')->where('kode_event', $kodeEvent)->first();
         $hargaEvent = (float) ($event->harga_event ?? 0);
         if ($hargaEvent > 0) {
             $totalAmount += $hargaEvent;
             $itemDetails[] = [
-                'id'       => $request->kode_event,
+                'id'       => $kodeEvent,
                 'price'    => (int) $hargaEvent,
                 'quantity' => 1,
                 'name'     => mb_substr($event->judul_event ?? 'Event Registration', 0, 50),
@@ -329,14 +311,14 @@ class WebLoginController extends Controller
         }
 
         if ($totalAmount <= 0) {
-            return response()->json([
+            return [
                 'success'        => true,
                 'free'           => true,
                 'snap_token'     => null,
                 'total_amount'   => 0,
                 'harga_event'    => $hargaEvent,
                 'selected_paket' => $selectedPaketData,
-            ]);
+            ];
         }
 
         $midtransConfig = DB::table('app_midtrans_config')
@@ -345,7 +327,7 @@ class WebLoginController extends Controller
             ->first();
 
         if (!$midtransConfig || empty($midtransConfig->server_key)) {
-            return response()->json(['success' => false, 'message' => 'Konfigurasi Midtrans belum diatur. Hubungi administrator.']);
+            return ['success' => false, 'message' => 'Konfigurasi Midtrans belum diatur. Hubungi administrator.'];
         }
 
         $isProduction = $midtransConfig->environment === 'production';
@@ -353,7 +335,7 @@ class WebLoginController extends Controller
             ? 'https://api.midtrans.com/snap/v1/transactions'
             : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
-        $orderId = 'REG-' . $request->user_id . '-' . time();
+        $orderId = 'REG-' . $user->id_user . '-' . time();
 
         $payload = [
             'transaction_details' => [
@@ -389,7 +371,7 @@ class WebLoginController extends Controller
                 $errMsg = isset($res['error_messages'])
                     ? implode(', ', (array) $res['error_messages'])
                     : ($res['message'] ?? 'Gagal mendapatkan SNAP token dari Midtrans.');
-                return response()->json(['success' => false, 'message' => $errMsg]);
+                return ['success' => false, 'message' => $errMsg];
             }
 
             $snapToken = $res['token'];
@@ -409,7 +391,7 @@ class WebLoginController extends Controller
                 ]);
             }
 
-            return response()->json([
+            return [
                 'success'        => true,
                 'free'           => false,
                 'snap_token'     => $snapToken,
@@ -419,295 +401,128 @@ class WebLoginController extends Controller
                 'selected_paket' => $selectedPaketData,
                 'client_key'     => $midtransConfig->client_key,
                 'is_production'  => $isProduction,
-            ]);
+            ];
 
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Gagal membuat token pembayaran: ' . $e->getMessage()]);
+            return ['success' => false, 'message' => 'Gagal membuat token pembayaran: ' . $e->getMessage()];
         }
     }
 
-    public function enrollEventFree(Request $request)
+    public function getRegistrationSnapToken(Request $request)
     {
         $request->validate([
             'user_id'    => 'required|integer',
             'kode_event' => 'required|string',
         ]);
 
-        $this->enrollUser($request->user_id, $request->kode_event, $request->packages ?? []);
-
-        return response()->json(['success' => true, 'message' => 'Enrolled successfully.']);
-    }
-
-    public function paymentRegistrationCallback(Request $request)
-    {
-        $request->validate([
-            'user_id'    => 'required|integer',
-            'kode_event' => 'required|string',
-        ]);
-
-        $midtransResult = json_decode($request->midtrans_result, true);
-
-        if (!empty($midtransResult['order_id'])) {
-            if (Schema::hasTable('app_midtrans_transaction')) {
-                DB::table('app_midtrans_transaction')
-                    ->where('order_id', $midtransResult['order_id'])
-                    ->update([
-                        'transaction_status' => $midtransResult['transaction_status'] ?? 'settlement',
-                        'payment_type'       => $midtransResult['payment_type'] ?? null,
-                        'updated_at'         => now(),
-                    ]);
-            }
-        }
-
-        $this->enrollUser($request->user_id, $request->kode_event, $request->packages ?? []);
-
-        return response()->json(['success' => true, 'message' => 'Payment confirmed. Enrolled successfully.']);
-    }
-
-    private function enrollUser($userId, $kodeEvent, $packages = [])
-    {
-        DB::table('app_user')->where('id_user', $userId)->update([
-            'status_user' => 1,
-            'updated_at'  => now(),
-        ]);
-
-        DB::table('t_event_registrasi')
-            ->where('id_user', $userId)
-            ->where('kode_event', $kodeEvent)
-            ->update([
-                'status_registrasi' => 'CONFIRMED',
-                'confirmed_at'      => now(),
-                'updated_at'        => now(),
-            ]);
-
-        if (!empty($packages)) {
-            foreach ($packages as $kode_paket) {
-                $existing = DB::table('t_event_addon')
-                    ->where('id_user', $userId)
-                    ->where('kode_paket', $kode_paket)
-                    ->exists();
-                if (!$existing) {
-                    DB::table('t_event_addon')->insert([
-                        'id_user'    => $userId,
-                        'kode_event' => $kodeEvent,
-                        'kode_paket' => $kode_paket,
-                        'created_at' => now(),
-                    ]);
-                }
-            }
-        }
-    }
-
-    public function verifikasiAkun($token)
-    {
-        $user = DB::table('app_user')->where('verify_token', $token)->first();
-
+        $user = DB::table('app_user')->where('id_user', $request->user_id)->first();
         if (!$user) {
-            return "Token tidak valid!";
+            return response()->json(['success' => false, 'message' => 'User not found.']);
         }
 
-        DB::table('app_user')
-            ->where('id_user', $user->id_user)
-            ->update(['status_user' => 1, 'verify_token' => null]);
+        $packages = $request->packages ?? [];
+        $result   = $this->buildSnapToken($user, $request->kode_event, $packages);
 
-        return redirect()->route('login')->with('success', 'Account verified successfully. Please login.');
+        return response()->json($result);
     }
 
-    public function loginAction(Request $request)
+    /**
+     * Retry payment - dipanggil dari halaman riwayat (user sudah login).
+     */
+    public function retryPayment(Request $request)
     {
-        $request->validate(['email' => 'required', 'password' => 'required']);
+        $request->validate([
+            'kode_event' => 'required|string',
+            'packages'   => 'nullable|array',
+        ]);
 
-        $user = DB::table('app_user as u')
-            ->select('u.*')
-            ->where('u.username_user', $request->email)
-            ->where('u.role_id', 4)
+        $userId = session('id_user');
+        if (!$userId) {
+            return response()->json(['success' => false, 'message' => 'Session expired. Please login again.'], 401);
+        }
+
+        $user = DB::table('app_user')->where('id_user', $userId)->first();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found.']);
+        }
+
+        // Pastikan registrasi yang bisa di-retry: PENDING_PAYMENT atau PAYMENT_EXPIRED
+        $reg = DB::table('t_event_registrasi')
+            ->where('id_user', $userId)
+            ->where('kode_event', $request->kode_event)
+            ->whereIn('status_registrasi', ['PENDING_PAYMENT', 'PAYMENT_EXPIRED'])
             ->first();
 
-        if (!$user) {
-            return response()->json(['status' => false, 'message' => 'User not found.']);
+        if (!$reg) {
+            return response()->json(['success' => false, 'message' => 'No pending registration found for this event.']);
         }
 
-        if (!$user->status_user) {
-            return response()->json(['status' => false, 'message' => 'Account is not active. Please verify your email first.']);
+        // Ambil paket yang sudah dipilih sebelumnya jika tidak dikirim ulang
+        $packages = $request->packages ?? [];
+        if (empty($packages)) {
+            $addonKodes = DB::table('t_event_addon')
+                ->where('id_user', $userId)
+                ->where('kode_event', $request->kode_event)
+                ->pluck('kode_paket')
+                ->toArray();
+            $packages = $addonKodes;
         }
 
-        if (!Hash::check($request->password, $user->password_user)) {
-            return response()->json(['status' => false, 'message' => 'Incorrect password.']);
-        }
+        // Reset status ke PENDING_PAYMENT agar konsisten
+        DB::table('t_event_registrasi')
+            ->where('id_user', $userId)
+            ->where('kode_event', $request->kode_event)
+            ->update(['status_registrasi' => 'PENDING_PAYMENT', 'updated_at' => now()]);
 
-        $this->dataService->setMailConfig();
+        $result = $this->buildSnapToken($user, $request->kode_event, $packages);
 
-        $otp = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        $upd = DB::table('app_user')->where('id_user', $user->id_user)->update(['otp_user' => $otp]);
-
-        $id_hash  = Crypt::encrypt($user->id_user);
-        $data_log = ['email' => $request->email, 'nama' => $user->nama_user, 'otp' => $otp];
-
-        if ($upd) {
-            Mail::to($request->email)->queue(
-                new AppMail(
-                    'web.email-otp-login',
-                    ['nama' => $user->nama_user, 'otp' => $otp],
-                    'OTP Login - ' . env('APP_NAME', 'Society Event')
-                )
-            );
-
-            $this->dataService->createLogWeb($request, 'loginAction', 'OTP sent successfully', '', json_encode($data_log));
-
-            return response()->json([
-                'status'  => true,
-                'message' => 'OTP code has been sent to your email.',
-                'key'     => $id_hash
-            ]);
-        } else {
-            $this->dataService->createLogWeb($request, 'loginAction', 'Failed to send OTP', '', json_encode($data_log));
-            return response()->json(['status' => false, 'message' => 'Failed to send OTP. Please try again.', 'key' => '']);
-        }
+        return response()->json($result);
     }
 
-    public function otpLogin($key, Request $request)
+    /**
+     * Callback setelah retry payment sukses (dipanggil dari JS Snap onSuccess).
+     */
+    public function retryPaymentCallback(Request $request)
     {
-        $menu_aktif = 'otp';
-       
-        $data = [
-            'menu'       => 'OTP Login',
-            'menu_aktif' => $menu_aktif,
-            'key'        => $key,
-            'set'        => DB::table('app_setting')->where('id_setting', 1)->first(),
-        ];
-
-        return view('web.otp-login', $data);
-    }
-
-    public function verifyOtpAction(Request $request)
-    {
-        $request->validate(['key' => 'required', 'otp' => 'required']);
-
-        $id   = Crypt::decrypt($request->key);
-        $user = DB::table('app_user as u')->select('u.*')->where('u.id_user', $id)->first();
-
-        if (!$user) {
-            return response()->json(['status' => false, 'message' => 'User not found.']);
-        }
-
-        if ($request->otp != $user->otp_user) {
-            return response()->json(['status' => false, 'message' => 'Invalid OTP code.']);
-        }
-
-        session([
-            'id_user'             => $user->id_user,
-            'nama_user'           => $user->nama_user,
-            'email_user'          => $user->username_user,
-            'identitas_user'      => $user->identitas_user,
-            'file_identitas_user' => $user->file_identitas_user,
-            'jenis_user'          => 'publik',
+        $request->validate([
+            'kode_event' => 'required|string',
         ]);
 
-        $data_log = ['email' => $user->username_user, 'nama' => $user->nama_user, 'otp' => $request->otp];
-
-        $upd = DB::table('app_user')->where('id_user', $user->id_user)->update(['otp_user' => '']);
-
-        if ($upd) {
-            $this->dataService->createLogWeb($request, 'verifyOtpAction', 'OTP verified successfully', '', json_encode($data_log));
-            return response()->json(['status' => true, 'message' => 'OTP verified.']);
-        } else {
-            $this->dataService->createLogWeb($request, 'verifyOtpAction', 'OTP verification failed', '', json_encode($data_log));
-            return response()->json(['status' => false, 'message' => 'OTP verification failed. Please try again.']);
+        $userId = session('id_user');
+        if (!$userId) {
+            return response()->json(['success' => false, 'message' => 'Session expired.'], 401);
         }
+
+        $midtransResult = json_decode($request->midtrans_result ?? '{}', true);
+
+        if (!empty($midtransResult['order_id']) && Schema::hasTable('app_midtrans_transaction')) {
+            DB::table('app_midtrans_transaction')
+                ->where('order_id', $midtransResult['order_id'])
+                ->update([
+                    'transaction_status' => $midtransResult['transaction_status'] ?? 'settlement',
+                    'payment_type'       => $midtransResult['payment_type'] ?? null,
+                    'updated_at'         => now(),
+                ]);
+        }
+
+        $packages = $request->packages ?? [];
+        $this->enrollUser($userId, $request->kode_event, $packages);
+
+        return response()->json(['success' => true, 'message' => 'Payment confirmed. You are now enrolled.']);
     }
 
-    public function lupaPassword(Request $request)
+    /**
+     * Midtrans server-to-server notification webhook.
+     * Daftarkan URL ini di dashboard Midtrans: /society-event/midtrans-notification
+     * Route ini bypass CSRF.
+     */
+    public function midtransNotification(Request $request)
     {
-        $menu_aktif = 'lupa password';
-        $data = [
-            'menu'       => 'Forgot Password',
-            'menu_aktif' => $menu_aktif,
-            'set'        => DB::table('app_setting')->where('id_setting', 1)->first(),
-        ];
-        return view('web.lupa-password', $data);
-    }
+        $payload = $request->all();
+        Log::info('Midtrans Notification', $payload);
 
-    public function passwordBaru(Request $request, $token)
-    {
-        $menu_aktif = 'password baru';
-        $data = [
-            'menu'       => 'New Password',
-            'menu_aktif' => $menu_aktif,
-            'token'      => $token,
-            'set'        => DB::table('app_setting')->where('id_setting', 1)->first(),
-        ];
-        return view('web.password-baru', $data);
-    }
-
-    public function lupaPasswordAction(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|max:200',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-        }
-
-        $user = DB::table('app_user')->where('username_user', $request->email)->count();
-        if ($user < 1) {
-            return response()->json(['success' => false, 'message' => 'Email is not registered.'], 422);
-        }
-
-        $user_dt = DB::table('app_user')->where('username_user', $request->email)->first();
-        $token   = Str::random(64);
-
-        DB::table('app_user')->where('username_user', $request->email)->update(['verify_token' => $token]);
-
-        $verificationUrl = url(env('APP_ROUTE') . '/password-baru/' . $token);
-        Mail::to($request->email)->queue(
-            new AppMail(
-                'web.email-lupa-password',
-                ['nama' => $user_dt->nama_user, 'verificationUrl' => $verificationUrl],
-                'Forgot Password - ' . env('APP_NAME', 'Society Event')
-            )
-        );
-
-        $this->dataService->createLogWeb($request, 'lupaPasswordAction', 'Forgot password request submitted.');
-        return response()->json(['success' => true, 'message' => 'Request submitted. Please check your email for the reset link.']);
-    }
-
-    public function ganitPasswordAction(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'password'   => 'required|max:200',
-            'konfirmasi' => 'required|max:200',
-            'token'      => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
-        }
-
-        $user = DB::table('app_user')->where('verify_token', $request->token)->count();
-        if ($user < 1) {
-            return response()->json(['success' => false, 'message' => 'Invalid token.'], 422);
-        }
-
-        if ($request->password != $request->konfirmasi) {
-            return response()->json(['success' => false, 'message' => 'Password confirmation does not match.'], 422);
-        }
-
-        $det_user = DB::table('app_user')->where('verify_token', $request->token)->first();
-        $password = Hash::make($request->password);
-
-        $update = DB::table('app_user')->where('id_user', $det_user->id_user)->update([
-            'verify_token'  => '',
-            'password_user' => $password
-        ]);
-
-        if ($update) {
-            $this->dataService->createLogWeb($request, 'ganitPasswordAction', 'Password changed successfully.');
-            return response()->json(['success' => true, 'message' => 'Password changed successfully.']);
-        } else {
-            $this->dataService->createLogWeb($request, 'ganitPasswordAction', 'Failed to change password.');
-            return response()->json(['success' => false, 'message' => 'Failed to change password. Please try again.']);
-        }
-    }
-}
+        $orderId           = $payload['order_id']           ?? null;
+        $transactionStatus = $payload['transaction_status'] ?? null;
+        $fraudStatus       = $payload['fraud_status']       ?? null;
+        $grossAmount       = $payload['gross_amount']       ?? 0;
+        $paymentType  

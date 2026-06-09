@@ -60,10 +60,9 @@
                                                     {!! Str::limit(strip_tags($e->keterangan_event), 250) !!}
                                                 </div>
 
-                                                {{-- Register Now button passes kode_event as query param --}}
-                                                <a href="{{ route('register') }}?event={{ $e->kode_event }}"
+                                                <a href="{{ route('detailEvent', $e->kode_event) }}"
                                                    class="btn btn-warning btn-lg px-8">
-                                                    Register Now
+                                                    <i class="fa-solid fa-circle-info"></i> More Information
                                                 </a>
 
                                             </div>

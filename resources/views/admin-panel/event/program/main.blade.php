@@ -112,11 +112,11 @@
 			 $(document).on('click', '.btn-delete-event', function() {
                 var keypost = $(this).data('id');
                 Swal.fire({
-                    title: 'Confirm', text: 'Are you sure you want to delete this package event data?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Yes', cancelButtonText: 'Cancel'
+                    title: 'Confirm', text: 'Are you sure you want to delete this program event data?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Yes', cancelButtonText: 'Cancel'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                        	url: "{{ route('deletePaketEventAction') }}", 
+                        	url: "{{ route('deleteProgramEventAction') }}", 
                             type: 'POST',
                             data: {
                                 _token: "{{ csrf_token() }}",  

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 
 
@@ -49,7 +50,7 @@ class WebHomeController extends Controller
         }
 
         $data = [
-            'menu' => 'Log Aktivitas',
+            'menu' => 'Home',
             'menu_aktif' => $menu_aktif,
             'event' => $event,
             'set' => DB::table('app_setting')
@@ -60,275 +61,342 @@ class WebHomeController extends Controller
         return view('web.home.main', $data);
     }
 
-    public function getListData()
+    public function detailEvent($key, Request $request)
     {
-        $dataset = DB::table('t_master_data as x')
-                ->leftJoin('reff_status as b', function ($join) {
-                    $join->on('b.kode_status', '=', 'x.tipe_master')
-                        ->where('b.jenis_status', '=', 'tipe_data');
-                })
-                ->leftJoin('reff_status as c', function ($join) {
-                    $join->on('c.kode_status', '=', 'x.kategori_master')
-                        ->where('c.jenis_status', '=', 'kategori_data');
-                })
-                ->leftJoin('reff_status as e', function ($join) {
-                    $join->on('e.kode_status', '=', 'x.frekuensi_master')
-                        ->where('e.jenis_status', '=', 'frekuensi_data');
-                })
-                ->leftJoin('reff_organisasi as d', 'd.id_organisasi', '=', 'x.organisasi_master')
-                ->selectRaw("x.*, b.keterangan_status as tipe_data_desc, c.keterangan_status as kategori_data_desc,
-                             e.keterangan_status as frekuensi_data_desc,
-                             d.nama_organisasi,
-                            (SELECT COUNT(*) FROM t_permohonan WHERE t_permohonan.kode_data_permohonan = x.kode_data_master AND t_permohonan.status_permohonan = 'Y') AS jumlah_download,
-                            (SELECT COUNT(*) FROM t_data_log WHERE t_data_log.data_kode_log = x.kode_data_master ) AS jumlah_lihat ")
-            ->where('x.tipe_master', 'DT')
-            ->where('x.status_master','Y')
-            ->whereIn('x.sifat_master', ['TERBUKA','TERBATAS'])
-            ->orderBy('x.id_master_data', 'desc')
-            ->limit(4)
+        $menu_aktif = 'about';
+        $detail = DB::table('t_event')->where('kode_event', $key)->first();
+        // dd($detail);
+        $paket = DB::table('t_event_paket')
+            ->where('event_kode_paket', $key)
+            ->orderBy('id_event_paket', 'asc')
             ->get();
 
-        $infografis = DB::table('t_master_data as x')
-            ->leftJoin('reff_status as b', function ($join) {
-                    $join->on('b.kode_status', '=', 'x.tipe_master')
-                        ->where('b.jenis_status', '=', 'tipe_data');
-                })
-                ->leftJoin('reff_status as c', function ($join) {
-                    $join->on('c.kode_status', '=', 'x.kategori_master')
-                        ->where('c.jenis_status', '=', 'kategori_data');
-                })
-                ->leftJoin('reff_status as e', function ($join) {
-                    $join->on('e.kode_status', '=', 'x.frekuensi_master')
-                        ->where('e.jenis_status', '=', 'frekuensi_data');
-                })
-                ->leftJoin('reff_organisasi as d', 'd.id_organisasi', '=', 'x.organisasi_master')
-                ->selectRaw("x.*, b.keterangan_status as tipe_data_desc, c.keterangan_status as kategori_data_desc,
-                             e.keterangan_status as frekuensi_data_desc,
-                             d.nama_organisasi,
-                            (SELECT COUNT(*) FROM t_permohonan WHERE t_permohonan.kode_data_permohonan = x.kode_data_master AND t_permohonan.status_permohonan = 'Y') AS jumlah_download,
-                            (SELECT COUNT(*) FROM t_data_log WHERE t_data_log.data_kode_log = x.kode_data_master ) AS jumlah_lihat ")
-            ->where('x.tipe_master', 'IG')
-            ->where('x.status_master','Y')
-            ->whereIn('x.sifat_master', ['TERBUKA','TERBATAS'])
-            ->orderBy('x.id_master_data', 'desc')
-            ->limit(4)
+        $program = DB::table('t_event_program')
+            ->where('event_kode_program', $key)
+            ->orderBy('hari_program', 'asc')
             ->get();
 
-        $datasetHtml = view('web.dashboard-list-data', [
-            'data' => $dataset,
-            'img' => 'satu-data-pertahanan-data.jpeg',
-            'carousel_id' => 'datasetCarousel'
-        ])->render();
-
-        $infografisHtml = view('web.dashboard-list-data', [
-            'data' => $infografis,
-            'img' => 'satu-data-pertahanan-data.jpeg',
-            'carousel_id' => 'infografisCarousel'
-        ])->render();
-
-        return response()->json([
-            'dataset_html' => $datasetHtml,
-            'infografis_html' => $infografisHtml
-        ]);
-    }
-    
-    public function getCountData(Request $request)
-    {
-        $dataset_count = DB::table('t_master_data')
-            ->where('tipe_master', 'DT')
-            ->where('status_master', 'Y')
-            ->whereIn('sifat_master', ['TERBUKA','TERBATAS'])
-            ->count();
-
-        $infografis_count = DB::table('t_master_data')
-            ->where('status_master', 'Y')
-            ->where('tipe_master', 'IG')
-            ->whereIn('sifat_master', ['TERBUKA','TERBATAS'])
-            ->count();
-
-        $organisasi_count = DB::table('reff_organisasi')->where('status_organisasi','Y')->count();
-        // dd($dataset_count);
-        return response()->json([
-            'organisasi_count' => $organisasi_count,
-            'dataset_count' => $dataset_count,
-            'infografis_count' => $infografis_count,
-            'total_data' => $dataset_count + $infografis_count
-        ]);
-    }
-
-    public function getTopik()
-    {
-        $topik = DB::table('reff_topik')
-            ->orderBy('urutan_topik', 'asc')
+        $kolaborasi = DB::table('t_event_kolaborasi')
+            ->where('event_kode_kolaborasi', $key)
+            ->orderBy('created_at_kolaborasi', 'asc')
             ->get();
 
-        $html = view('web.dashboard-topik', compact('topik'))->render();
-
-        return response()->json([
-            'html' => $html
-        ]);
-    }
-
-    public function getTautan()
-    {
-        $tautan = DB::table('t_tautan')
-            ->orderBy('urutan_tautan','asc')
-            ->get();
-
-        $chunks = $tautan->chunk(4);
-
-        $html = '';
-
-        foreach ($chunks as $key => $chunk) {
-            $active = $key == 0 ? 'active' : '';
-
-            $html .= '<div class="carousel-item '.$active.'">';
-            $html .= '<div class="row text-center">';
-
-            foreach ($chunk as $item) {
-                $url = $item->link_tautan;
-                $img = asset('storage/'.$item->gambar_tautan);
-                $nama = $item->nama_tautan ?? 'Tautan';
-
-                $html .= '
-                <div class="col-3 my-2">
-                    <a target="_blank" href="'.$url.'">
-                        <img src="'.$img.'" 
-                            class="d-block mx-auto img-fluid"
-                            style="height:100px; object-fit:contain;"
-                            alt="'.$nama.'">
-                    </a>
-                </div>';
-            }
-
-            $html .= '</div></div>';
+        foreach ($program as $e) {
+            $e->program = DB::table('t_event_program_detail')
+                ->where('event_program_kode', $e->kode_event_program)
+                ->orderBy('awal_program_detail', 'asc')
+                ->get();
+          
         }
 
-        return response()->json([
-            'html' => $html
-        ]);
-    }
-    public function getSlider()
-    {
-        $slider = DB::table('app_slider')
-            ->where('jenis_slider','gambar')
-            ->orderBy('urutan_slider','asc')
-            ->get();
+        $data = [
+            'menu' => 'Detail',
+            'menu_aktif' => $menu_aktif,
+            'detail' => $detail,
+            'paket' => $paket,
+            'program' => $program,
+            'kolaborasi' => $kolaborasi,
+            'set' => DB::table('app_setting')->where('kode', 'SETT')->first(),
+        ];
 
-        $html = '';
-
-        foreach ($slider as $i => $d) {
-            $active = $i == 0 ? 'active' : '';
-            $img = asset('storage/'.$d->gambar_slider);
-
-            $html .= '
-            <div class="carousel-item '.$active.'">
-                <div class="slider-wrapper">
-                    <img src="'.$img.'" class="img-fluid slider-img" alt="Slider">
-                </div>
-            </div>';
-        }
-
-        return response()->json([
-            'html' => $html
-        ]);
+        return view('web.home.detail', $data);
     }
 
-    public function getOrganisasi()
+    public function addCartEvent(Request $request)
     {
-        $organisasi = DB::table('reff_organisasi')
-            ->orderBy('id_organisasi','asc')
-            ->get();
+        if (!session()->has('id_user')) {
 
-        $html = '';
-
-        foreach ($organisasi as $t) {
-            $html .= '
-            <div class="col-6 col-md-4 col-lg-4 mb-3">
-                <a href="'.$t->web_organisasi.'" target="_blank" class="footer-link">
-                    <i class="fa fa-globe"></i>
-                    <span>'.$t->nama_organisasi.'</span>
-                </a>
-            </div>';
-        }
-
-        return response()->json([
-            'html' => $html
-        ]);
-    }
-
-    public function getTableLog(Request $request)
-    {
-        if ($request->ajax()) {
-            
-            $query = DB::table('app_log_aktivitas as a')
-                ->selectRaw('*');
-                
-                if ($request->filled('nama')) {
-                    $query->where('a.deskripsi_log', 'ILIKE', '%' . $request->input('nama') . '%');
-                }
-                
-           $query->orderBy('a.id_log', 'desc')->get();
-
-            return DataTables::of($query)
-                ->addIndexColumn()  
-                ->addColumn('action', function ($row) {
-                    $id_hash = Crypt::encrypt($row->id_log);
-                    $infoUrl = route('editTopik', $id_hash);
-                    $btn = '<a href=' . $infoUrl . ' class="btn btn-light-warning btn-sm"><span class="fa fa-pencil"></span></a> 
-                            <button title="HAPUS" class="btn btn-danger btn-delete-topik btn-sm" data-id="' . $id_hash . '"><span class="fa fa-trash"></span></button> ';
-                    return $btn;
-                })
-                
-                ->rawColumns(['action'])
-                ->make(true);
-        }
-    }
-
-    public function submit(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'tujuan'   => 'required|string|max:255',
-            'keberhasilan'  => 'required|string|max:10',
-            'saran'    => 'string|max:500'
-        ]);
-
-        if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => $validator->errors()->first()
+                'message' => 'Please login first.'
             ]);
-        }else{
-            if($request->tujuan == 'Lainnya' && empty($request->tujuan_lainnya)){
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Tujuan lainnya harus diisi'
-                ]);
-            }
-            $save = DB::table('t_survey_kepuasan')->insert([
-                'tujuan' => $request->tujuan,
-                'tujuan_lainnya' => $request->tujuan_lainnya ?? '',
-                'keberhasilan' => $request->keberhasilan,
-                'saran' => $request->saran,
-                'created_at' => now()
-            ]);
-
-            if($save){
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Terima kasih atas Penilaian dan Feedback yang telah Anda berikan'
-                ]);
-            }else{
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Terjadi kesalahan dalam menyimpan feedback'
-                ]);
-            }
-            
         }
 
-        
+        $event = DB::table('t_event')
+            ->where('kode_event', $request->kode_event)
+            ->first();
+
+        if (!$event) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Event not found.'
+            ]);
+        }
+
+        $qty = (int) $request->quantity;
+
+        if ($qty < 1) {
+            $qty = 1;
+        }
+        $cek = DB::table('t_event_cart')
+            ->where('id_user', session('id_user'))
+            ->where('kode_event', $request->kode_event)
+            ->first();
+
+        if ($cek) {
+            $kode_cart = $cek->kode_cart;
+            DB::table('t_event_cart')
+                ->where('id_event_cart', $cek->id_event_cart)
+                ->update([
+                    'qty' => $cek->qty + $qty,
+                    'subtotal' => ($cek->qty + $qty) * $event->harga_event,
+                    'updated_at' => now()
+                ]);
+
+        } else {
+            $kode_cart = 'CRT' . date('YmdHis') . strtoupper(Str::random(5));
+
+            DB::table('t_event_cart')->insert([
+                'kode_cart' => $kode_cart ,
+                'kode_event' => $event->kode_event,
+                'id_user' => session('id_user'),
+                'qty' => $qty,
+                'harga' => $event->harga_event,
+                'subtotal' => $qty * $event->harga_event,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Successfully added to cart.',
+            'kode_cart' => $kode_cart
+        ]);
     }
 
+    public function detailCartEvent($kode_cart, Request $request)
+    {
+        if (!$request->session()->has('id_user')) {
+            return redirect()->route('login');
+        }
+        $menu_aktif = 'about';
+        $cart = DB::table('t_event_cart as c')
+            ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
+            ->where('c.kode_cart', $kode_cart)
+            ->first();
+
+        $paket = DB::table('t_event_paket')
+            ->where('event_kode_paket', $cart->kode_event)
+            ->get();
+
+        $selectedPaket = DB::table('t_event_cart_paket')
+            ->where('kode_cart', $kode_cart)
+            ->pluck('kode_event_paket')
+            ->toArray();
+
+        $data = [
+            'menu'          => 'Detail',
+            'menu_aktif'    => $menu_aktif,
+            'cart'          => $cart,
+            'paket'         => $paket,
+            'selectedPaket' => $selectedPaket,
+            'set'           => DB::table('app_setting')
+                                ->where('kode', 'SETT')
+                                ->first(),
+        ];
+
+        return view('web.home.event-cart', $data);
+    }
+
+    public function savePackageCart(Request $request)
+    {
+        if (!session()->has('id_user')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please login first.'
+            ]);
+        }
+
+        DB::table('t_event_cart_paket')
+            ->where('kode_cart', $request->kode_cart)
+            ->delete();
+        if (!empty($request->paket)) {
+            foreach ($request->paket as $kodePaket) {
+                $paket = DB::table('t_event_paket')->where('kode_paket', $kodePaket)->first();
+                if ($paket) {
+                    DB::table('t_event_cart_paket')->insert([
+                        'kode_cart'        => $request->kode_cart,
+                        'kode_event_paket' => $paket->kode_paket,
+                        'judul_paket'      => $paket->judul_paket,
+                        'harga_paket'      => $paket->harga_paket,
+                        'event_kode'      => $paket->event_kode_paket,
+                        'created_at'       => now(),
+                        'updated_at'       => now()
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'status'    => true,
+            'message'   => 'Package selection saved successfully.',
+            'kode_cart' => $request->kode_cart
+        ]);
+    }
+
+    
+    public function detailCheckoutEvent($kode_cart, Request $request)
+    {
+        if (!$request->session()->has('id_user')) {
+            return redirect()->route('login');
+        }
+        $menu_aktif = 'about';
+        $cart = DB::table('t_event_cart as c')
+            ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
+            ->where('c.kode_cart', $kode_cart)
+            ->select(
+                'c.*',
+                'e.judul_event',
+                'e.lokasi_event',
+                'e.tanggal_awal_event',
+                'e.tanggal_akhir_event',
+                'e.harga_event'
+            )
+            ->first();
+        if (!$cart) {
+            abort(404);
+        }
+
+        $addon = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
+        $subtotalAddon = $addon->sum('harga_paket') * $cart->qty;
+        $grandTotal = $cart->subtotal + $subtotalAddon;
+        // dd($cart);
+        $data = [
+            'menu'          => 'Checkout',
+            'menu_aktif'    => $menu_aktif,
+            'cart'          => $cart,
+            'addon'         => $addon,
+            'subtotalAddon' => $subtotalAddon,
+            'grandTotal'    => $grandTotal,
+            'set'           => DB::table('app_setting')->where('kode', 'SETT')->first(),
+        ];
+
+        return view('web.home.event-checkout', $data);
+    }
+
+    public function myCart(Request $request)
+    {
+        if (!$request->session()->has('id_user')) {
+            return redirect()->route('login');
+        }
+        $menu_aktif = 'cart';
+        $cart = DB::table('t_event_cart as c')
+            ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
+            ->leftJoin(
+                DB::raw("
+                    (
+                        SELECT
+                            kode_cart,
+                            COALESCE(SUM(harga_paket),0) as total_paket
+                        FROM t_event_cart_paket
+                        GROUP BY kode_cart
+                    ) p
+                "),
+                'p.kode_cart',
+                '=',
+                'c.kode_cart'
+            )
+
+            ->where('c.id_user', session('id_user'))
+
+            ->orderBy('c.created_at', 'desc')
+
+            ->select(
+                'c.*',
+                'e.judul_event',
+                'e.lokasi_event',
+                'e.tanggal_awal_event',
+                'e.tanggal_akhir_event',
+                'e.harga_event',
+                DB::raw('COALESCE(p.total_paket,0) as total_paket'),
+                DB::raw('
+                    (
+                        COALESCE(c.subtotal,0)
+                        +
+                        COALESCE(p.total_paket,0)
+                    ) as grand_total
+                ')
+            )
+            ->get();
+
+        $data = [
+            'menu'        => 'My Cart',
+            'menu_aktif'  => $menu_aktif,
+            'cart'        => $cart,
+            'set'         => DB::table('app_setting')
+                                ->where('kode', 'SETT')
+                                ->first(),
+        ];
+
+        return view('web.home.my-cart', $data);
+    }
+
+    public function updateCartEvent(Request $request)
+    {
+        $cart = DB::table('t_event_cart')
+            ->where('kode_cart', $request->kode_cart)
+            ->first();
+
+        if (!$cart) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Cart not found'
+            ]);
+        }
+
+        $qty = max(1, (int)$request->qty);
+
+        $harga = $cart->harga;
+
+        DB::table('t_event_cart')
+            ->where('kode_cart', $request->kode_cart)
+            ->update([
+                'qty' => $qty,
+                'subtotal' => $harga * $qty,
+                'updated_at' => now()
+            ]);
+
+        DB::table('t_event_cart_paket')
+            ->where('kode_cart', $request->kode_cart)
+            ->update([
+                'harga_paket' => DB::raw('harga_paket')
+            ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Cart updated successfully'
+        ]);
+    }
+
+    public function deleteCartEvent(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            DB::table('t_event_cart_paket')
+                ->where('kode_cart', $request->kode_cart)
+                ->delete();
+
+            DB::table('t_event_cart')
+                ->where('kode_cart', $request->kode_cart)
+                ->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Cart deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
 
 }

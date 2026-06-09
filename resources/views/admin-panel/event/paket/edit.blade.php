@@ -54,6 +54,10 @@
 														</div>
 														<small class="text-muted">Set to 0 if this package is free / included</small>
 													</div>
+													<div class="col-md-6 mt-4">
+														<label class="fs-4 opacity-75 mb-4">Additional Price</label>
+														<input type="text" name="harga" value="{{$detail->harga_paket}}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Only numbers are allowed" class="form-control" placeholder="Price" required>
+													</div>
                                                     <div class="col-md-6 mt-4">
 														<label class="fs-4 opacity-75 mb-4">Description:</label>
                                                         <textarea name="keterangan" class="form-control py-4" rows="3">{{$detail->keterangan_paket}}</textarea>

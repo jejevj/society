@@ -47,12 +47,17 @@
 														<input type="text" name="lokasi" class="form-control" placeholder="Location" required>
 													</div>
 													<div class="col-md-6 mb-3">
+<<<<<<< Updated upstream
+														<label class="form-label required">Price</label>
+														<input type="text" name="harga" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Only numbers are allowed" class="form-control" placeholder="Price" required>
+=======
 														<label class="form-label required">Registration Fee (Rp)</label>
 														<div class="input-group">
 															<span class="input-group-text">Rp</span>
 															<input type="number" name="harga" class="form-control" placeholder="0" min="0" value="0" required>
 														</div>
 														<small class="text-muted">Set to 0 if the event is free</small>
+>>>>>>> Stashed changes
 													</div>
 													<div class="col-md-12 mb-3">
 														<label class="form-label required">Description</label>

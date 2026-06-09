@@ -13,6 +13,7 @@
 										<span class="page-desc opacity-50 fs-6 fw-bold pt-4"></span>
 										</h1>
 									</div>
+									
 								</div>
 							</div>
 						</div>
@@ -21,11 +22,12 @@
 						<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
 							<div class="d-flex flex-column flex-column-fluid">
 								<div id="kt_app_content" class="app-content">
+									
 									<div class="card card-flush">
 										<div class="card-body">
                                             <div class="mb-4">
                                                 <div class="d-flex justify-content-end">
-                                                    <a class="btn btn-warning btn-sm" href="{{ route('paketEvent', $detail->kode_event) }}">
+                                                    <a class="btn btn-warning btn-sm" href="{{ route('kolaborasiEvent', $detail->kode_event) }}">
                                                         <i class="fa fa-backward"></i> Back
                                                     </a>
                                                 </div>
@@ -35,50 +37,28 @@
                                                 <input type="hidden" name="key" value="{{$detail->kode_event}}">
 												<div class="row">
 													<div class="col-md-6">
-														<label class="fs-4 opacity-75 mb-4">Title:</label>
-														<input type="text" class="form-control py-4" name="judul" placeholder="Title">
-													</div>
-													<div class="col-md-6">
-														<label class="fs-4 opacity-75 mb-4">Sub Title:</label>
-														<input type="text" class="form-control py-4" name="sub_judul" placeholder="Sub Title">
-													</div>
-                                                    <div class="col-md-6 mt-4">
-														<label class="fs-4 opacity-75 mb-4">Location:</label>
-														<input type="text" class="form-control py-4" name="lokasi" placeholder="Location">
-													</div>
-                                                    <div class="col-md-6 mt-4">
-														<label class="fs-4 opacity-75 mb-4">Package Price (Rp):</label>
-														<div class="input-group">
-															<span class="input-group-text">Rp</span>
-															<input type="number" class="form-control py-4" name="harga" placeholder="0" min="0" value="0">
-														</div>
-														<small class="text-muted">Set to 0 if this package is free / included</small>
-													</div>
-													<div class="col-md-6 mt-4">
-														<label class="fs-4 opacity-75 mb-4">Additional Price</label>
-														<input type="text" name="harga" oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Only numbers are allowed" class="form-control" placeholder="Price" required>
+														<label class="fs-4 opacity-75 mb-4">Name:</label>
+														<input type="text" class="form-control py-4" name="nama" placeholder="Name" >
 													</div>
                                                     <div class="col-md-6 mt-4">
 														<label class="fs-4 opacity-75 mb-4">Images:</label>
-														<input type="file" class="form-control py-4" name="gambar" placeholder="Images" accept=".jpg,.jpeg,.png">
+														<input type="file" class="form-control py-4" name="gambar" placeholder="Images" accept=".jpg,.jpeg,.png" >
 													</div>
                                                     <div class="col-md-6 mt-4">
-														<label class="fs-4 opacity-75 mb-4">Icon:</label>
-														<input type="file" class="form-control py-4" name="icon" placeholder="icon" accept=".jpg,.jpeg,.png">
-													</div>
-                                                    <div class="col-md-12 mt-4">
 														<label class="fs-4 opacity-75 mb-4">Description:</label>
                                                         <textarea name="keterangan" class="form-control py-4" rows="3"></textarea>
 													</div>
+
 												</div>
-												<div class="row">
+												<div class="row">													
 													<div class="col-md-12 mt-4">
-														<button type="submit" id="btn-save" class="btn btn-marron-submit w-100"><i class="fa fa-save text-white"></i> Save</button>
+														<button type="submit" id="btn-save" class="btn btn-marron-submit w-100"><i class="fa fa-save text-white"></i>Save</button>
 													</div>
 												</div>
 											</form>
 										</div>
 									</div>
+									
 								</div>
 							</div>							
 						</div>
@@ -98,7 +78,7 @@
 				formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
 
 				$.ajax({
-					url: "{{ route('addPaketEventAction') }}",
+					url: "{{ route('addKolaborasiEventAction') }}",
 					type: 'POST',
 					data: formData,
 					contentType: false,
@@ -108,7 +88,9 @@
                             title: 'Loading...',
                             text: 'Saving data',
                             allowOutsideClick: false,
-                            didOpen: () => { Swal.showLoading(); }
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
                         });
                     },
 					success: function (response) {
@@ -117,12 +99,20 @@
 							title: 'Success',
 							text: response.message
 						}).then(() => {
-							window.location.href = "{{ route('paketEvent', $detail->kode_event) }}";
+							window.location.href = "{{ route('kolaborasiEvent', $detail->kode_event) }}";
 						});
 					},
 					error: function (xhr) {
-						let message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'An error occurred.';
-						Swal.fire({ icon: 'error', title: 'Failed', text: message });
+						let message = 'An error occurred.';
+						if (xhr.responseJSON && xhr.responseJSON.message) {
+							message = xhr.responseJSON.message;
+						}
+
+						Swal.fire({
+							icon: 'error',
+							title: 'Failed',
+							text: message
+						});
 					}
 				});
 			});

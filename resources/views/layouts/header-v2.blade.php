@@ -62,7 +62,6 @@
 								<div class="menu menu-rounded menu-active-bg menu-state-primary menu-column menu-lg-row menu-title-gray-700 menu-icon-gray-500 menu-arrow-gray-500 menu-bullet-gray-500 my-5 my-lg-0 align-items-stretch fw-semibold px-2 px-lg-0 justify-content-end w-100"
 									id="kt_app_header_menu" data-kt-menu="true">
 
-									{{-- About --}}
 									<div class="menu-item me-0 me-lg-2">
 										<a href="{{ route('about') }}" class="menu-link">
 											<span class="menu-title fs-5">
@@ -71,7 +70,6 @@
 										</a>
 									</div>
 
-									{{-- Event --}}
 									<div class="menu-item me-0 me-lg-2">
 										<a href="{{ route('list-event') }}" class="menu-link">
 											<span class="menu-title fs-5">
@@ -80,7 +78,6 @@
 										</a>
 									</div>
 
-									{{-- Paper --}}
 									<div class="menu-item me-0 me-lg-2">
 										<a href="{{ route('about') }}" class="menu-link">
 											<span class="menu-title fs-5">
@@ -90,86 +87,55 @@
 									</div>
 
 									<?php if (empty(session('id_user'))) { ?>
-									<div class="menu-item me-0">
-										<a href="{{ route('login') }}" class="btn btn-login">
-											<i class="fa-solid fa-circle-user me-2 text-white"></i> Login / Register
-										</a>
-									</div>
-									<?php } else { ?>
-									<div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
-										data-kt-menu-placement="bottom-start"
-										class="menu-item menu-lg-down-accordion menu-sub-lg-down-indention me-0 me-lg-2">
-										<span class="menu-link bg-warning">
-											<span class="menu-title text-white">
-												<i class="fa fa-user px-2 py-4 text-white"></i> Hallo, {{ session('nama_user') }}
-											</span>
-											<span class="menu-arrow d-lg-none"></span>
-										</span>
-										<div class="menu-sub menu-sub-lg-down-accordion menu-sub-lg-dropdown px-lg-2 py-lg-4 w-lg-200px">
-											<div class="menu-item">
-												<a class="menu-link mb-2" href="{{ route('riwayat-user') }}"
-													data-bs-toggle="tooltip" data-bs-trigger="hover"
-													data-bs-dismiss="click" data-bs-placement="right">
-													<span class="menu-icon"><span class="bullet w-10px h-10px"></span></span>
-													<span class="menu-title">Riwayat Permohonan</span>
-												</a>
-												<a class="menu-link mb-2" href="{{ route('profile-user') }}"
-													data-bs-toggle="tooltip" data-bs-trigger="hover"
-													data-bs-dismiss="click" data-bs-placement="right">
-													<span class="menu-icon"><span class="bullet w-10px h-10px"></span></span>
-													<span class="menu-title">Profil Saya</span>
-												</a>
-												<a class="menu-link mb-2" href="{{ route('ganti-password-user') }}"
-													data-bs-toggle="tooltip" data-bs-trigger="hover"
-													data-bs-dismiss="click" data-bs-placement="right">
-													<span class="menu-icon"><span class="bullet w-10px h-10px"></span></span>
-													<span class="menu-title">Ganti Password</span>
-												</a>
-											</div>
-											<div class="menu-item">
-												<a href="javascript:void(0)" id="btnLogout"
-													class="btn btn-danger text-white btn-block w-100">
-													<i class="fa-solid fa-power-off"></i> Logout
-												</a>
-											</div>
-											<script>
-												$(document).ready(function () {
-													$("#btnLogout").on("click", function (e) {
-														e.preventDefault();
-														Swal.fire({
-															title: "Konfirmasi",
-															text: "Yakin ingin logout?",
-															icon: "warning",
-															showCancelButton: true,
-															confirmButtonColor: "#d33",
-															cancelButtonColor: "#3085d6",
-															confirmButtonText: "Ya, Logout!"
-														}).then((result) => {
-															if (result.isConfirmed) {
-																$.ajax({
-																	url: "{{ route('logout-backend-action') }}",
-																	type: "POST",
-																	data: { _token: "{{ csrf_token() }}" },
-																	success: function (res) {
-																		if (res.status) {
-																			Swal.fire("Berhasil!", res.message, "success").then(() => {
-																				window.location.href = "{{ route('login') }}";
-																			});
-																		} else {
-																			Swal.fire("Gagal!", res.message, "error");
-																		}
-																	},
-																	error: function () {
-																		Swal.fire("Error!", "Terjadi kesalahan, coba lagi.", "error");
-																	}
-																});
-															}
-														});
-													});
-												});
-											</script>
+
+										<div class="menu-item me-0">
+											<a href="{{ route('login') }}" class="btn btn-login">
+												<i class="fa-solid fa-circle-user me-2 text-white"></i>
+												Login / Register
+											</a>
 										</div>
-									</div>
+
+									<?php } else { ?>
+										<div class="menu-item me-0 me-lg-2">
+											<a href="{{ route('profile-user') }}" class="menu-link">
+												<span class="menu-title fs-5">
+													<span class="fw-bold {{ $menu_aktif == 'profile' ? 'text-maroon-active' : 'text-white' }}">
+														My Profile
+													</span>
+												</span>
+											</a>
+										</div>
+										@php
+											$jumlah_cart = 0;
+
+											if(session('id_user')) {
+												$jumlah_cart = DB::table('t_event_cart')
+													->where('id_user', session('id_user'))
+													->count();
+											}
+										@endphp
+										<div class="menu-item me-3">
+											<a href="{{ url(env('APP_ROUTE').'/my-cart') }}"
+											class="position-relative text-decoration-none">
+												<div class="cart-icon-header">
+													<i class="fa-solid fa-cart-shopping"></i>
+													@if($jumlah_cart > 0)
+														<span class="cart-badge">
+															{{ $jumlah_cart > 99 ? '99+' : $jumlah_cart }}
+														</span>
+													@endif
+												</div>
+											</a>
+										</div>
+										
+
+										<div class="menu-item me-0">
+											<a href="javascript:void(0)" id="btnLogout" class="btn btn-login">
+												<i class="fa-solid fa-power-off"></i>
+												Sign Out
+											</a>
+										</div>
+
 									<?php } ?>
 
 								</div>

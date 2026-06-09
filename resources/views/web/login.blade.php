@@ -229,13 +229,13 @@
                 {{-- Col kiri: informasi event --}}
                 <div class="col-md-8 col-lg-7 login-info-col">
                     <span class="badge-event">{{ $set->nama_app ?? env('APP_NAME', 'Society Event') }}</span>
-                    <h1>{!! nl2br(e($set->judul_login ?? 'Portal Layanan')) !!}</h1>
-                    <p>{{ $set->deskripsi_login ?? $set->deskripsi_app ?? 'Akses informasi, data, dan layanan secara mudah, cepat, dan aman melalui satu platform terintegrasi.' }}</p>
+                    <h1>{!! nl2br(e($set->judul_login ?? 'Service Portal')) !!}</h1>
+                    <p>{{ $set->deskripsi_login ?? $set->deskripsi_app ?? 'Access information, data, and services easily, quickly, and securely through one integrated platform.' }}</p>
                     <ul class="login-info-features">
-                        <li><span class="feat-icon"><i class="fa-solid fa-circle-check"></i></span> {{ $set->fitur1_login ?? 'Data dan informasi resmi terverifikasi' }}</li>
-                        <li><span class="feat-icon"><i class="fa-solid fa-circle-check"></i></span> {{ $set->fitur2_login ?? 'Akses berbagai layanan event dan kegiatan' }}</li>
-                        <li><span class="feat-icon"><i class="fa-solid fa-shield-halved"></i></span> {{ $set->fitur3_login ?? 'Sistem keamanan berlapis dengan verifikasi OTP' }}</li>
-                        <li><span class="feat-icon"><i class="fa-solid fa-user-check"></i></span> {{ $set->fitur4_login ?? 'Registrasi mudah dan proses validasi transparan' }}</li>
+                        <li><span class="feat-icon"><i class="fa-solid fa-circle-check"></i></span> {{ $set->fitur1_login ?? 'Official verified data and information' }}</li>
+                        <li><span class="feat-icon"><i class="fa-solid fa-circle-check"></i></span> {{ $set->fitur2_login ?? 'Access various event services and activities' }}</li>
+                        <li><span class="feat-icon"><i class="fa-solid fa-shield-halved"></i></span> {{ $set->fitur3_login ?? 'Multi-layered security system with OTP verification' }}</li>
+                        <li><span class="feat-icon"><i class="fa-solid fa-user-check"></i></span> {{ $set->fitur4_login ?? 'Easy registration and transparent validation process' }}</li>
                     </ul>
                 </div>
 
@@ -243,8 +243,8 @@
                 <div class="col-md-4 col-lg-4 col-11">
                     <div class="login-card">
                         <img src="{{ asset('images/logo.png') }}" alt="Logo" class="card-logo">
-                        <h2>Masuk Akun</h2>
-                        <div class="subtitle">Silakan masuk untuk melanjutkan</div>
+                        <h2>Login Account</h2>
+                        <div class="subtitle">Please log in to continue</div>
 
                         <form method="POST" id="actLoginForm" enctype="multipart/form-data">
                             @csrf
@@ -296,20 +296,20 @@
                 type: "POST",
                 data: $(this).serialize(),
                 beforeSend: function () {
-                    Swal.fire({ title: "Sedang diproses...", text: "Mohon tunggu sebentar", allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+                    Swal.fire({ title: "Being processed...", text: "Please wait a moment", allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
                 },
                 success: function (res) {
                     Swal.close();
                     if (res.status) {
-                        Swal.fire({ icon: "success", title: "Berhasil", text: res.message, timer: 1500, showConfirmButton: false }).then(() => {
+                        Swal.fire({ icon: "success", title: "Success", text: res.message, timer: 1500, showConfirmButton: false }).then(() => {
                             window.location.href = "{{ url(env('APP_ROUTE') . '/otpLogin') }}/" + res.key;
                         });
                     } else {
-                        Swal.fire({ icon: "error", title: "Login Gagal", text: res.message });
+                        Swal.fire({ icon: "error", title: "Login Failed", text: res.message });
                     }
                 },
                 error: function () {
-                    Swal.fire({ icon: "error", title: "Oops...", text: "Terjadi kesalahan, coba lagi." });
+                    Swal.fire({ icon: "error", title: "Oops...", text: "An error occurred, please try again." });
                 }
             });
         });

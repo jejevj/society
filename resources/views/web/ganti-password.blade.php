@@ -1,48 +1,125 @@
-
 @include('layouts.header-v2')
-				<div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
-					<div id="kt_app_toolbar" class="app-toolbar"></div>
-					<div class="container-xxl">
-						<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-							<div class="d-flex flex-column flex-column-fluid">
-								<div id="kt_app_content" class="app-content">
-									<div class="card card-flush">
-										<div class="card-body">
-											<form id="actForm" class="mb-4" enctype="multipart/form-data">
-												@csrf
-												<div class="row">
-													<div class="col-md-12 mb-4">
-														<h3 class="fs-1q my-2 text-marron">Ganti Password</h3>
-													</div>
-													<div class="col-md-12 mb-4">
-														<label class="fs-4 opacity-75 mb-4">Password Lama:</label><br>
-														<input name="password_lama" type="password" class="form-control py-4" placeholder="Masukkan password lama">
-													</div>
-													<div class="col-md-12 mb-4">
-														<label class="fs-4 opacity-75 mb-4">Password Baru:</label><br>
-														<input name="password_baru" type="password" class="form-control py-4" placeholder="Masukkan password baru">
-													</div>
-													<div class="col-md-12 mb-4">
-														<label class="fs-4 opacity-75 mb-4">Konfirmasi Password Baru:</label><br>
-														<input name="konfirmasi_password_baru" type="password" class="form-control py-4" placeholder="Masukkan konfirmasi password baru">
-													</div>
-												</div>
-												<div class="row">													
-													<div class="col-md-12 mt-4">
-														<button type="submit" id="btn-save" class="btn btn-marron-monitoring text-white w-100"><i class="fa fa-save text-white"></i>Submit</button>
-													</div>
-												</div>
-											</form>
-										</div>
-									</div>
-									
+
+<div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
+    <div class="container py-10">
+        <form id="actForm" enctype="multipart/form-data">
+            @csrf
+            <div class="row">
+                <div class="col-lg-4 mb-5">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body text-center p-8">
+                            <div class="symbol symbol-100px mx-auto mb-5">
+                                @if(!empty($detail->file_identitas_user))
+                                    <img src="{{ url('storage/'.$detail->file_identitas_user) }}"
+                                         class="rounded-circle object-fit-cover"
+                                         style="width:100px;height:100px;">
+                                @else
+                                    <div class="symbol-label bg-light-primary">
+                                        <i class="fa-solid fa-user fs-1 text-detail"></i>
+                                    </div>
+                                @endif
+                            </div>
+                            <h3 class="fw-bold mb-1">
+                                {{ $detail->nama_user }}
+                            </h3>
+                            <div class="text-muted mb-4">
+                                {{ $detail->username_user }}
+                            </div>
+                            <div class="badge badge-light-success">
+                                Active Member
+                            </div>
+                            <hr>
+                            <div class="text-start">
+                                <div class="mb-3">
+                                    <small class="text-muted d-block">
+                                        Identity Number
+                                    </small>
+                                    <strong>
+                                        {{ $detail->identitas_user ?: '-' }}
+                                    </strong>
+                                </div>
+
+                                <div class="mb-3">
+                                    <small class="text-muted d-block">
+                                        Phone Number
+                                    </small>
+
+                                    <strong>
+                                        {{ $detail->telepon_user ?: '-' }}
+                                    </strong>
+                                </div>
+								<hr>
+
+								<a href="{{ route('profile-user') }}" class="btn btn-light-warning w-100">
+									<i class="fa-solid fa-key me-2"></i>
+									Change Profile
+								</a>
+                            </div>
+                        </div>
+                    </div>
+					
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0">
+						<div class="card-header border-0 pt-6">
+							<div>
+								<h2 class="fw-bold mb-1">
+									Change Password
+								</h2>
+								<div class="text-muted">
+									Update your account password
 								</div>
-							</div>							
+							</div>
+						</div>
+
+						<div class="card-body">
+							<form id="actForm">
+								@csrf
+								<div class="row">
+									<div class="col-md-12 mb-4">
+										<label class="form-label fw-semibold">
+											Current Password
+										</label>
+										<input type="password"
+											name="old_password"
+											class="form-control form-control-lg">
+									</div>
+									<div class="col-md-12 mb-4">
+										<label class="form-label fw-semibold">
+											New Password
+										</label>
+										<input type="password"
+											name="new_password"
+											class="form-control form-control-lg">
+									</div>
+									<div class="col-md-12 mb-4">
+										<label class="form-label fw-semibold">
+											Confirm New Password
+										</label>
+										<input type="password"
+											name="confirm_password"
+											class="form-control form-control-lg">
+									</div>
+								</div>
+								<button type="button"
+										id="btn-save"
+										class="btn btn-warning">
+									<i class="fa-solid fa-key me-2"></i>
+									Update Password
+								</button>
+							</form>
 						</div>
 					</div>
-				</div>
-			</div>
-		</div>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
 		<script>
 			$.ajaxSetup({
 				headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
@@ -50,7 +127,6 @@
 
 			$('#btn-save').on('click', function (e) {
 				e.preventDefault();
-
 				let formData = new FormData($('#actForm')[0]);
 				formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
 
@@ -84,8 +160,9 @@
 				});
 			});
 
-
+			
 			
 		</script>
+		
 
 @include('layouts.footer-v2')

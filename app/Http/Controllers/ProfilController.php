@@ -35,7 +35,7 @@ class ProfilController extends Controller
         $navbar = $this->dataService->getMenuHTML($menu_aktif, Session::getFacadeRoot());
         
         $data = [
-            'menu' => 'Profil Saya',
+            'menu' => 'Profile',
             'menu_aktif' => $menu_aktif,
             'navbar' => $navbar,
             'breadcrumb' => '

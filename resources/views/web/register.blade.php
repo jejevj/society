@@ -785,7 +785,10 @@
                             </button>
                         </div>
 
+<<<<<<< Updated upstream
+=======
                         {{-- SUCCESS --}}
+>>>>>>> Stashed changes
                         <div id="stepSuccess" style="display:none;">
                             <div class="success-container">
                                 <div class="success-icon"><i class="fa-solid fa-check"></i></div>

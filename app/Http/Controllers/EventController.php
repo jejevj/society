@@ -78,7 +78,7 @@ class EventController extends Controller
                     (
                         SELECT COUNT(*)
                         FROM t_event_program c
-                        WHERE c.kode_event_program = a.kode_event
+                        WHERE c.event_kode_program = a.kode_event
                     ) as total_program,
                     (
                         SELECT COUNT(*)
@@ -88,7 +88,7 @@ class EventController extends Controller
                 ");
                 
                 if ($request->filled('nama')) {
-                    $query->where('a.judul_event', 'ILIKE', '%' . $request->input('nama') . '%');
+                    $query->where('a.judul_event', 'LIKE', '%' . $request->input('nama') . '%');
                 }
                 
            $query->orderBy('a.id_event', 'desc')->get();
@@ -139,6 +139,8 @@ class EventController extends Controller
 
     public function tambah(Request $request)
     {
+
+       
         $menu_aktif = 'event||';
         if (!$request->session()->has('id')) {
             $prefix = trim(env('APP_ROUTE'), '/');
@@ -183,10 +185,9 @@ class EventController extends Controller
                 'sub_judul'   => 'required|string|max:255',
                 'awal'        => 'required',
                 'akhir'       => 'required',
-                'keterangan'  => 'required',
-                'lokasi'      => 'required|string|max:255',
-                'harga'       => 'nullable|numeric|min:0',
-                'gambar'      => 'required|image|mimes:jpg,jpeg,png|max:5048',
+                'keterangan'       => 'required',
+                'lokasi'       => 'required|string|max:255',
+                'gambar'     => 'required|image|mimes:jpg,jpeg,png|max:5048',
             ]);
 
             if ($validator->fails()) {
@@ -286,10 +287,9 @@ class EventController extends Controller
                 'judul'      => 'required|string|max:255',
                 'sub_judul'  => 'required|string|max:255',
                 'awal'       => 'required',
-                'akhir'      => 'required',
-                'keterangan' => 'required',
-                'lokasi'     => 'required|string|max:255',
-                'harga'      => 'nullable|numeric|min:0',
+                'akhir'       => 'required',
+                'keterangan'       => 'required',
+                'lokasi'       => 'required|string|max:255',
                 'gambar'     => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
             ]);
 
@@ -456,9 +456,11 @@ class EventController extends Controller
                             ? 'Rp ' . number_format($row->harga_paket, 0, ',', '.')
                             : '<span class="badge badge-light-success">Free</span>';
                         return '
+                            <span class="text-dark fs-6"><b>Additional Price</b>: '.number_format($row->harga_paket, 0, ',', '.').'</span><br>
                             <span class="text-dark fs-6"><b>Location</b>: '.$row->lokasi_paket.'</span><br>
                             <span class="text-dark fs-6"><b>Price</b>: '.$harga.'</span><br>
                             <span class="text-dark fs-6"><b>Description</b>: '.$row->keterangan_paket.'</span><br>
+                            
                         ';
                     })
                 
@@ -515,12 +517,11 @@ class EventController extends Controller
             }
                 
             $validator = Validator::make($request->all(), [
-                'judul'      => 'required|string|max:255',
-                'sub_judul'  => 'required|string|max:255',
-                'key'        => 'required',
-                'keterangan' => 'required',
-                'lokasi'     => 'required|string|max:255',
-                'harga'      => 'nullable|numeric|min:0',
+                'judul'       => 'required|string|max:255',
+                'sub_judul'       => 'required|string|max:255',
+                'key'       => 'required',
+                'keterangan'       => 'required',
+                'lokasi'       => 'required|string|max:255',
                 'gambar'     => 'required|image|mimes:jpg,jpeg,png|max:5048',
                 'icon'       => 'required|image|mimes:jpg,jpeg,png|max:5048',
             ]);
@@ -549,13 +550,12 @@ class EventController extends Controller
                 'kode_paket'       => $kode,
                 'event_kode_paket' => $request->key,
                 'judul_paket'      => $request->judul,
-                'sub_judul_paket'  => $request->sub_judul,
-                'keterangan_paket' => $request->keterangan,
-                'lokasi_paket'     => $request->lokasi,
-                'harga_paket'      => $request->filled('harga') ? (int) $request->harga : 0,
-                'gambar_paket'     => $path,
-                'icon_paket'       => $path2,
-                'created_at_paket' => now(),
+                'sub_judul_paket'      => $request->sub_judul,
+                'keterangan_paket'      => $request->keterangan,
+                'lokasi_paket'      => $request->lokasi,
+                'gambar_paket'      => $path,
+                'icon_paket'      => $path2,
+                'created_at_paket'            => now(),
             ];
             
             $insert = DB::table('t_event_paket')->insert($data);
@@ -624,12 +624,11 @@ class EventController extends Controller
             }
                 
             $validator = Validator::make($request->all(), [
-                'key'        => 'required',
-                'judul'      => 'required|string|max:255',
-                'sub_judul'  => 'required|string|max:255',
-                'keterangan' => 'required',
-                'lokasi'     => 'required|string|max:255',
-                'harga'      => 'nullable|numeric|min:0',
+                'key'       => 'required',
+                'judul'       => 'required|string|max:255',
+                'sub_judul'       => 'required|string|max:255',
+                'keterangan'       => 'required',
+                'lokasi'       => 'required|string|max:255',
                 'gambar'     => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
                 'icon'       => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
             ]);
@@ -642,11 +641,10 @@ class EventController extends Controller
             }
             $updateData = [
                 'judul_paket'      => $request->judul,
-                'sub_judul_paket'  => $request->sub_judul,
-                'keterangan_paket' => $request->keterangan,
-                'lokasi_paket'     => $request->lokasi,
-                'harga_paket'      => $request->filled('harga') ? (int) $request->harga : 0,
-                'updated_at_paket' => now(),
+                'sub_judul_paket'      => $request->sub_judul,
+                'keterangan_paket'      => $request->keterangan,
+                'lokasi_paket'      => $request->lokasi,
+                'updated_at_paket'            => now(),
             ];
             if ($request->hasFile('gambar')) {
                 $filename = 'pkg_' .time() . '_' . $request->file('gambar')->getClientOriginalName();
@@ -904,4 +902,475 @@ class EventController extends Controller
             }
         }
     }
+
+    public function editProgramEvent($kode_event_program, Request $request)
+    {
+        $menu_aktif = 'event||';
+        if (!$request->session()->has('id')) {
+            $prefix = trim(env('APP_ROUTE'), '/');
+            return Redirect::to(($prefix ? '/' . $prefix : '') . '/login-backend');
+        }
+        $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+        $navbar = $this->dataService->getMenuHTML($menu_aktif, Session::getFacadeRoot());
+        
+        $detail = DB::table('t_event_program')->where('kode_event_program', $kode_event_program)->first();
+        $detail_program = DB::table('t_event_program_detail')
+            ->where('event_program_kode', $kode_event_program)
+            ->orderBy('awal_program_detail')
+            ->get();
+        $data = [
+            'menu' => 'Edit Program Event',
+            'menu_aktif' => $menu_aktif,
+            'navbar' => $navbar,
+            'cek_permit' => $cek,
+            'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
+										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+                                        <li class="breadcrumb-item  fw-bold lh-1">Program Events</li>
+                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+										<li class="breadcrumb-item  fw-bold lh-1">Edit Program Event</li>
+									</ul>',
+            'kode_event_program' => $kode_event_program,
+            'detail' => $detail,
+            'detail_program' => $detail_program
+        ];
+        if (!$cek['u']) {
+             return view('admin-panel.error_page.403-page', $data);
+        }
+
+        return view('admin-panel.event.program.edit', $data);
+    }
+
+    public function editProgramEventAction(Request $request)
+    {
+        if (!$request->session()->has('id')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Session expired'
+            ], 422);
+        }
+
+        $menu_aktif = 'event||';
+        $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+
+        if(!$cek['u']){
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied'
+            ], 422);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'hari' => 'required',
+            'tanggal' => 'required',
+            'kode_event_program' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+        DB::beginTransaction();
+
+        try {
+            DB::table('t_event_program')
+                ->where('kode_event_program', $request->kode_event_program)
+                ->update([
+                    'hari_program' => $request->hari,
+                    'tanggal_program' => $request->tanggal,
+                    'updated_at_program' => now()
+                ]);
+
+            $existingDetail = DB::table('t_event_program_detail')
+                ->where('event_program_kode', $request->kode_event_program)
+                ->pluck('kode_event_program_detail')
+                ->toArray();
+            $savedDetail = [];
+
+            for ($i = 0; $i < count($request->sesi); $i++) {
+                $kodeDetail = $request->kode_detail[$i] ?? '';
+                if (!empty($kodeDetail)) {
+                    DB::table('t_event_program_detail')
+                        ->where('kode_event_program_detail', $kodeDetail)
+                        ->update([
+                            'sesi_program_detail' => $request->sesi[$i],
+                            'keterangan_program_detail' => $request->keterangan[$i],
+                            'awal_program_detail' => $request->jam_awal[$i],
+                            'akhir_program_detail' => $request->jam_akhir[$i],
+                            'updated_at_program_detail' => now()
+                        ]);
+                    $savedDetail[] = $kodeDetail;
+                } else {
+                    $kodeDetailBaru =
+                        $request->kode_event_program.'D'.date('His').rand(100,999);
+
+                    DB::table('t_event_program_detail')->insert([
+                        'kode_event_program_detail' => $kodeDetailBaru,
+                        'event_program_kode' => $request->kode_event_program,
+                        'event_kode' => $request->key,
+                        'sesi_program_detail' => $request->sesi[$i],
+                        'keterangan_program_detail' => $request->keterangan[$i],
+                        'awal_program_detail' => $request->jam_awal[$i],
+                        'akhir_program_detail' => $request->jam_akhir[$i],
+                        'created_at_program_detail' => now()
+                    ]);
+
+                    $savedDetail[] = $kodeDetailBaru;
+                }
+            }
+
+            $deleted = array_diff($existingDetail, $savedDetail);
+
+            if(count($deleted) > 0){
+                DB::table('t_event_program_detail')
+                    ->whereIn('kode_event_program_detail', $deleted)
+                    ->delete();
+            }
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'Successfully updated program event data'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteProgramEventAction(Request $request)
+    {
+        if ($request->session()->has('id')) {
+            $menu_aktif = 'event||';
+            $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+            if(!$cek['d']){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access denied'
+                ], 422);
+                }
+            $validator = Validator::make($request->all(), [
+                'key' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 422);
+            }
+            $id = $request->key;
+            $dt_exist = DB::table('t_event_program')->where('kode_event_program', $id)->first();
+            $deleted = DB::table('t_event_program')->where('kode_event_program', $id)->delete();
+
+            if ($deleted) {
+                $deleted_detail = DB::table('t_event_program_detail')->where('event_program_kode', $id)->delete();
+                $this->dataService->createLog($request,'deleteProgramEventAction' ,'Successfully deleted program event data','',json_encode($dt_exist));
+                return response()->json(['success' => true, 'message' => 'Successfully deleted program event data']);
+            } else {
+                $this->dataService->createLog($request,'deleteProgramEventAction' ,'Failed to delete program event data','',json_encode($dt_exist));
+                return response()->json(['success' => false, 'message' => 'Failed to delete program event data']);
+            }
+        }    
+    }
+
+    public function kolaborasiEvent($kode_event, Request $request)
+    {
+        $menu_aktif = 'event||';
+        if (!$request->session()->has('id')) {
+            $prefix = trim(env('APP_ROUTE'), '/');
+            return Redirect::to(($prefix ? '/' . $prefix : '') . '/login-backend');
+        }
+        $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+        $navbar = $this->dataService->getMenuHTML($menu_aktif, Session::getFacadeRoot());
+        
+        $detail = DB::table('t_event')->where('kode_event', $kode_event)->first();
+        $data = [
+            'menu' => 'Collaborators Event',
+            'menu_aktif' => $menu_aktif,
+            'navbar' => $navbar,
+            'cek_permit' => $cek,
+            'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
+										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+										<li class="breadcrumb-item  fw-bold lh-1">Collaborators Event</li>
+									</ul>',
+            'kode_event' => $kode_event,
+            'detail' => $detail
+        ];
+         if (!$cek['u']) {
+             return view('admin-panel.error_page.403-page', $data);
+        }
+
+        return view('admin-panel.event.kolaborasi.main', $data);
+    }
+
+    
+    public function getTableKolaborasiEvent(Request $request)
+    {
+        if ($request->session()->has('id')) {
+            $menu_aktif = 'event||';
+            $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+            
+            $query = DB::table('t_event_kolaborasi as a')
+                ->selectRaw("a.*");
+                if ($request->filled('key')) {
+                    $query->where('a.event_kode_kolaborasi',  $request->input('key'));
+                }
+                
+           $query->orderBy('a.id_event_kolaborasi', 'desc')->get();
+
+            return DataTables::of($query)
+                ->addIndexColumn()  
+                ->addColumn('gambar', function ($row) {
+                    if ($row->gambar_kolaborasi) {
+                        $url = asset('storage/' . $row->gambar_kolaborasi);
+                        return '<img src="'.$url.'" width="80" class="img-icon"/>';
+                    }
+                    return '-';
+                })
+                ->addColumn('action', function ($row)  use ($cek) {
+                    $infoUrl = route('editKolaborasiEvent', $row->kode_kolaborasi);
+                    $btn = '';
+                    if($cek['u']){
+                        $btn .= '<a href=' . $infoUrl . ' class="btn btn-light-warning btn-sm"><span class="fa fa-pencil"></span></a> ';
+                    }
+                    if($cek['d']){
+                        $btn .= '<button title="HAPUS" class="btn btn-danger btn-delete-event btn-sm" data-id="' . $row->kode_kolaborasi . '"><span class="fa fa-trash"></span></button> ';
+                    }
+                    return $btn;
+                })
+                
+                ->rawColumns(['action','gambar'])
+                ->make(true);
+        }
+    }
+
+    public function tambahKolaborasiEvent($kode_event, Request $request)
+    {
+        $menu_aktif = 'event||';
+        if (!$request->session()->has('id')) {
+            $prefix = trim(env('APP_ROUTE'), '/');
+            return Redirect::to(($prefix ? '/' . $prefix : '') . '/login-backend');
+        }
+        $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+        $navbar = $this->dataService->getMenuHTML($menu_aktif, Session::getFacadeRoot());
+        
+        $detail = DB::table('t_event')->where('kode_event', $kode_event)->first();
+        $data = [
+            'menu' => 'Add Collaborator Event',
+            'menu_aktif' => $menu_aktif,
+            'navbar' => $navbar,
+            'cek_permit' => $cek,
+            'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
+										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+                                        <li class="breadcrumb-item  fw-bold lh-1">Collaborator Events</li>
+                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+										<li class="breadcrumb-item  fw-bold lh-1">Add Collaborator Event</li>
+									</ul>',
+            'kode_event' => $kode_event,
+            'detail' => $detail
+        ];
+         if (!$cek['u']) {
+             return view('admin-panel.error_page.403-page', $data);
+        }
+
+        return view('admin-panel.event.kolaborasi.tambah', $data);
+    }
+
+    public function addKolaborasiEventAction(Request $request)
+    {
+        if ($request->session()->has('id')) {
+            $menu_aktif = 'event||';
+            $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+            if(!$cek['c']){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access denied'
+                ], 422);
+            }
+                
+            $validator = Validator::make($request->all(), [
+                'nama'       => 'required|string|max:255',
+                'key'       => 'required',
+                'keterangan'       => 'required',
+                'gambar'     => 'required|image|mimes:jpg,jpeg,png|max:5048',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first()
+                ], 422);
+            }
+
+            $path = null;
+            $filename = null;
+            if ($request->hasFile('gambar')) {
+                $filename = 'clb_' .time() . '_' . $request->file('gambar')->getClientOriginalName();
+                $path = $request->file('gambar')->storeAs('event', $filename, 'public');
+            }
+
+            $kode = $request->key.date('is');
+            $data = [
+                'kode_kolaborasi'      => $kode,
+                'event_kode_kolaborasi'      => $request->key,
+                'nama_kolaborasi'      => $request->nama,
+                'keterangan_kolaborasi'      => $request->keterangan,
+                'gambar_kolaborasi'      => $path,
+                'created_at_kolaborasi'            => now(),
+            ];
+            
+            $insert = DB::table('t_event_kolaborasi')->insert($data);
+
+            if($insert){
+                $this->dataService->createLog($request,'addKolaborasiEventAction' ,'Successfully added collaborator event data',json_encode($data),'');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Successfully added collaborator event data'
+                ]);
+            }else{
+                $this->dataService->createLog($request,'addKolaborasiEventAction' ,'Failed to add collaborator event data',json_encode($data),'');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to add collaborator event data'
+                ]);
+            }
+        }
+    }
+
+    
+    public function editKolaborasiEvent($kode_kolaborasi, Request $request)
+    {
+        $menu_aktif = 'event||';
+        if (!$request->session()->has('id')) {
+            $prefix = trim(env('APP_ROUTE'), '/');
+            return Redirect::to(($prefix ? '/' . $prefix : '') . '/login-backend');
+        }
+        $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+        $navbar = $this->dataService->getMenuHTML($menu_aktif, Session::getFacadeRoot());
+        
+        $detail = DB::table('t_event_kolaborasi')->where('kode_kolaborasi', $kode_kolaborasi)->first();
+        $data = [
+            'menu' => 'Edit Collaborator Event',
+            'menu_aktif' => $menu_aktif,
+            'navbar' => $navbar,
+            'cek_permit' => $cek,
+            'breadcrumb' => '<ul class="breadcrumb breadcrumb-separatorless fw-semibold">
+										<li class="breadcrumb-item  fw-bold lh-1"><span class=" text-hover-primary"><i class="ki-outline ki-home  fs-3"></i></span></li>
+										<li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+										<li class="breadcrumb-item  fw-bold lh-1">Events</li>
+                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+                                        <li class="breadcrumb-item  fw-bold lh-1">Collaborator Events</li>
+                                        <li class="breadcrumb-item"><i class="ki-outline ki-right fs-4  mx-n1"></i></li>
+										<li class="breadcrumb-item  fw-bold lh-1">Edit Collaborator Event</li>
+									</ul>',
+            'kode_kolaborasi' => $kode_kolaborasi,
+            'detail' => $detail
+        ];
+         if (!$cek['u']) {
+             return view('admin-panel.error_page.403-page', $data);
+        }
+
+        return view('admin-panel.event.kolaborasi.edit', $data);
+    }
+
+    public function editKolaborasiEventAction(Request $request)
+    {
+        if ($request->session()->has('id')) {
+            $menu_aktif = 'event||';
+            $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+            if(!$cek['u']){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access denied'
+                ], 422);
+            }
+                
+            $validator = Validator::make($request->all(), [
+                'key'       => 'required',
+                'nama'       => 'required|string|max:255',
+                'keterangan'       => 'required',
+                'gambar'     => 'nullable|image|mimes:jpg,jpeg,png|max:5048',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first()
+                ], 422);
+            }
+            $updateData = [
+                'nama_kolaborasi'      => $request->nama,
+                'keterangan_kolaborasi'      => $request->keterangan,
+                'updated_at_kolaborasi'            => now(),
+            ];
+            if ($request->hasFile('gambar')) {
+                $filename = 'clb_' .time() . '_' . $request->file('gambar')->getClientOriginalName();
+                $path = $request->file('gambar')->storeAs('event', $filename, 'public');
+                $updateData['gambar_kolaborasi'] = $path;
+            }
+
+            $id =  $request->key;
+            $dt_exist = DB::table('t_event_kolaborasi')->where('kode_kolaborasi', $id)->first();
+            $update = DB::table('t_event_kolaborasi')->where('kode_kolaborasi', $id)->update($updateData);
+
+            if($update){
+                $this->dataService->createLog($request,'editKolaborasiEventAction' ,'Event Collaborator updated successfully',json_encode($updateData),json_encode($dt_exist));
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Event Collaborator updated successfully'
+                ]);
+            }else{
+                $this->dataService->createLog($request,'editKolaborasiEventAction' ,'Event Collaborator failed to update',json_encode($updateData),json_encode($dt_exist));
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event Collaborator failed to update'
+                ]);
+            }
+        }
+    }
+
+    
+    public function deleteKolaborasiEventAction(Request $request)
+    {
+        if ($request->session()->has('id')) {
+            $menu_aktif = 'event||';
+            $cek = $this->dataService->cekPermit($menu_aktif, Session::getFacadeRoot());
+            if(!$cek['d']){
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access denied'
+                ], 422);
+                }
+            $validator = Validator::make($request->all(), [
+                'key' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 422);
+            }
+            $id = $request->key;
+            $dt_exist = DB::table('t_event_kolaborasi')->where('kode_kolaborasi', $id)->first();
+            $deleted = DB::table('t_event_kolaborasi')->where('kode_kolaborasi', $id)->delete();
+
+            if ($deleted) {
+                $this->dataService->createLog($request,'deleteKolaborasiEventAction' ,'Successfully deleted collaborator event data','',json_encode($dt_exist));
+                return response()->json(['success' => true, 'message' => 'Successfully deleted collaborator event data']);
+            } else {
+                $this->dataService->createLog($request,'deleteKolaborasiEventAction' ,'Failed to delete collaborator event data','',json_encode($dt_exist));
+                return response()->json(['success' => false, 'message' => 'Failed to delete collaborator event data']);
+            }
+        }    
+    }
+
 }

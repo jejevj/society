@@ -9,7 +9,18 @@ Route::prefix('society-event')->group(function () {
     // frontend 
     Route::get('/about', [App\Http\Controllers\WebHomeController::class, 'index'])->name('about');
     Route::get('/home', [App\Http\Controllers\WebHomeController::class, 'index'])->name('home');
+    Route::get('/detailEvent/{key}', [App\Http\Controllers\WebHomeController::class, 'detailEvent'])->name('detailEvent');
+    Route::post('/event/add-cart', [App\Http\Controllers\WebHomeController::class, 'addCartEvent'])->name('event.add.cart');
 
+<<<<<<< Updated upstream
+    Route::get('/event-cart/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCartEvent'])->name('event-cart');
+    Route::post('/savePackageCart',[App\Http\Controllers\WebHomeController::class, 'savePackageCart'])->name('savePackageCart');
+    Route::get('/checkout-event/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCheckoutEvent']);
+    Route::get('/my-cart', [App\Http\Controllers\WebHomeController::class, 'myCart'])->name('my-cart');
+    Route::post('/updateCartEvent', [App\Http\Controllers\WebHomeController::class, 'updateCartEvent'])->name('updateCartEvent');
+    Route::post('/deleteCartEvent', [App\Http\Controllers\WebHomeController::class, 'deleteCartEvent'])->name('deleteCartEvent');
+    
+=======
     // Halaman list event publik (path /list-event agar tidak bentrok dengan backend admin /event)
     Route::get('/list-event', [App\Http\Controllers\WebEventPublicController::class, 'index'])->name('list-event');
 
@@ -29,6 +40,7 @@ Route::prefix('society-event')->group(function () {
 
     Route::get('/hubungi-kami', [App\Http\Controllers\WebHubungiController::class, 'index'])->name('hubungi-kami');
     Route::post('/hubungiKamiAction', [App\Http\Controllers\WebHubungiController::class, 'hubungiKamiAction'])->name('hubungiKamiAction');
+>>>>>>> Stashed changes
 
     Route::get('/login', [App\Http\Controllers\WebLoginController::class, 'index'])->name('login');
     Route::get('/register', [App\Http\Controllers\WebLoginController::class, 'register'])->name('register');
@@ -221,6 +233,16 @@ Route::prefix('society-event')->group(function () {
     Route::get('/tambahProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'tambahProgramEvent'])->name('tambahProgramEvent');
     Route::get('/editProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'editProgramEvent'])->name('editProgramEvent');
     Route::post('/addProgramEventAction', [App\Http\Controllers\EventController::class, 'addProgramEventAction'])->name('addProgramEventAction');
+    Route::post('/editProgramEventAction', [App\Http\Controllers\EventController::class, 'editProgramEventAction'])->name('editProgramEventAction');
+    Route::post('/deleteProgramEventAction', [App\Http\Controllers\EventController::class, 'deleteProgramEventAction'])->name('deleteProgramEventAction');
+
+    Route::get('/getTableKolaborasiEvent', [App\Http\Controllers\EventController::class, 'getTableKolaborasiEvent'])->name('getTableKolaborasiEvent');
+    Route::get('/tambahKolaborasiEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'tambahKolaborasiEvent'])->name('tambahKolaborasiEvent');
+    Route::get('/editKolaborasiEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'editKolaborasiEvent'])->name('editKolaborasiEvent');
+    Route::post('/addKolaborasiEventAction', [App\Http\Controllers\EventController::class, 'addKolaborasiEventAction'])->name('addKolaborasiEventAction');
+    Route::post('/editKolaborasiEventAction', [App\Http\Controllers\EventController::class, 'editKolaborasiEventAction'])->name('editKolaborasiEventAction');
+    Route::post('/deleteKolaborasiEventAction', [App\Http\Controllers\EventController::class, 'deleteKolaborasiEventAction'])->name('deleteKolaborasiEventAction');
+    
 
     Route::get('event-registrasi', [App\Http\Controllers\EventRegistrasiController::class, 'index'])->name('event-registrasi');
     Route::get('/getTableRegistrasi', [App\Http\Controllers\EventRegistrasiController::class, 'getTableRegistrasi'])->name('getTableRegistrasi');

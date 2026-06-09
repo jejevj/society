@@ -4612,7 +4612,7 @@ fieldset:disabled .btn {
   --bs-accordion-btn-focus-box-shadow: none;
   --bs-accordion-body-padding-x: 1.5rem;
   --bs-accordion-body-padding-y: 1.5rem;
-  --bs-accordion-active-color: var(--bs-primary);
+  --bs-accordion-active-color: #ce472c;
   --bs-accordion-active-bg: var(--bs-gray-100);
 }
 .accordion-button {
@@ -46556,8 +46556,8 @@ code:not([class*="language-"]).code-dark {
   color: var(--bs-primary);
 }
 .badge-light-primary {
-  background-color: var(--bs-primary-light);
-  color: var(--bs-primary);
+  background-color: #fae7e3;
+  color: #ce472c;
 }
 .badge-secondary {
   color: var(--bs-secondary-inverse);

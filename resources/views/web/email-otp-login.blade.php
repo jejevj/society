@@ -2,17 +2,17 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Kode OTP Login Portal SDI</title>
+    <title>OTP Code</title>
 </head>
 <body style="font-family: Arial, sans-serif;">
-    <h2>Halo, {{ $nama }}</h2>
-    <p>Berikut Kode OTP Anda:</p>
+    <h2>Hi, {{ $nama }}</h2>
+    <p>Here is your OTP Code:</p>
 
     <p>
         <span 
            style="display:inline-block;
                   padding:12px 20px;
-                  background-color:#28a745;
+                  background-color:#cc0a24;
                   color:#fff;
                   text-decoration:none;
                   border-radius:6px;">
@@ -20,6 +20,6 @@
 </span>
     </p>
 
-    <p>Jaga Kerahasiaan kode OTP anda, Terimakasih</p>
+    <p>Keep your OTP code confidential, Thank you</p>
 </body>
 </html>

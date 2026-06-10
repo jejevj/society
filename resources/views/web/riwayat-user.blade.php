@@ -49,8 +49,6 @@
 }
 .retry-banner .rb-text { font-size: 0.82rem; color: #92400e; }
 .retry-banner .rb-text strong { display: block; font-size: 0.88rem; color: #78350f; margin-bottom: 2px; }
-.retry-banner .rb-text.expired { color: #991b1b; }
-.retry-banner .rb-text.expired strong { color: #7f1d1d; }
 .btn-retry {
     background: #E62020;
     color: #fff;
@@ -115,8 +113,8 @@
 @foreach($eventRegistrasi as $reg)
 <div class="col-md-4 col-sm-6">
     <div class="ev-card">
-        @if($reg->gambar_event)
-            <img src="{{ asset('storage/'.$reg->gambar_event) }}" class="ev-card-img" alt="{{ $reg->judul_event }}">
+        @if(!empty($reg->background_event))
+            <img src="{{ asset('storage/'.$reg->background_event) }}" class="ev-card-img" alt="{{ $reg->judul_event }}">
         @else
             <div class="ev-card-img d-flex align-items-center justify-content-center" style="background:#f1f5f9;">
                 <i class="fa-solid fa-calendar-days fa-2x" style="color:#cbd5e1"></i>
@@ -141,7 +139,6 @@
                 @endif
             </div>
 
-            {{-- Status badge berdasarkan status_registrasi (A=aktif, P=pending) dan payment_status --}}
             @php
                 if ($reg->status_registrasi === 'A') {
                     $badgeClass = 'confirmed';
@@ -159,7 +156,6 @@
             @endphp
             <span class="ev-badge {{ $badgeClass }}">{{ $badgeLabel }}</span>
 
-            {{-- Addons --}}
             @if($reg->addons->count() > 0)
             <div class="mt-2">
                 @foreach($reg->addons as $addon)
@@ -168,7 +164,6 @@
             </div>
             @endif
 
-            {{-- RETRY BANNER: tampil bila belum bayar --}}
             @if($reg->status_registrasi !== 'A' && in_array($reg->payment_status, ['PENDING','UNPAID']))
             <div class="retry-banner mt-2">
                 <div class="rb-text">
@@ -185,7 +180,6 @@
             <div class="pay-inline" id="payStatus_{{ $reg->kode_event }}"></div>
             @endif
 
-            {{-- Terdaftar at --}}
             @if($reg->status_registrasi === 'A' && $reg->confirmed_at)
             <div style="font-size:0.73rem;color:#10b981;margin-top:6px;">
                 <i class="fa-solid fa-circle-check me-1"></i>
@@ -202,7 +196,6 @@
 </div>
 </div>
 
-{{-- ─── SCRIPT RETRY PAYMENT ─── --}}
 <script>
 var _csrf         = '{{ csrf_token() }}';
 var _clientKey    = '{{ $midtransConfig->client_key ?? '' }}';
@@ -238,7 +231,6 @@ function doRetryPayment(btn) {
     btn.innerHTML = '<div class="spinner-sm"></div> Loading...';
     setPayInline(kodeEvent, 'pending', '<div class="spinner-sm"></div><span>Menyiapkan pembayaran...</span>');
 
-    // Poll status dari server, lalu buka Snap jika masih pending
     $.ajax({
         url: '{{ route("cart.check-payment") }}',
         type: 'POST',
@@ -256,7 +248,6 @@ function doRetryPayment(btn) {
                 return;
             }
 
-            // Masih pending — buka Snap
             if (!_clientKey) {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
@@ -272,7 +263,6 @@ function doRetryPayment(btn) {
                     return;
                 }
 
-                // Dapatkan snap token baru dari server
                 $.ajax({
                     url: '{{ route("cart.retry-snap-token") }}',
                     type: 'POST',

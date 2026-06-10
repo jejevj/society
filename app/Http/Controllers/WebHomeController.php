@@ -251,7 +251,8 @@ class WebHomeController extends Controller
             return response()->json(['status' => false, 'message' => 'Event not found.']);
         }
 
-        $qty = max(1, (int) ($request->qty ?? 1));
+        // Baca dari 'quantity' (nama field di detail.blade.php) atau fallback ke 'qty'
+        $qty = max(1, (int) ($request->quantity ?? $request->qty ?? 1));
 
         $cek = DB::table('t_event_cart')
             ->where('id_user', session('id_user'))
@@ -387,13 +388,11 @@ class WebHomeController extends Controller
                 ->first();
 
             if ($existingReg && !empty($existingReg->snap_token)) {
-                // Kasus 1: Ada pending + snap_token tersimpan → langsung pakai
                 $orderId    = $existingReg->midtrans_order_id;
                 $snapToken  = $existingReg->snap_token;
                 $pendingReg = $existingReg;
 
             } elseif ($existingReg && empty($existingReg->snap_token)) {
-                // Kasus 2: Ada pending tapi snap_token kosong → hapus & buat baru
                 DB::table('t_event_registrasi')
                     ->where('kode_registrasi', $existingReg->kode_registrasi)
                     ->delete();
@@ -423,7 +422,6 @@ class WebHomeController extends Controller
                 ]);
 
             } else {
-                // Kasus 3: Belum ada pending → order_id baru
                 $orderId   = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
                 $params    = $this->buildSnapParams($midtransConfig, $orderId, $grandTotal, $cart, $addon, $user);
                 $snapToken = $this->getSnapToken($midtransConfig, $params);

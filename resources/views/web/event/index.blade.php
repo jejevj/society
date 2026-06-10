@@ -2,7 +2,7 @@
 
 <style>
 /* ─── PAGE ─── */
-.ev-page { padding-top: 100px; padding-bottom: 70px; min-height: 100vh; background: #f4f6f9; }
+.ev-page { padding-top: 30px; padding-bottom: 70px; min-height: 100vh; background: #f4f6f9; }
 .ev-page-title { font-size: 1.7rem; font-weight: 900; color: #1a1a1a; }
 .ev-page-sub   { font-size: 0.92rem; color: #777; }
 
@@ -235,6 +235,21 @@
     cursor: not-allowed;
     pointer-events: none;
 }
+.ev-btn-detail {
+    display: block;
+    text-align: center;
+    background: #fff;
+    color: #E62020;
+    border: 2px solid #E62020;
+    border-radius: 10px;
+    padding: 8px;
+    font-size: 0.83rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s;
+    margin-top: 6px;
+}
+.ev-btn-detail:hover { background: #fff0f0; color: #c41a1a; border-color: #c41a1a; }
 
 /* Empty state */
 .ev-empty { text-align: center; padding: 60px 20px; background: #fff; border-radius: 18px; border: 1.5px solid #f0f0f0; }
@@ -452,16 +467,29 @@
                         </div>
                         @endif
 
-                        {{-- CTA --}}
+                        {{-- CTA: logic berdasarkan status login & status pendaftaran --}}
                         @if($e->is_open)
-                            <a href="{{ route('register') }}?event={{ $e->kode_event }}" class="ev-btn-register">
-                                <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Daftar Sekarang
-                            </a>
+                            @if(session('id_user'))
+                                {{-- User sudah login: langsung ke detail event untuk proses cart/registrasi --}}
+                                <a href="{{ route('detailEvent', ['key' => $e->kode_event]) }}" class="ev-btn-register">
+                                    <i class="fa-solid fa-cart-plus me-1"></i> Daftar / Beli Tiket
+                                </a>
+                            @else
+                                {{-- Guest: arahkan ke halaman register dengan event param --}}
+                                <a href="{{ route('register') }}?event={{ $e->kode_event }}" class="ev-btn-register">
+                                    <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Daftar Sekarang
+                                </a>
+                            @endif
                         @else
                             <span class="ev-btn-register disabled">
                                 <i class="fa-solid fa-lock me-1"></i> Pendaftaran Ditutup
                             </span>
                         @endif
+
+                        {{-- Tombol lihat detail selalu tersedia --}}
+                        <a href="{{ route('detailEvent', ['key' => $e->kode_event]) }}" class="ev-btn-detail">
+                            <i class="fa-solid fa-circle-info me-1"></i> Lihat Detail
+                        </a>
 
                     </div>
                 </div>

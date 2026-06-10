@@ -2,6 +2,25 @@
 
 <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
     <div class="container py-10">
+
+        {{-- Progress Steps --}}
+        <div class="d-flex align-items-center justify-content-center mb-8 gap-3">
+            <div class="d-flex align-items-center">
+                <span class="badge rounded-pill bg-detail px-3 py-2">1</span>
+                <span class="ms-2 fw-bold text-detail">Add-On</span>
+            </div>
+            <div class="border-top border-2 flex-grow-1 mx-2" style="max-width:60px"></div>
+            <div class="d-flex align-items-center">
+                <span class="badge rounded-pill bg-secondary px-3 py-2">2</span>
+                <span class="ms-2 text-muted">Participant Data</span>
+            </div>
+            <div class="border-top border-2 flex-grow-1 mx-2" style="max-width:60px"></div>
+            <div class="d-flex align-items-center">
+                <span class="badge rounded-pill bg-secondary px-3 py-2">3</span>
+                <span class="ms-2 text-muted">Checkout</span>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-lg-8">
                 <div class="card shadow-sm border-0 mb-5">
@@ -95,7 +114,7 @@
                             </span>
                         </div>
                         <button type="button" id="btnContinue" class="btn bg-detail text-white w-100 mt-5 py-3">
-                            Save & Continue Checkout
+                            <i class="fa fa-arrow-right me-2"></i>Save & Fill Participant Data
                         </button>
                     </div>
                 </div>
@@ -117,14 +136,8 @@ $('#btnContinue').on('click', function() {
         },
         success: function(res) {
             if (res.status) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: res.message,
-                    confirmButtonColor: '#ff7a00'
-                }).then(() => {
-                    window.location.href = "{{ url(env('APP_ROUTE') . '/checkout-event') }}/" + res.kode_cart;
-                });
+                // Redirect ke participant form, bukan langsung checkout
+                window.location.href = "{{ url(env('APP_ROUTE') . '/participant-form') }}/" + res.kode_cart;
             } else {
                 Swal.fire({ icon: 'warning', title: 'Warning', text: res.message, confirmButtonColor: '#ff7a00' });
             }
@@ -135,7 +148,7 @@ $('#btnContinue').on('click', function() {
         },
         complete: function() {
             btn.prop('disabled', false);
-            btn.html('Save & Continue Checkout');
+            btn.html('<i class="fa fa-arrow-right me-2"></i>Save & Fill Participant Data');
         }
     });
 });

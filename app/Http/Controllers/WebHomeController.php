@@ -55,7 +55,7 @@ class WebHomeController extends Controller
             : 'https://api.sandbox.midtrans.com';
     }
 
-    // ── helper: generate Snap Token via HTTP (tanpa package midtrans-php) ─
+    // ── helper: generate Snap Token via HTTP ──────────────────────────────
     private function getSnapToken(object $cfg, array $params): ?string
     {
         try {
@@ -78,6 +78,59 @@ class WebHomeController extends Controller
             Log::error('Cart getSnapToken error: ' . $e->getMessage());
             return null;
         }
+    }
+
+    // ── helper: build params untuk Snap Token ────────────────────────────
+    private function buildSnapParams(object $cfg, string $orderId, int $grandTotal, object $cart, $addon, object $user): array
+    {
+        $email = filter_var($user->email_user ?? '', FILTER_VALIDATE_EMAIL)
+            ? $user->email_user
+            : 'noreply@society-event.com';
+
+        $itemDetails = [];
+        if ($cart->harga_event > 0) {
+            $itemDetails[] = [
+                'id'       => $cart->kode_event,
+                'price'    => (int) $cart->harga_event,
+                'quantity' => 1,
+                'name'     => mb_substr($cart->judul_event, 0, 50),
+            ];
+        }
+        foreach ($addon as $ad) {
+            if ($ad->harga_paket > 0) {
+                $itemDetails[] = [
+                    'id'       => $ad->kode_event_paket,
+                    'price'    => (int) $ad->harga_paket,
+                    'quantity' => 1,
+                    'name'     => mb_substr($ad->judul_paket, 0, 50),
+                ];
+            }
+        }
+
+        $params = [
+            'transaction_details' => [
+                'order_id'     => $orderId,
+                'gross_amount' => $grandTotal,
+            ],
+            'customer_details' => [
+                'first_name' => $user->nama_user ?? 'User',
+                'email'      => $email,
+                'phone'      => $user->no_hp_user ?? '',
+            ],
+        ];
+
+        if (!empty($itemDetails)) {
+            $params['item_details'] = $itemDetails;
+        }
+
+        if (!empty($cfg->payment_types)) {
+            $types = json_decode($cfg->payment_types, true);
+            if (!empty($types)) {
+                $params['enabled_payments'] = $types;
+            }
+        }
+
+        return $params;
     }
 
     // ── helper: cek status transaksi via Core API ─────────────────────────
@@ -162,7 +215,6 @@ class WebHomeController extends Controller
                 ->get();
         }
 
-        // Cek apakah user yang login sudah terdaftar di event ini
         $is_registered = false;
         if (session()->has('id_user')) {
             $is_registered = DB::table('t_event_registrasi')
@@ -301,8 +353,9 @@ class WebHomeController extends Controller
         if (!$request->session()->has('id_user')) {
             return redirect()->route('login');
         }
-        $menu_aktif     = 'about';
-        $cart           = DB::table('t_event_cart as c')
+
+        $menu_aktif = 'about';
+        $cart       = DB::table('t_event_cart as c')
             ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
             ->where('c.kode_cart', $kode_cart)
             ->select('c.*', 'e.judul_event', 'e.lokasi_event',
@@ -313,7 +366,7 @@ class WebHomeController extends Controller
 
         $addon         = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
         $subtotalAddon = $addon->sum('harga_paket');
-        $grandTotal    = $cart->subtotal + $subtotalAddon;
+        $grandTotal    = (int) ($cart->subtotal + $subtotalAddon);
 
         $midtransConfig = $this->midtransConfig();
         $snapToken      = null;
@@ -321,131 +374,55 @@ class WebHomeController extends Controller
         $pendingReg     = null;
 
         if ($midtransConfig && $grandTotal > 0) {
-            // Cek registrasi PENDING yang sudah ada untuk cart ini
+            $user = DB::table('app_user')->where('id_user', session('id_user'))->first();
+
+            // Cek apakah sudah ada registrasi PENDING untuk cart ini
             $existingReg = DB::table('t_event_registrasi')
                 ->where('kode_cart', $kode_cart)
                 ->where('payment_status', 'PENDING')
                 ->first();
 
-            if ($existingReg) {
-                // Sudah ada PENDING — gunakan snap_token yang tersimpan (jika ada)
-                // atau regenerate dengan order_id yang SAMA
+            if ($existingReg && !empty($existingReg->snap_token)) {
+                // ✔ Kasus 1: Ada pending + snap_token tersimpan → langsung pakai
                 $orderId    = $existingReg->midtrans_order_id;
+                $snapToken  = $existingReg->snap_token;
                 $pendingReg = $existingReg;
 
-                // Coba ambil snap token dari DB jika tersimpan
-                $snapToken = $existingReg->snap_token ?? null;
+            } elseif ($existingReg && empty($existingReg->snap_token)) {
+                // ❌ Kasus 2: Ada pending tapi snap_token kosong (order_id sudah dipakai Midtrans)
+                // Solusi: hapus registrasi PENDING lama, generate order_id baru
+                DB::table('t_event_registrasi')
+                    ->where('kode_registrasi', $existingReg->kode_registrasi)
+                    ->delete();
 
-                // Jika snap_token belum tersimpan, generate ulang dengan order_id yang sama
-                // Midtrans mengizinkan regenerate token untuk order_id yang sama selama belum expire
-                if (!$snapToken) {
-                    $user        = DB::table('app_user')->where('id_user', session('id_user'))->first();
-                    $itemDetails = [];
+                $orderId   = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
+                $params    = $this->buildSnapParams($midtransConfig, $orderId, $grandTotal, $cart, $addon, $user);
+                $snapToken = $this->getSnapToken($midtransConfig, $params);
 
-                    if ($cart->harga_event > 0) {
-                        $itemDetails[] = [
-                            'id'       => $cart->kode_event,
-                            'price'    => (int) $cart->harga_event,
-                            'quantity' => 1,
-                            'name'     => mb_substr($cart->judul_event, 0, 50),
-                        ];
-                    }
-                    foreach ($addon as $ad) {
-                        if ($ad->harga_paket > 0) {
-                            $itemDetails[] = [
-                                'id'       => $ad->kode_event_paket,
-                                'price'    => (int) $ad->harga_paket,
-                                'quantity' => 1,
-                                'name'     => mb_substr($ad->judul_paket, 0, 50),
-                            ];
-                        }
-                    }
+                $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
+                DB::table('t_event_registrasi')->insert([
+                    'kode_registrasi'   => $kodeRegistrasi,
+                    'kode_event'        => $cart->kode_event,
+                    'kode_cart'         => $kode_cart,
+                    'id_user'           => session('id_user'),
+                    'nama_peserta'      => $user->nama_user       ?? '',
+                    'email_peserta'     => $user->email_user      ?? '',
+                    'instansi_peserta'  => $user->organisasi_user ?? null,
+                    'no_hp_peserta'     => $user->no_hp_user      ?? null,
+                    'total_bayar'       => (float) $grandTotal,
+                    'midtrans_order_id' => $orderId,
+                    'snap_token'        => $snapToken,
+                    'payment_status'    => 'PENDING',
+                    'status_registrasi' => 'P',
+                    'confirmed_at'      => null,
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ]);
 
-                    $email = filter_var($user->email_user ?? '', FILTER_VALIDATE_EMAIL)
-                        ? $user->email_user
-                        : 'noreply@society-event.com';
-
-                    $params = [
-                        'transaction_details' => [
-                            'order_id'     => $orderId,
-                            'gross_amount' => (int) $grandTotal,
-                        ],
-                        'customer_details' => [
-                            'first_name' => $user->nama_user  ?? 'User',
-                            'email'      => $email,
-                            'phone'      => $user->no_hp_user ?? '',
-                        ],
-                    ];
-                    if (!empty($itemDetails)) {
-                        $params['item_details'] = $itemDetails;
-                    }
-                    if (!empty($midtransConfig->payment_types)) {
-                        $types = json_decode($midtransConfig->payment_types, true);
-                        if (!empty($types)) {
-                            $params['enabled_payments'] = $types;
-                        }
-                    }
-
-                    $snapToken = $this->getSnapToken($midtransConfig, $params);
-
-                    // Simpan snap_token ke DB agar tidak perlu regenerate terus
-                    if ($snapToken) {
-                        DB::table('t_event_registrasi')
-                            ->where('midtrans_order_id', $orderId)
-                            ->update(['snap_token' => $snapToken, 'updated_at' => now()]);
-                    }
-                }
             } else {
-                // Belum ada PENDING — buat order_id baru dan registrasi baru
-                $orderId = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
-
-                $user        = DB::table('app_user')->where('id_user', session('id_user'))->first();
-                $itemDetails = [];
-
-                if ($cart->harga_event > 0) {
-                    $itemDetails[] = [
-                        'id'       => $cart->kode_event,
-                        'price'    => (int) $cart->harga_event,
-                        'quantity' => 1,
-                        'name'     => mb_substr($cart->judul_event, 0, 50),
-                    ];
-                }
-                foreach ($addon as $ad) {
-                    if ($ad->harga_paket > 0) {
-                        $itemDetails[] = [
-                            'id'       => $ad->kode_event_paket,
-                            'price'    => (int) $ad->harga_paket,
-                            'quantity' => 1,
-                            'name'     => mb_substr($ad->judul_paket, 0, 50),
-                        ];
-                    }
-                }
-
-                $email = filter_var($user->email_user ?? '', FILTER_VALIDATE_EMAIL)
-                    ? $user->email_user
-                    : 'noreply@society-event.com';
-
-                $params = [
-                    'transaction_details' => [
-                        'order_id'     => $orderId,
-                        'gross_amount' => (int) $grandTotal,
-                    ],
-                    'customer_details' => [
-                        'first_name' => $user->nama_user  ?? 'User',
-                        'email'      => $email,
-                        'phone'      => $user->no_hp_user ?? '',
-                    ],
-                ];
-                if (!empty($itemDetails)) {
-                    $params['item_details'] = $itemDetails;
-                }
-                if (!empty($midtransConfig->payment_types)) {
-                    $types = json_decode($midtransConfig->payment_types, true);
-                    if (!empty($types)) {
-                        $params['enabled_payments'] = $types;
-                    }
-                }
-
+                // ✔ Kasus 3: Belum ada pending sama sekali → order_id baru
+                $orderId   = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
+                $params    = $this->buildSnapParams($midtransConfig, $orderId, $grandTotal, $cart, $addon, $user);
                 $snapToken = $this->getSnapToken($midtransConfig, $params);
 
                 $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
@@ -468,6 +445,7 @@ class WebHomeController extends Controller
                     'updated_at'        => now(),
                 ]);
             }
+
         } elseif ($grandTotal <= 0) {
             $this->enrollCartEvent($kode_cart, $cart, $addon, null, 'FREE');
             DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->delete();
@@ -545,7 +523,6 @@ class WebHomeController extends Controller
             return response()->json(['status' => 'invalid_payload'], 400);
         }
 
-        // Verifikasi ke Midtrans untuk mencegah pemalsuan notifikasi
         $midtransConfig = $this->midtransConfig();
         if ($midtransConfig) {
             $verified = $this->getMidtransTransactionStatus($midtransConfig, $orderId);

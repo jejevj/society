@@ -36,7 +36,6 @@ class webProfilController extends Controller
             'breadcrumb' => '',
             'organisasi' => ReffOrganisasi::latest()->get(),
             'detail'     => DB::table('app_user')
-                ->leftJoin('reff_organisasi', 'reff_organisasi.id_organisasi', '=', 'app_user.organisasi_id')
                 ->leftJoin('reff_role', 'reff_role.id_role', '=', 'app_user.role_id')
                 ->where('id_user', session('id_user'))
                 ->first(),
@@ -121,7 +120,7 @@ class webProfilController extends Controller
             'password_baru'            => [
                 'required', 'string', 'min:8',
                 'regex:/[A-Z]/', 'regex:/[a-z]/',
-                'regex:/[0-9]/', 'regex:/[@$!%*#?&._-]/'
+                'regex:/[0-9]/', 'regex:/[@$!%*#?&._-]//'
             ],
             'konfirmasi_password_baru' => 'required|same:password_baru',
         ], [

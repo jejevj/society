@@ -99,27 +99,31 @@
                         </div>
 
                         @if($snapToken)
-                            {{-- Ada snap token — tampilkan tombol bayar --}}
                             @if($pendingReg ?? null)
                             <div class="alert alert-light-warning py-2 px-3 mb-3 fs-7">
                                 <i class="fa-solid fa-triangle-exclamation me-1"></i>
                                 Melanjutkan pembayaran yang tertunda.
                             </div>
                             @endif
-                            <button id="btnPayNow" class="btn bg-detail text-white w-100 py-3">
+
+                            @php
+                                $btnLabel = ($pendingReg ?? null) ? 'Lanjutkan Pembayaran' : 'Proceed To Payment';
+                            @endphp
+                            <button id="btnPayNow"
+                                    data-label="{{ $btnLabel }}"
+                                    class="btn bg-detail text-white w-100 py-3">
                                 <i class="fa-solid fa-credit-card me-2 text-white"></i>
-                                {{ ($pendingReg ?? null) ? 'Lanjutkan Pembayaran' : 'Proceed To Payment' }}
+                                {{ $btnLabel }}
                             </button>
                             <div id="paymentStatus" class="mt-3 d-none"></div>
 
                         @elseif($pendingReg ?? null)
-                            {{-- Ada pending tapi snap token gagal di-generate --}}
                             <div class="alert alert-warning mb-3">
                                 <i class="fa-solid fa-clock-rotate-left me-2"></i>
                                 <strong>Pembayaran Tertunda</strong><br>
                                 <small>Order ID: {{ $pendingReg->midtrans_order_id }}</small>
                             </div>
-                            <button id="btnPayNow" class="btn btn-warning w-100 py-3" onclick="window.location.reload()">
+                            <button class="btn btn-warning w-100 py-3" onclick="window.location.reload()">
                                 <i class="fa-solid fa-rotate me-2"></i>
                                 Refresh & Coba Lagi
                             </button>
@@ -128,7 +132,6 @@
                             </div>
 
                         @else
-                            {{-- Tidak ada snap token sama sekali --}}
                             <div class="alert alert-warning">
                                 <i class="fa-solid fa-triangle-exclamation me-2"></i>
                                 Gagal memuat payment gateway. Silakan refresh halaman.
@@ -149,11 +152,12 @@
 @endphp
 <script src="https://{{ $snapDomain }}/snap/snap.js" data-client-key="{{ $clientKey }}"></script>
 <script>
-const SNAP_TOKEN  = '{{ $snapToken }}';
-const ORDER_ID    = '{{ $orderId }}';
+const SNAP_TOKEN  = @json($snapToken);
+const ORDER_ID    = @json($orderId);
 const CHECK_URL   = '{{ route('cart.check-payment') }}';
 const SUCCESS_URL = '{{ route('cart-payment.success') }}';
 const CSRF_TOKEN  = '{{ csrf_token() }}';
+const BTN_LABEL   = document.getElementById('btnPayNow').dataset.label;
 
 let pollingInterval = null;
 
@@ -181,7 +185,7 @@ function startPolling() {
                     $('#paymentStatus').html(
                         '<div class="alert alert-danger mt-2"><i class="fa-solid fa-circle-xmark me-2"></i>Pembayaran gagal atau dibatalkan. Silakan coba lagi.</div>'
                     );
-                    $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>Coba Bayar Lagi');
+                    $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>' + BTN_LABEL);
                 }
             }
         });
@@ -194,11 +198,16 @@ $('#btnPayNow').on('click', function () {
         onSuccess: function (result) { startPolling(); },
         onPending: function (result) { startPolling(); },
         onError: function (result) {
-            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>{{ ($pendingReg ?? null) ? "Lanjutkan Pembayaran" : "Proceed To Payment" }}');
-            Swal.fire({ icon: 'error', title: 'Pembayaran Gagal', text: 'Terjadi kesalahan saat proses pembayaran.', confirmButtonColor: '#E62020' });
+            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>' + BTN_LABEL);
+            Swal.fire({
+                icon: 'error',
+                title: 'Pembayaran Gagal',
+                text: 'Terjadi kesalahan saat proses pembayaran.',
+                confirmButtonColor: '#E62020'
+            });
         },
         onClose: function () {
-            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>{{ ($pendingReg ?? null) ? "Lanjutkan Pembayaran" : "Proceed To Payment" }}');
+            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>' + BTN_LABEL);
         }
     });
 });

@@ -134,8 +134,9 @@
                     <p class="text-muted">
                         You haven't added any event yet.
                     </p>
-                    <a href="{{ url(env('APP_ROUTE').'/home') }}"
+                    <a href="{{ route('list-event') }}"
                        class="btn bg-detail text-white">
+                        <i class="fa-solid fa-calendar-days me-2"></i>
                         Browse Events
                     </a>
                 </div>

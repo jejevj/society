@@ -7,7 +7,6 @@
                     <i class="fa-solid fa-cart-shopping text-detail me-2"></i>
                     My Cart
                 </h1>
-
                 <div class="text-muted">
                     Review your selected events before checkout
                 </div>
@@ -38,39 +37,13 @@
                                         <div class="border rounded p-3 mt-3 bg-light">
                                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                                 <div>
-                                                    <small class="text-muted d-block">
-                                                        Participants
-                                                    </small>
-                                                    <div class="d-flex align-items-center gap-2 mt-2">
-                                                        <button type="button"
-                                                                class="btn btn-sm btn-light btn-minus"
-                                                                data-cart="{{ $item->kode_cart }}">
-                                                            -
-                                                        </button>
-                                                        <input
-                                                            type="number"
-                                                            class="form-control text-center qty-input"
-                                                            value="{{ $item->qty }}"
-                                                            min="1"
-                                                            data-cart="{{ $item->kode_cart }}"
-                                                            data-harga="{{ $item->harga_event }}"
-                                                            style="width:80px">
-
-                                                        <button type="button"
-                                                                class="btn btn-sm btn-light btn-plus"
-                                                                data-cart="{{ $item->kode_cart }}">
-                                                            +
-                                                        </button>
+                                                    <small class="text-muted d-block mb-1">Participant</small>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <i class="fa-solid fa-user-check text-detail"></i>
+                                                        <span class="fw-bold">1 Participant (You)</span>
                                                     </div>
                                                 </div>
                                                 <div class="text-end">
-                                                    <button
-                                                        type="button"
-                                                        class="btn bg-detail btn-sm btnUpdateCart"
-                                                        data-cart="{{ $item->kode_cart }}">
-                                                        <i class="fa fa-save me-1 text-white"></i>
-                                                        Update
-                                                    </button>
                                                     <button
                                                         type="button"
                                                         class="btn btn-dark btn-sm btnDeleteCart"
@@ -85,27 +58,15 @@
 
                                     <div class="col-lg-5 text-lg-end">
                                         <div class="mb-2">
-                                            <small class="text-muted-detail">
-                                                Event
-                                            </small>
-                                            <div>
-                                                Rp {{ number_format($item->subtotal,0,',','.') }}
-                                            </div>
+                                            <small class="text-muted-detail">Event</small>
+                                            <div>Rp {{ number_format($item->subtotal,0,',','.') }}</div>
                                         </div>
-
                                         <div class="mb-2">
-                                            <small class="text-muted-detail">
-                                                Add-On Package
-                                            </small>
-                                            <div>
-                                                Rp {{ number_format($item->total_paket * $item->qty,0,',','.') }}
-                                            </div>
+                                            <small class="text-muted-detail">Add-On Package</small>
+                                            <div>Rp {{ number_format($item->total_paket * $item->qty,0,',','.') }}</div>
                                         </div>
-
                                         <hr>
-                                        <div class="text-muted-detail mb-1 fs-4">
-                                            Total Price
-                                        </div>
+                                        <div class="text-muted-detail mb-1 fs-4">Total Price</div>
                                         <div
                                             class="fw-bold fs-4 text-detail total-cart"
                                             id="total-{{ $item->kode_cart }}"
@@ -128,14 +89,9 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center py-15">
                     <i class="fa-solid fa-cart-shopping text-muted fs-5x mb-5"></i>
-                    <h3 class="fw-bold">
-                        Your cart is empty
-                    </h3>
-                    <p class="text-muted">
-                        You haven't added any event yet.
-                    </p>
-                    <a href="{{ route('list-event') }}"
-                       class="btn bg-detail text-white">
+                    <h3 class="fw-bold">Your cart is empty</h3>
+                    <p class="text-muted">You haven't added any event yet.</p>
+                    <a href="{{ route('list-event') }}" class="btn bg-detail text-white">
                         <i class="fa-solid fa-calendar-days me-2"></i>
                         Browse Events
                     </a>
@@ -145,123 +101,27 @@
     </div>
 </div>
 <script>
-$(document).on('click','.btn-plus',function(){
-
-    let input = $(this).siblings('.qty-input');
-
-    input.val(
-        parseInt(input.val()) + 1
-    ).trigger('keyup');
-
-});
-
-$(document).on('click','.btn-minus',function(){
-
-    let input = $(this).siblings('.qty-input');
-
-    let qty = parseInt(input.val());
-
-    if(qty > 1){
-        input.val(qty - 1).trigger('keyup');
-    }
-
-});
-
-$(document).on('keyup change','.qty-input',function(){
-
-    let qty = parseInt($(this).val()) || 1;
-
-    let harga = parseInt($(this).data('harga'));
-
-    let cart = $(this).data('cart');
-
-    let addon = parseInt(
-        $('#total-'+cart).data('addon')
-    ) || 0;
-
-    let total =
-        (harga * qty)
-        +
-        (addon * qty);
-
-    $('#total-'+cart).html(
-        'Rp ' + total.toLocaleString('id-ID')
-    );
-
-});
-
-$('.btnUpdateCart').click(function(){
-
-    let cart = $(this).data('cart');
-
-    let qty = $('.qty-input[data-cart="'+cart+'"]').val();
-
-    $.post(
-        "{{ route('updateCartEvent') }}",
-        {
-            _token:'{{ csrf_token() }}',
-            kode_cart:cart,
-            qty:qty
-        },
-        function(res){
-
-            if(res.status){
-
-                Swal.fire({
-                    icon:'success',
-                    title:'Success',
-                    text:res.message
-                }).then(()=>{
-                    location.reload();
-                });
-
-            }
-
-        }
-    );
-
-});
-
 $('.btnDeleteCart').click(function(){
-
     let cart = $(this).data('cart');
-
     Swal.fire({
         title:'Delete Cart?',
         icon:'warning',
         showCancelButton:true,
         confirmButtonText:'Delete'
     }).then((result)=>{
-
         if(result.isConfirmed){
-
             $.post(
                 "{{ route('deleteCartEvent') }}",
-                {
-                    _token:'{{ csrf_token() }}',
-                    kode_cart:cart
-                },
+                { _token:'{{ csrf_token() }}', kode_cart:cart },
                 function(res){
-
                     if(res.status){
-
-                        Swal.fire({
-                            icon:'success',
-                            title:'Success',
-                            text:res.message
-                        }).then(()=>{
-                            location.reload();
-                        });
-
+                        Swal.fire({ icon:'success', title:'Success', text:res.message })
+                        .then(()=>{ location.reload(); });
                     }
-
                 }
             );
-
         }
-
     });
-
 });
 </script>
 @include('layouts.footer-v2')

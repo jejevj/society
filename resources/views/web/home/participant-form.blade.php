@@ -186,11 +186,12 @@
     </div>
 </div>
 
+{{-- userData inject dari kolom yang benar di app_user --}}
 <script>
 const userData = {
-    nama     : @json($user->nama_user     ?? ''),
-    email    : @json($user->email_user    ?? ''),
-    no_hp    : @json($user->no_hp_user    ?? ''),
+    nama     : @json($user->nama_user      ?? ''),
+    email    : @json($user->username_user  ?? ''),
+    no_hp    : @json($user->telepon_user   ?? ''),
     instansi : @json($user->organisasi_user ?? ''),
 };
 

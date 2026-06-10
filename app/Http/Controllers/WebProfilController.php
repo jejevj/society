@@ -109,6 +109,10 @@ class webProfilController extends Controller
             'menu_aktif' => 'password||akun',
             'navbar'     => '',
             'breadcrumb' => '',
+            'detail'     => DB::table('app_user')
+                ->leftJoin('reff_role', 'reff_role.id_role', '=', 'app_user.role_id')
+                ->where('id_user', session('id_user'))
+                ->first(),
         ];
         return view('web.ganti-password', $data);
     }
@@ -116,17 +120,17 @@ class webProfilController extends Controller
     public function updatePasswordUserAction(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'password_lama'            => 'required|string|max:200',
-            'password_baru'            => [
+            'old_password'     => 'required|string|max:200',
+            'new_password'     => [
                 'required', 'string', 'min:8',
                 'regex:/[A-Z]/', 'regex:/[a-z]/',
-                'regex:/[0-9]/', 'regex:/[@$!%*#?&._-]//'
+                'regex:/[0-9]/', 'regex:/[@$!%*#?&._-]/'
             ],
-            'konfirmasi_password_baru' => 'required|same:password_baru',
+            'confirm_password' => 'required|same:new_password',
         ], [
-            'password_baru.min'             => 'Password minimal 8 karakter.',
-            'password_baru.regex'           => 'Password harus mengandung huruf besar, huruf kecil, angka, dan karakter khusus.',
-            'konfirmasi_password_baru.same' => 'Konfirmasi password tidak sesuai.',
+            'new_password.min'        => 'Password minimal 8 karakter.',
+            'new_password.regex'      => 'Password harus mengandung huruf besar, huruf kecil, angka, dan karakter khusus.',
+            'confirm_password.same'   => 'Konfirmasi password tidak sesuai.',
         ]);
 
         if ($validator->fails()) {
@@ -135,17 +139,17 @@ class webProfilController extends Controller
 
         $user = DB::table('app_user')->where('id_user', session('id_user'))->first();
 
-        if (!Hash::check($request->password_lama, $user->password_user)) {
+        if (!Hash::check($request->old_password, $user->password_user)) {
             return response()->json(['success' => false, 'message' => 'Password lama salah'], 422);
         }
-        if (Hash::check($request->password_baru, $user->password_user)) {
+        if (Hash::check($request->new_password, $user->password_user)) {
             return response()->json(['success' => false, 'message' => 'Password baru tidak boleh sama dengan password lama'], 422);
         }
 
         $id       = session('id_user');
         $dt_exist = DB::table('app_user')->where('id_user', $id)->first();
         $update   = DB::table('app_user')->where('id_user', $id)->update([
-            'password_user' => Hash::make($request->password_baru),
+            'password_user' => Hash::make($request->new_password),
             'updated_at'    => now(),
         ]);
 

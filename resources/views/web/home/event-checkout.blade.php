@@ -15,6 +15,18 @@
                         </a>
                     </div>
                     <div class="card-body">
+
+                        {{-- Banner Pembayaran Pending --}}
+                        @if($pendingReg ?? null)
+                        <div class="alert alert-warning d-flex align-items-center gap-3 mb-5">
+                            <i class="fa-solid fa-clock-rotate-left fs-2 text-warning"></i>
+                            <div>
+                                <div class="fw-bold">Kamu masih memiliki pembayaran yang belum diselesaikan</div>
+                                <div class="text-muted fs-7">Order ID: <span class="fw-bold">{{ $pendingReg->midtrans_order_id }}</span> &mdash; dibuat {{ \Carbon\Carbon::parse($pendingReg->created_at)->diffForHumans() }}</div>
+                            </div>
+                        </div>
+                        @endif
+
                         <div class="border rounded p-5 mb-5">
                             <h3 class="fw-bold mb-3">{{ $cart->judul_event }}</h3>
                             <div class="row">
@@ -87,16 +99,40 @@
                         </div>
 
                         @if($snapToken)
-                        <button id="btnPayNow" class="btn bg-detail text-white w-100 py-3">
-                            <i class="fa-solid fa-credit-card me-2 text-white"></i>
-                            Proceed To Payment
-                        </button>
-                        <div id="paymentStatus" class="mt-3 d-none"></div>
+                            {{-- Ada snap token — tampilkan tombol bayar --}}
+                            @if($pendingReg ?? null)
+                            <div class="alert alert-light-warning py-2 px-3 mb-3 fs-7">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                Melanjutkan pembayaran yang tertunda.
+                            </div>
+                            @endif
+                            <button id="btnPayNow" class="btn bg-detail text-white w-100 py-3">
+                                <i class="fa-solid fa-credit-card me-2 text-white"></i>
+                                {{ ($pendingReg ?? null) ? 'Lanjutkan Pembayaran' : 'Proceed To Payment' }}
+                            </button>
+                            <div id="paymentStatus" class="mt-3 d-none"></div>
+
+                        @elseif($pendingReg ?? null)
+                            {{-- Ada pending tapi snap token gagal di-generate --}}
+                            <div class="alert alert-warning mb-3">
+                                <i class="fa-solid fa-clock-rotate-left me-2"></i>
+                                <strong>Pembayaran Tertunda</strong><br>
+                                <small>Order ID: {{ $pendingReg->midtrans_order_id }}</small>
+                            </div>
+                            <button id="btnPayNow" class="btn btn-warning w-100 py-3" onclick="window.location.reload()">
+                                <i class="fa-solid fa-rotate me-2"></i>
+                                Refresh & Coba Lagi
+                            </button>
+                            <div class="mt-2 text-center">
+                                <small class="text-muted">Jika terus gagal, hubungi panitia dengan Order ID di atas.</small>
+                            </div>
+
                         @else
-                        <div class="alert alert-warning">
-                            <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                            Gagal memuat payment gateway. Silakan refresh halaman.
-                        </div>
+                            {{-- Tidak ada snap token sama sekali --}}
+                            <div class="alert alert-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                Gagal memuat payment gateway. Silakan refresh halaman.
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -107,17 +143,17 @@
 
 @if($snapToken)
 @php
-    $isSandbox  = !($midtransConfig->is_production ?? false);
+    $isSandbox  = ($midtransConfig->environment ?? 'sandbox') !== 'production';
     $clientKey  = $midtransConfig->client_key ?? '';
     $snapDomain = $isSandbox ? 'app.sandbox.midtrans.com' : 'app.midtrans.com';
 @endphp
 <script src="https://{{ $snapDomain }}/snap/snap.js" data-client-key="{{ $clientKey }}"></script>
 <script>
-const SNAP_TOKEN = '{{ $snapToken }}';
-const ORDER_ID   = '{{ $orderId }}';
-const CHECK_URL  = '{{ route('cart.check-payment') }}';
+const SNAP_TOKEN  = '{{ $snapToken }}';
+const ORDER_ID    = '{{ $orderId }}';
+const CHECK_URL   = '{{ route('cart.check-payment') }}';
 const SUCCESS_URL = '{{ route('cart-payment.success') }}';
-const CSRF_TOKEN = '{{ csrf_token() }}';
+const CSRF_TOKEN  = '{{ csrf_token() }}';
 
 let pollingInterval = null;
 
@@ -158,11 +194,11 @@ $('#btnPayNow').on('click', function () {
         onSuccess: function (result) { startPolling(); },
         onPending: function (result) { startPolling(); },
         onError: function (result) {
-            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>Proceed To Payment');
+            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>{{ ($pendingReg ?? null) ? "Lanjutkan Pembayaran" : "Proceed To Payment" }}');
             Swal.fire({ icon: 'error', title: 'Pembayaran Gagal', text: 'Terjadi kesalahan saat proses pembayaran.', confirmButtonColor: '#E62020' });
         },
         onClose: function () {
-            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>Proceed To Payment');
+            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>{{ ($pendingReg ?? null) ? "Lanjutkan Pembayaran" : "Proceed To Payment" }}');
         }
     });
 });

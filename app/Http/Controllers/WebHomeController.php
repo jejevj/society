@@ -318,70 +318,136 @@ class WebHomeController extends Controller
         $midtransConfig = $this->midtransConfig();
         $snapToken      = null;
         $orderId        = null;
+        $pendingReg     = null;
 
         if ($midtransConfig && $grandTotal > 0) {
+            // Cek registrasi PENDING yang sudah ada untuk cart ini
             $existingReg = DB::table('t_event_registrasi')
                 ->where('kode_cart', $kode_cart)
                 ->where('payment_status', 'PENDING')
                 ->first();
 
-            $orderId = $existingReg
-                ? $existingReg->midtrans_order_id
-                : 'CART-' . strtoupper(Str::random(8)) . '-' . time();
+            if ($existingReg) {
+                // Sudah ada PENDING — gunakan snap_token yang tersimpan (jika ada)
+                // atau regenerate dengan order_id yang SAMA
+                $orderId    = $existingReg->midtrans_order_id;
+                $pendingReg = $existingReg;
 
-            $user        = DB::table('app_user')->where('id_user', session('id_user'))->first();
-            $itemDetails = [];
+                // Coba ambil snap token dari DB jika tersimpan
+                $snapToken = $existingReg->snap_token ?? null;
 
-            if ($cart->harga_event > 0) {
-                $itemDetails[] = [
-                    'id'       => $cart->kode_event,
-                    'price'    => (int) $cart->harga_event,
-                    'quantity' => 1,
-                    'name'     => mb_substr($cart->judul_event, 0, 50),
-                ];
-            }
-            foreach ($addon as $ad) {
-                if ($ad->harga_paket > 0) {
+                // Jika snap_token belum tersimpan, generate ulang dengan order_id yang sama
+                // Midtrans mengizinkan regenerate token untuk order_id yang sama selama belum expire
+                if (!$snapToken) {
+                    $user        = DB::table('app_user')->where('id_user', session('id_user'))->first();
+                    $itemDetails = [];
+
+                    if ($cart->harga_event > 0) {
+                        $itemDetails[] = [
+                            'id'       => $cart->kode_event,
+                            'price'    => (int) $cart->harga_event,
+                            'quantity' => 1,
+                            'name'     => mb_substr($cart->judul_event, 0, 50),
+                        ];
+                    }
+                    foreach ($addon as $ad) {
+                        if ($ad->harga_paket > 0) {
+                            $itemDetails[] = [
+                                'id'       => $ad->kode_event_paket,
+                                'price'    => (int) $ad->harga_paket,
+                                'quantity' => 1,
+                                'name'     => mb_substr($ad->judul_paket, 0, 50),
+                            ];
+                        }
+                    }
+
+                    $email = filter_var($user->email_user ?? '', FILTER_VALIDATE_EMAIL)
+                        ? $user->email_user
+                        : 'noreply@society-event.com';
+
+                    $params = [
+                        'transaction_details' => [
+                            'order_id'     => $orderId,
+                            'gross_amount' => (int) $grandTotal,
+                        ],
+                        'customer_details' => [
+                            'first_name' => $user->nama_user  ?? 'User',
+                            'email'      => $email,
+                            'phone'      => $user->no_hp_user ?? '',
+                        ],
+                    ];
+                    if (!empty($itemDetails)) {
+                        $params['item_details'] = $itemDetails;
+                    }
+                    if (!empty($midtransConfig->payment_types)) {
+                        $types = json_decode($midtransConfig->payment_types, true);
+                        if (!empty($types)) {
+                            $params['enabled_payments'] = $types;
+                        }
+                    }
+
+                    $snapToken = $this->getSnapToken($midtransConfig, $params);
+
+                    // Simpan snap_token ke DB agar tidak perlu regenerate terus
+                    if ($snapToken) {
+                        DB::table('t_event_registrasi')
+                            ->where('midtrans_order_id', $orderId)
+                            ->update(['snap_token' => $snapToken, 'updated_at' => now()]);
+                    }
+                }
+            } else {
+                // Belum ada PENDING — buat order_id baru dan registrasi baru
+                $orderId = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
+
+                $user        = DB::table('app_user')->where('id_user', session('id_user'))->first();
+                $itemDetails = [];
+
+                if ($cart->harga_event > 0) {
                     $itemDetails[] = [
-                        'id'       => $ad->kode_event_paket,
-                        'price'    => (int) $ad->harga_paket,
+                        'id'       => $cart->kode_event,
+                        'price'    => (int) $cart->harga_event,
                         'quantity' => 1,
-                        'name'     => mb_substr($ad->judul_paket, 0, 50),
+                        'name'     => mb_substr($cart->judul_event, 0, 50),
                     ];
                 }
-            }
-
-            // Validasi email sebelum dikirim ke Midtrans
-            $email = filter_var($user->email_user ?? '', FILTER_VALIDATE_EMAIL)
-                ? $user->email_user
-                : 'noreply@society-event.com';
-
-            $params = [
-                'transaction_details' => [
-                    'order_id'     => $orderId,
-                    'gross_amount' => (int) $grandTotal,
-                ],
-                'customer_details' => [
-                    'first_name' => $user->nama_user  ?? 'User',
-                    'email'      => $email,
-                    'phone'      => $user->no_hp_user ?? '',
-                ],
-            ];
-            if (!empty($itemDetails)) {
-                $params['item_details'] = $itemDetails;
-            }
-
-            // Tambahkan enabled_payments jika dikonfigurasi
-            if (!empty($midtransConfig->payment_types)) {
-                $types = json_decode($midtransConfig->payment_types, true);
-                if (!empty($types)) {
-                    $params['enabled_payments'] = $types;
+                foreach ($addon as $ad) {
+                    if ($ad->harga_paket > 0) {
+                        $itemDetails[] = [
+                            'id'       => $ad->kode_event_paket,
+                            'price'    => (int) $ad->harga_paket,
+                            'quantity' => 1,
+                            'name'     => mb_substr($ad->judul_paket, 0, 50),
+                        ];
+                    }
                 }
-            }
 
-            $snapToken = $this->getSnapToken($midtransConfig, $params);
+                $email = filter_var($user->email_user ?? '', FILTER_VALIDATE_EMAIL)
+                    ? $user->email_user
+                    : 'noreply@society-event.com';
 
-            if (!$existingReg) {
+                $params = [
+                    'transaction_details' => [
+                        'order_id'     => $orderId,
+                        'gross_amount' => (int) $grandTotal,
+                    ],
+                    'customer_details' => [
+                        'first_name' => $user->nama_user  ?? 'User',
+                        'email'      => $email,
+                        'phone'      => $user->no_hp_user ?? '',
+                    ],
+                ];
+                if (!empty($itemDetails)) {
+                    $params['item_details'] = $itemDetails;
+                }
+                if (!empty($midtransConfig->payment_types)) {
+                    $types = json_decode($midtransConfig->payment_types, true);
+                    if (!empty($types)) {
+                        $params['enabled_payments'] = $types;
+                    }
+                }
+
+                $snapToken = $this->getSnapToken($midtransConfig, $params);
+
                 $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
                 DB::table('t_event_registrasi')->insert([
                     'kode_registrasi'   => $kodeRegistrasi,
@@ -394,6 +460,7 @@ class WebHomeController extends Controller
                     'no_hp_peserta'     => $user->no_hp_user      ?? null,
                     'total_bayar'       => (float) $grandTotal,
                     'midtrans_order_id' => $orderId,
+                    'snap_token'        => $snapToken,
                     'payment_status'    => 'PENDING',
                     'status_registrasi' => 'P',
                     'confirmed_at'      => null,
@@ -417,6 +484,7 @@ class WebHomeController extends Controller
             'grandTotal'     => $grandTotal,
             'snapToken'      => $snapToken,
             'orderId'        => $orderId,
+            'pendingReg'     => $pendingReg,
             'midtransConfig' => $midtransConfig,
             'set'            => $this->setting(),
         ];
@@ -469,12 +537,10 @@ class WebHomeController extends Controller
 
     public function cartPaymentCallback(Request $request)
     {
-        // Ambil notifikasi dari request body (Midtrans server-to-server callback)
         $txStatus    = $request->input('transaction_status');
         $orderId     = $request->input('order_id');
         $fraudStatus = $request->input('fraud_status');
 
-        // Jika tidak ada di body, verifikasi ulang ke Midtrans API
         if (!$txStatus || !$orderId) {
             return response()->json(['status' => 'invalid_payload'], 400);
         }

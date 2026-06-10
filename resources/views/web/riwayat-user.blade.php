@@ -29,10 +29,10 @@
 
 /* Status badges */
 .ev-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.8px; }
-.ev-badge.confirmed    { background: #d1fae5; color: #065f46; }
-.ev-badge.pending_pay  { background: #fef3c7; color: #92400e; }
-.ev-badge.expired      { background: #fee2e2; color: #991b1b; }
-.ev-badge.pending_otp  { background: #e0e7ff; color: #3730a3; }
+.ev-badge.confirmed   { background: #d1fae5; color: #065f46; }
+.ev-badge.pending_pay { background: #fef3c7; color: #92400e; }
+.ev-badge.failed      { background: #fee2e2; color: #991b1b; }
+.ev-badge.pending_otp { background: #e0e7ff; color: #3730a3; }
 
 /* Retry banner */
 .retry-banner {
@@ -72,11 +72,6 @@
 /* Addon pills */
 .addon-pill { display: inline-block; background: #f0f4ff; color: #3730a3; font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin: 2px 2px 0 0; }
 
-/* Permohonan table */
-.table-riwayat { font-size: 0.85rem; }
-.table-riwayat thead th { background: #f8f9fa; font-weight: 700; color: #555; border-bottom: 2px solid #e9ecef; }
-.badge-status { font-size: 0.72rem; padding: 3px 8px; border-radius: 20px; font-weight: 700; }
-
 /* Pay status inline */
 .pay-inline { font-size: 0.8rem; margin-top: 6px; display: none; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; }
 .pay-inline.pending { background: #fefce8; border: 1px solid #fde047; color: #854d0e; display: flex; }
@@ -89,9 +84,9 @@
 <div class="riwayat-page">
 <div class="container">
 
-{{-- ─── BANNER RETRY: hanya tampil jika ada PENDING_PAYMENT atau PAYMENT_EXPIRED ─── --}}
+{{-- ─── BANNER: pending payment ─── --}}
 @php
-    $pendingEvents = $eventRegistrasi->whereIn('status_registrasi', ['PENDING_PAYMENT','PAYMENT_EXPIRED']);
+    $pendingEvents = $eventRegistrasi->whereIn('payment_status', ['PENDING','UNPAID'])->where('status_registrasi', '!=', 'A');
 @endphp
 @if($pendingEvents->count() > 0)
 <div class="alert mb-4" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:14px;padding:16px 20px;">
@@ -138,24 +133,29 @@
                     &ndash;
                     {{ date('d M Y', strtotime($reg->tanggal_akhir_event)) }}
                 </span>
-                <span><i class="fa-solid fa-id-badge"></i> {{ ucfirst($reg->role_peserta ?? 'participant') }}</span>
+                <span><i class="fa-solid fa-id-badge"></i> {{ ucfirst($reg->role_peserta ?? 'Participant') }}</span>
+                @if($reg->total_bayar > 0)
+                <span><i class="fa-solid fa-money-bill"></i>
+                    Rp {{ number_format($reg->total_bayar, 0, ',', '.') }}
+                </span>
+                @endif
             </div>
 
-            {{-- Status badge --}}
+            {{-- Status badge berdasarkan status_registrasi (A=aktif, P=pending) dan payment_status --}}
             @php
-                $badgeClass = match($reg->status_registrasi) {
-                    'CONFIRMED'       => 'confirmed',
-                    'PENDING_PAYMENT' => 'pending_pay',
-                    'PAYMENT_EXPIRED' => 'expired',
-                    default           => 'pending_otp',
-                };
-                $badgeLabel = match($reg->status_registrasi) {
-                    'CONFIRMED'       => 'Terdaftar',
-                    'PENDING_PAYMENT' => 'Menunggu Pembayaran',
-                    'PAYMENT_EXPIRED' => 'Pembayaran Expired',
-                    'PENDING_OTP'     => 'Menunggu Verifikasi',
-                    default           => $reg->status_registrasi,
-                };
+                if ($reg->status_registrasi === 'A') {
+                    $badgeClass = 'confirmed';
+                    $badgeLabel = 'Terdaftar';
+                } elseif (in_array($reg->payment_status, ['FAILED','EXPIRE','CANCEL'])) {
+                    $badgeClass = 'failed';
+                    $badgeLabel = 'Pembayaran Gagal';
+                } elseif (in_array($reg->payment_status, ['PENDING','UNPAID'])) {
+                    $badgeClass = 'pending_pay';
+                    $badgeLabel = 'Menunggu Pembayaran';
+                } else {
+                    $badgeClass = 'pending_otp';
+                    $badgeLabel = $reg->status_registrasi;
+                }
             @endphp
             <span class="ev-badge {{ $badgeClass }}">{{ $badgeLabel }}</span>
 
@@ -168,22 +168,16 @@
             </div>
             @endif
 
-            {{-- RETRY BANNER --}}
-            @if(in_array($reg->status_registrasi, ['PENDING_PAYMENT','PAYMENT_EXPIRED']))
+            {{-- RETRY BANNER: tampil bila belum bayar --}}
+            @if($reg->status_registrasi !== 'A' && in_array($reg->payment_status, ['PENDING','UNPAID']))
             <div class="retry-banner mt-2">
-                <div class="rb-text {{ $reg->status_registrasi === 'PAYMENT_EXPIRED' ? 'expired' : '' }}">
-                    <strong>
-                        @if($reg->status_registrasi === 'PAYMENT_EXPIRED')
-                            Pembayaran telah expired
-                        @else
-                            Pembayaran belum selesai
-                        @endif
-                    </strong>
+                <div class="rb-text">
+                    <strong>Pembayaran belum selesai</strong>
                     Selesaikan untuk konfirmasi pendaftaran.
                 </div>
                 <button class="btn-retry"
+                    data-order-id="{{ $reg->midtrans_order_id }}"
                     data-kode-event="{{ $reg->kode_event }}"
-                    data-event-nama="{{ $reg->judul_event }}"
                     onclick="doRetryPayment(this)">
                     <i class="fa-solid fa-credit-card"></i> Bayar Sekarang
                 </button>
@@ -191,8 +185,8 @@
             <div class="pay-inline" id="payStatus_{{ $reg->kode_event }}"></div>
             @endif
 
-            {{-- Confirmed at --}}
-            @if($reg->status_registrasi === 'CONFIRMED' && $reg->confirmed_at)
+            {{-- Terdaftar at --}}
+            @if($reg->status_registrasi === 'A' && $reg->confirmed_at)
             <div style="font-size:0.73rem;color:#10b981;margin-top:6px;">
                 <i class="fa-solid fa-circle-check me-1"></i>
                 Terdaftar pada {{ date('d M Y H:i', strtotime($reg->confirmed_at)) }}
@@ -205,69 +199,15 @@
 </div>
 @endif
 
-{{-- ─── RIWAYAT PERMOHONAN DATA ─── --}}
-<div class="rw-section-title">
-    <i class="fa-solid fa-file-lines" style="color:#6366f1"></i> Riwayat Permohonan Data
-</div>
-
-@if($riwayat->isEmpty())
-<div class="text-center text-muted py-4" style="background:#fff;border-radius:14px;border:1.5px solid #f0f0f0;">
-    <i class="fa-solid fa-inbox fa-2x mb-2" style="color:#ddd"></i>
-    <div style="font-size:0.88rem;">Belum ada riwayat permohonan.</div>
-</div>
-@else
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover table-riwayat mb-0">
-                <thead>
-                    <tr>
-                        <th class="ps-4">No</th>
-                        <th>Data</th>
-                        <th>Tujuan</th>
-                        <th>Tgl Permohonan</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach($riwayat as $i => $item)
-                <tr>
-                    <td class="ps-4">{{ $riwayat->firstItem() + $i }}</td>
-                    <td>{{ $item->judul_data ?? '-' }}</td>
-                    <td>{{ Str::limit($item->tujuan_permohonan ?? '-', 50) }}</td>
-                    <td>{{ $item->created_at ? date('d M Y', strtotime($item->created_at)) : '-' }}</td>
-                    <td>
-                        <span class="badge-status"
-                            style="background:{{ match($item->kode_status ?? '') {
-                                'APPROVED' => '#d1fae5', 'PENDING' => '#fef3c7',
-                                'REJECTED' => '#fee2e2', default   => '#f3f4f6'
-                            } }};
-                            color:{{ match($item->kode_status ?? '') {
-                                'APPROVED' => '#065f46', 'PENDING' => '#92400e',
-                                'REJECTED' => '#991b1b', default   => '#374151'
-                            } }};">
-                            {{ $item->keterangan_status ?? $item->kode_status ?? '-' }}
-                        </span>
-                    </td>
-                </tr>
-                @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-{{ $riwayat->links() }}
-@endif
-
 </div>
 </div>
 
 {{-- ─── SCRIPT RETRY PAYMENT ─── --}}
 <script>
-var _csrf        = '{{ csrf_token() }}';
-var _clientKey   = '{{ $midtransConfig->client_key ?? '' }}';
-var _isProduction = {{ isset($midtransConfig) && $midtransConfig && $midtransConfig->environment === 'production' ? 'true' : 'false' }};
-var _snapUrl     = _isProduction
+var _csrf         = '{{ csrf_token() }}';
+var _clientKey    = '{{ $midtransConfig->client_key ?? '' }}';
+var _isProduction = {{ isset($midtransConfig) && $midtransConfig && ($midtransConfig->is_production ?? false) ? 'true' : 'false' }};
+var _snapUrl      = _isProduction
     ? 'https://app.midtrans.com/snap/snap.js'
     : 'https://app.sandbox.midtrans.com/snap/snap.js';
 
@@ -285,57 +225,44 @@ function loadSnapScript(callback) {
     var s = document.createElement('script');
     s.src = _snapUrl;
     s.setAttribute('data-client-key', _clientKey);
-    s.onload = function () { setTimeout(callback, 150); };
-    s.onerror = function () {
-        alert('Gagal memuat gateway pembayaran. Periksa koneksi internet Anda.');
-    };
+    s.onload  = function () { setTimeout(callback, 150); };
+    s.onerror = function () { alert('Gagal memuat gateway pembayaran. Periksa koneksi internet Anda.'); };
     document.head.appendChild(s);
 }
 
 function doRetryPayment(btn) {
     var kodeEvent = btn.dataset.kodeEvent;
-    var eventNama = btn.dataset.eventNama;
+    var orderId   = btn.dataset.orderId;
 
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner-sm"></div> Loading...';
     setPayInline(kodeEvent, 'pending', '<div class="spinner-sm"></div><span>Menyiapkan pembayaran...</span>');
 
+    // Poll status dari server, lalu buka Snap jika masih pending
     $.ajax({
-        url: '{{ route("retryPayment") }}',
+        url: '{{ route("cart.check-payment") }}',
         type: 'POST',
-        data: { _token: _csrf, kode_event: kodeEvent },
+        data: { _token: _csrf, order_id: orderId },
         success: function (r) {
-            if (!r.success) {
+            if (r.status === 'paid') {
+                setPayInline(kodeEvent, 'ok', '<i class="fa-solid fa-circle-check"></i><span>Pembayaran sudah diterima. Muat ulang halaman.</span>');
+                setTimeout(function () { location.reload(); }, 1500);
+                return;
+            }
+            if (r.status === 'failed') {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
-                setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>' + (r.message || 'Gagal memuat pembayaran.') + '</span>');
+                setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>Pembayaran gagal/expired. Hubungi admin.</span>');
                 return;
             }
 
-            if (r.free) {
-                // Gratis, langsung enroll
-                $.ajax({
-                    url: '{{ route("retryPaymentCallback") }}',
-                    type: 'POST',
-                    data: { _token: _csrf, kode_event: kodeEvent },
-                    success: function () {
-                        setPayInline(kodeEvent, 'ok', '<i class="fa-solid fa-circle-check"></i><span>Berhasil terdaftar! Muat ulang halaman.</span>');
-                        setTimeout(function () { location.reload(); }, 1800);
-                    }
-                });
+            // Masih pending — buka Snap
+            if (!_clientKey) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-triangle-exclamation"></i><span>Konfigurasi pembayaran belum diatur.</span>');
                 return;
             }
-
-            // Update client key jika dikembalikan server
-            if (r.client_key) {
-                _clientKey    = r.client_key;
-                _isProduction = r.is_production === true;
-                _snapUrl      = _isProduction
-                    ? 'https://app.midtrans.com/snap/snap.js'
-                    : 'https://app.sandbox.midtrans.com/snap/snap.js';
-            }
-
-            var snapToken = r.snap_token;
 
             loadSnapScript(function () {
                 if (!window.snap || typeof window.snap.pay !== 'function') {
@@ -345,50 +272,53 @@ function doRetryPayment(btn) {
                     return;
                 }
 
-                window.snap.pay(snapToken, {
-                    onSuccess: function (result) {
-                        setPayInline(kodeEvent, 'ok', '<i class="fa-solid fa-circle-check"></i><span>Pembayaran berhasil! Mendaftarkan...</span>');
-                        $.ajax({
-                            url: '{{ route("retryPaymentCallback") }}',
-                            type: 'POST',
-                            data: {
-                                _token: _csrf,
-                                kode_event: kodeEvent,
-                                midtrans_result: JSON.stringify(result)
-                            },
-                            success: function () {
-                                setPayInline(kodeEvent, 'ok', '<i class="fa-solid fa-circle-check"></i><span>Terdaftar! Muat ulang halaman.</span>');
+                // Dapatkan snap token baru dari server
+                $.ajax({
+                    url: '{{ route("cart.retry-snap-token") }}',
+                    type: 'POST',
+                    data: { _token: _csrf, order_id: orderId },
+                    success: function (res) {
+                        if (!res.snap_token) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                            setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>' + (res.message || 'Gagal mendapatkan token.') + '</span>');
+                            return;
+                        }
+                        window.snap.pay(res.snap_token, {
+                            onSuccess: function () {
+                                setPayInline(kodeEvent, 'ok', '<i class="fa-solid fa-circle-check"></i><span>Pembayaran berhasil! Muat ulang halaman.</span>');
                                 setTimeout(function () { location.reload(); }, 1800);
                             },
-                            error: function () {
-                                setPayInline(kodeEvent, 'ok', '<i class="fa-solid fa-circle-check"></i><span>Pembayaran diterima. Halaman akan dimuat ulang.</span>');
-                                setTimeout(function () { location.reload(); }, 2000);
+                            onPending: function () {
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                                setPayInline(kodeEvent, 'pending', '<div class="spinner-sm"></div><span>Pembayaran pending. Kembali ke halaman ini setelah selesai.</span>');
+                            },
+                            onError: function (result) {
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                                setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>' + (result.status_message || 'Pembayaran gagal.') + '</span>');
+                            },
+                            onClose: function () {
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
+                                setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>Jendela pembayaran ditutup. Klik Bayar Sekarang untuk mencoba lagi.</span>');
                             }
                         });
                     },
-                    onPending: function () {
+                    error: function (xhr) {
                         btn.disabled = false;
                         btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
-                        setPayInline(kodeEvent, 'pending', '<div class="spinner-sm"></div><span>Pembayaran pending. Selesaikan dan kembali ke halaman ini.</span>');
-                    },
-                    onError: function (result) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
-                        setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>Pembayaran gagal: ' + (result.status_message || 'Coba lagi.') + '</span>');
-                    },
-                    onClose: function () {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
-                        setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>Kamu menutup jendela pembayaran. Klik Bayar Sekarang untuk mencoba lagi.</span>');
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Gagal mendapatkan token pembayaran.';
+                        setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>' + msg + '</span>');
                     }
                 });
             });
         },
-        error: function (xhr) {
+        error: function () {
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Bayar Sekarang';
-            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Gagal memuat pembayaran.';
-            setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>' + msg + '</span>');
+            setPayInline(kodeEvent, 'error', '<i class="fa-solid fa-circle-xmark"></i><span>Gagal memeriksa status pembayaran.</span>');
         }
     });
 }

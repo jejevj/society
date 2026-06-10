@@ -162,7 +162,7 @@ class webProfilController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // RIWAYAT USER — permohonan data + riwayat event registrasi
+    // RIWAYAT USER — riwayat event registrasi
     // ─────────────────────────────────────────────────────────────────
     public function riwayatUser(Request $request)
     {
@@ -172,19 +172,6 @@ class webProfilController extends Controller
 
         $userId = session('id_user');
 
-        // Riwayat permohonan data
-        $riwayat = DB::table('t_permohonan as a')
-            ->leftJoin('reff_status as b', function ($join) {
-                $join->on('b.kode_status', '=', 'a.status_permohonan')
-                    ->where('b.jenis_status', '=', 'status_permohonan');
-            })
-            ->leftJoin('t_data as c', 'c.id_data', '=', 'a.data_id_permohonan')
-            ->selectRaw('a.*, b.keterangan_status, c.judul_data')
-            ->where('a.user_id_permohonan', $userId)
-            ->orderBy('a.id_permohonan', 'asc')
-            ->paginate(6)
-            ->appends($request->all());
-
         // Riwayat event registrasi user
         $eventRegistrasi = DB::table('t_event_registrasi as r')
             ->join('t_event as e', 'e.kode_event', '=', 'r.kode_event')
@@ -192,7 +179,11 @@ class webProfilController extends Controller
                 'r.id_registrasi',
                 'r.kode_registrasi',
                 'r.kode_event',
+                'r.kode_cart',
                 'r.status_registrasi',
+                'r.payment_status',
+                'r.midtrans_order_id',
+                'r.total_bayar',
                 'r.role_peserta',
                 'r.confirmed_at',
                 'r.created_at',
@@ -227,8 +218,8 @@ class webProfilController extends Controller
             'menu_aktif'      => 'riwayat||akun',
             'navbar'          => '',
             'breadcrumb'      => '',
+            'set'             => DB::table('app_setting')->where('kode', 'SETT')->first(),
             'organisasi'      => ReffOrganisasi::latest()->get(),
-            'riwayat'         => $riwayat,
             'eventRegistrasi' => $eventRegistrasi,
             'midtransConfig'  => $midtransConfig,
         ];

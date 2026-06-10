@@ -172,7 +172,6 @@ class webProfilController extends Controller
 
         $userId = session('id_user');
 
-        // Riwayat event registrasi user
         $eventRegistrasi = DB::table('t_event_registrasi as r')
             ->join('t_event as e', 'e.kode_event', '=', 'r.kode_event')
             ->select(
@@ -192,14 +191,13 @@ class webProfilController extends Controller
                 'e.lokasi_event',
                 'e.tanggal_awal_event',
                 'e.tanggal_akhir_event',
-                'e.harga_event',
-                'e.gambar_event'
+                DB::raw('COALESCE(e.harga_event, 0) as harga_event'),
+                'e.background_event'  // kolom foto event yang benar
             )
             ->where('r.id_user', $userId)
             ->orderByDesc('r.created_at')
             ->get();
 
-        // Ambil addon per registrasi
         foreach ($eventRegistrasi as $reg) {
             $reg->addons = DB::table('t_event_addon as a')
                 ->join('t_event_paket as p', 'p.kode_paket', '=', 'a.kode_paket')
@@ -209,7 +207,6 @@ class webProfilController extends Controller
                 ->get();
         }
 
-        // Midtrans config untuk snap retry
         $midtransConfig = DB::table('app_midtrans_config')
             ->where('id_midtrans', 1)->where('is_active', 'Y')->first();
 

@@ -78,8 +78,9 @@
 										</a>
 									</div>
 
+									{{-- Menu Paper: arahkan ke login jika belum login, ke halaman paper jika sudah login --}}
 									<div class="menu-item me-0 me-lg-2">
-										<a href="{{ route('about') }}" class="menu-link">
+										<a href="{{ session('id_user') ? route('web.paper') : route('login') }}" class="menu-link">
 											<span class="menu-title fs-5">
 												<span class="fw-bold {{ $menu_aktif == 'paper' ? 'text-maroon-active' : 'text-white' }}">Paper</span>
 											</span>

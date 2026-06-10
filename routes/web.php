@@ -32,12 +32,17 @@ Route::prefix('society-event')->group(function () {
         ->name('cart.payment-callback')
         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-    // ── Peserta Register (link dari email) ────────────────────────────────
-    Route::get('/peserta-register/{token}', [App\Http\Controllers\PesertaRegisterController::class, 'show'])->name('peserta.register.show');
+    // ── Peserta Register (link dari email) ────────────────────────────────────
+Route::get('/peserta-register/{token}', [App\Http\Controllers\PesertaRegisterController::class, 'show'])->name('peserta.register.show');
     Route::post('/peserta-register/{token}', [App\Http\Controllers\PesertaRegisterController::class, 'submit'])->name('peserta.register.submit');
 
     // Halaman list event publik
     Route::get('/list-event', [App\Http\Controllers\WebEventPublicController::class, 'index'])->name('list-event');
+
+    // ── Paper (frontend user) ─────────────────────────────────────────────────
+    Route::get('/paper', [App\Http\Controllers\WebPaperController::class, 'index'])->name('web.paper');
+    Route::get('/paper/datatable', [App\Http\Controllers\WebPaperController::class, 'getPaperByEvent'])->name('web.paper.datatable');
+    Route::post('/paper/upload', [App\Http\Controllers\WebPaperController::class, 'uploadPaper'])->name('web.paper.upload');
 
     Route::get('/countDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getCountData'])->name('countDataDashboard');
     Route::get('/listDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getListData'])->name('listDataDashboard');

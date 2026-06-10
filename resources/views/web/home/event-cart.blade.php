@@ -5,11 +5,14 @@
         <div class="row">
             <div class="col-lg-8">
                 <div class="card shadow-sm border-0 mb-5">
-                    <div class="card-header border-0 pt-6">
-                        <h2 class="fw-bold">
-                            <i class="fa-solid fa-puzzle-piece text-detail me-2"></i>
+                    <div class="card-header border-0 pt-6 d-flex justify-content-between align-items-center">
+                        <h2 class="fw-bold mb-0">
+                            <i class="fa-solid fa-box-open text-detail me-2"></i>
                             Select Add-On Package
                         </h2>
+                        <a href="{{ route('my-cart') }}" class="btn btn-light-warning">
+                            <i class="fa-solid fa-arrow-left me-2"></i>Back to Cart
+                        </a>
                     </div>
                     <div class="card-body">
                         <form id="formPaket">
@@ -18,7 +21,7 @@
                             <div class="row">
                                 @forelse($paket as $item)
                                     <div class="col-md-6 mb-4">
-                                        <label class="paket-card w-100">
+                                        <label class="paket-card w-100 h-100 cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 class="paket-checkbox"
@@ -41,6 +44,12 @@
                                                 <hr>
                                                 <div class="fw-bold fs-4 text-detail">
                                                     Rp {{ number_format($item->harga_paket, 0, ',', '.') }}
+                                                </div>
+                                                <small class="text-muted">
+                                                    × {{ $cart->qty }} participant(s)
+                                                </small>
+                                                <div class="fw-bold text-success mt-1">
+                                                    Total: Rp {{ number_format($item->harga_paket * $cart->qty, 0, ',', '.') }}
                                                 </div>
                                             </div>
                                         </label>
@@ -67,10 +76,8 @@
                         <h4 class="fw-bold">{{ $cart->judul_event }}</h4>
                         <div class="text-muted-detail mb-4">{{ $cart->lokasi_event }}</div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Participant</span>
-                            <strong>
-                                <i class="fa-solid fa-user-check text-detail me-1"></i> 1 (You)
-                            </strong>
+                            <span>Participants</span>
+                            <strong>{{ $cart->qty }}</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Event Price</span>
@@ -134,11 +141,13 @@ $('#btnContinue').on('click', function() {
 });
 
 let eventTotal = {{ $cart->subtotal }};
+let qty = {{ $cart->qty }};
 
 function hitungAddon() {
     let addon = 0;
     $('.paket-checkbox:checked').each(function() {
-        addon += parseInt($(this).data('harga')) || 0;
+        let hargaPaket = parseInt($(this).data('harga')) || 0;
+        addon += (hargaPaket * qty);
     });
     $('#addon-total').html('Rp ' + addon.toLocaleString('id-ID'));
     $('#grand-total').html('Rp ' + (eventTotal + addon).toLocaleString('id-ID'));

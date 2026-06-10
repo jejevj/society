@@ -43,11 +43,8 @@
                                     <strong>{{ $cart->lokasi_event }}</strong>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <small class="text-muted-detail d-block">Participant</small>
-                                    <strong>
-                                        <i class="fa-solid fa-user-check text-detail me-1"></i>
-                                        1 Person (You)
-                                    </strong>
+                                    <small class="text-muted-detail d-block">Participants</small>
+                                    <strong>{{ $cart->qty }} Person(s)</strong>
                                 </div>
                             </div>
                         </div>
@@ -61,10 +58,11 @@
                                             <div class="fw-bold">{{ $item->judul_paket }}</div>
                                             <small class="text-muted-detail">
                                                 Rp {{ number_format($item->harga_paket, 0, ',', '.') }}
+                                                × {{ $cart->qty }}
                                             </small>
                                         </div>
                                         <div class="fw-bold text-detail">
-                                            Rp {{ number_format($item->harga_paket, 0, ',', '.') }}
+                                            Rp {{ number_format($item->harga_paket * $cart->qty, 0, ',', '.') }}
                                         </div>
                                     </div>
                                 </div>

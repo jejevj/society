@@ -87,12 +87,14 @@ class WebHomeController extends Controller
             ? $user->email_user
             : 'noreply@society-event.com';
 
+        $qty = (int) ($cart->qty ?? 1);
+
         $itemDetails = [];
         if ($cart->harga_event > 0) {
             $itemDetails[] = [
                 'id'       => $cart->kode_event,
                 'price'    => (int) $cart->harga_event,
-                'quantity' => 1,
+                'quantity' => $qty,
                 'name'     => mb_substr($cart->judul_event, 0, 50),
             ];
         }
@@ -101,7 +103,7 @@ class WebHomeController extends Controller
                 $itemDetails[] = [
                     'id'       => $ad->kode_event_paket,
                     'price'    => (int) $ad->harga_paket,
-                    'quantity' => 1,
+                    'quantity' => $qty,
                     'name'     => mb_substr($ad->judul_paket, 0, 50),
                 ];
             }
@@ -249,6 +251,8 @@ class WebHomeController extends Controller
             return response()->json(['status' => false, 'message' => 'Event not found.']);
         }
 
+        $qty = max(1, (int) ($request->qty ?? 1));
+
         $cek = DB::table('t_event_cart')
             ->where('id_user', session('id_user'))
             ->where('kode_event', $request->kode_event)
@@ -259,8 +263,8 @@ class WebHomeController extends Controller
             DB::table('t_event_cart')
                 ->where('id_event_cart', $cek->id_event_cart)
                 ->update([
-                    'qty'        => 1,
-                    'subtotal'   => $event->harga_event,
+                    'qty'        => $qty,
+                    'subtotal'   => $event->harga_event * $qty,
                     'updated_at' => now(),
                 ]);
         } else {
@@ -269,9 +273,9 @@ class WebHomeController extends Controller
                 'kode_cart'  => $kode_cart,
                 'kode_event' => $event->kode_event,
                 'id_user'    => session('id_user'),
-                'qty'        => 1,
+                'qty'        => $qty,
                 'harga'      => $event->harga_event,
-                'subtotal'   => $event->harga_event,
+                'subtotal'   => $event->harga_event * $qty,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -364,8 +368,9 @@ class WebHomeController extends Controller
 
         if (!$cart) abort(404);
 
+        $qty           = (int) ($cart->qty ?? 1);
         $addon         = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
-        $subtotalAddon = $addon->sum('harga_paket');
+        $subtotalAddon = $addon->sum('harga_paket') * $qty;
         $grandTotal    = (int) ($cart->subtotal + $subtotalAddon);
 
         $midtransConfig = $this->midtransConfig();
@@ -376,21 +381,19 @@ class WebHomeController extends Controller
         if ($midtransConfig && $grandTotal > 0) {
             $user = DB::table('app_user')->where('id_user', session('id_user'))->first();
 
-            // Cek apakah sudah ada registrasi PENDING untuk cart ini
             $existingReg = DB::table('t_event_registrasi')
                 ->where('kode_cart', $kode_cart)
                 ->where('payment_status', 'PENDING')
                 ->first();
 
             if ($existingReg && !empty($existingReg->snap_token)) {
-                // ✔ Kasus 1: Ada pending + snap_token tersimpan → langsung pakai
+                // Kasus 1: Ada pending + snap_token tersimpan → langsung pakai
                 $orderId    = $existingReg->midtrans_order_id;
                 $snapToken  = $existingReg->snap_token;
                 $pendingReg = $existingReg;
 
             } elseif ($existingReg && empty($existingReg->snap_token)) {
-                // ❌ Kasus 2: Ada pending tapi snap_token kosong (order_id sudah dipakai Midtrans)
-                // Solusi: hapus registrasi PENDING lama, generate order_id baru
+                // Kasus 2: Ada pending tapi snap_token kosong → hapus & buat baru
                 DB::table('t_event_registrasi')
                     ->where('kode_registrasi', $existingReg->kode_registrasi)
                     ->delete();
@@ -420,7 +423,7 @@ class WebHomeController extends Controller
                 ]);
 
             } else {
-                // ✔ Kasus 3: Belum ada pending sama sekali → order_id baru
+                // Kasus 3: Belum ada pending → order_id baru
                 $orderId   = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
                 $params    = $this->buildSnapParams($midtransConfig, $orderId, $grandTotal, $cart, $addon, $user);
                 $snapToken = $this->getSnapToken($midtransConfig, $params);
@@ -615,7 +618,8 @@ class WebHomeController extends Controller
         if ($alreadyReg) return;
 
         $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
-        $grandTotal     = $cart->subtotal + $addon->sum('harga_paket');
+        $qty            = (int) ($cart->qty ?? 1);
+        $grandTotal     = $cart->subtotal + ($addon->sum('harga_paket') * $qty);
 
         DB::table('t_event_registrasi')->insert([
             'kode_registrasi'   => $kodeRegistrasi,
@@ -643,8 +647,8 @@ class WebHomeController extends Controller
                 'kode_paket'      => $ad->kode_event_paket,
                 'nama_addon'      => $ad->judul_paket,
                 'harga_addon'     => (float) $ad->harga_paket,
-                'qty'             => 1,
-                'subtotal'        => (float) $ad->harga_paket,
+                'qty'             => $qty,
+                'subtotal'        => (float) ($ad->harga_paket * $qty),
                 'created_at'      => now(),
                 'updated_at'      => now(),
             ]);
@@ -696,9 +700,14 @@ class WebHomeController extends Controller
         if (!$cart) {
             return response()->json(['status' => false, 'message' => 'Cart not found']);
         }
+        $qty = max(1, (int) ($request->qty ?? 1));
         DB::table('t_event_cart')
             ->where('kode_cart', $request->kode_cart)
-            ->update(['qty' => 1, 'subtotal' => $cart->harga, 'updated_at' => now()]);
+            ->update([
+                'qty'        => $qty,
+                'subtotal'   => $cart->harga * $qty,
+                'updated_at' => now(),
+            ]);
 
         return response()->json(['status' => true, 'message' => 'Cart updated successfully']);
     }

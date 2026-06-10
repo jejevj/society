@@ -21,9 +21,7 @@
                             <div class="card-body p-5">
                                 <div class="row align-items-center">
                                     <div class="col-lg-7">
-                                        <h3 class="fw-bold mb-2">
-                                            {{ $item->judul_event }}
-                                        </h3>
+                                        <h3 class="fw-bold mb-2">{{ $item->judul_event }}</h3>
                                         <div class="mb-2 text-muted-detail">
                                             <i class="fa-solid fa-location-dot me-2"></i>
                                             {{ $item->lokasi_event }}
@@ -37,13 +35,36 @@
                                         <div class="border rounded p-3 mt-3 bg-light">
                                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                                 <div>
-                                                    <small class="text-muted d-block mb-1">Participant</small>
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <i class="fa-solid fa-user-check text-detail"></i>
-                                                        <span class="fw-bold">1 Participant (You)</span>
+                                                    <small class="text-muted d-block">Participants</small>
+                                                    <div class="d-flex align-items-center gap-2 mt-2">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-light btn-minus"
+                                                                data-cart="{{ $item->kode_cart }}">
+                                                            -
+                                                        </button>
+                                                        <input
+                                                            type="number"
+                                                            class="form-control text-center qty-input"
+                                                            value="{{ $item->qty }}"
+                                                            min="1"
+                                                            data-cart="{{ $item->kode_cart }}"
+                                                            data-harga="{{ $item->harga_event }}"
+                                                            style="width:80px">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-light btn-plus"
+                                                                data-cart="{{ $item->kode_cart }}">
+                                                            +
+                                                        </button>
                                                     </div>
                                                 </div>
                                                 <div class="text-end">
+                                                    <button
+                                                        type="button"
+                                                        class="btn bg-detail btn-sm btnUpdateCart"
+                                                        data-cart="{{ $item->kode_cart }}">
+                                                        <i class="fa fa-save me-1 text-white"></i>
+                                                        Update
+                                                    </button>
                                                     <button
                                                         type="button"
                                                         class="btn btn-dark btn-sm btnDeleteCart"
@@ -101,6 +122,43 @@
     </div>
 </div>
 <script>
+$(document).on('click','.btn-plus',function(){
+    let input = $(this).siblings('.qty-input');
+    input.val(parseInt(input.val()) + 1).trigger('keyup');
+});
+
+$(document).on('click','.btn-minus',function(){
+    let input = $(this).siblings('.qty-input');
+    let qty = parseInt(input.val());
+    if(qty > 1){
+        input.val(qty - 1).trigger('keyup');
+    }
+});
+
+$(document).on('keyup change','.qty-input',function(){
+    let qty    = parseInt($(this).val()) || 1;
+    let harga  = parseInt($(this).data('harga'));
+    let cart   = $(this).data('cart');
+    let addon  = parseInt($('#total-'+cart).data('addon')) || 0;
+    let total  = (harga * qty) + (addon * qty);
+    $('#total-'+cart).html('Rp ' + total.toLocaleString('id-ID'));
+});
+
+$('.btnUpdateCart').click(function(){
+    let cart = $(this).data('cart');
+    let qty  = $('.qty-input[data-cart="'+cart+'"]').val();
+    $.post(
+        "{{ route('updateCartEvent') }}",
+        { _token:'{{ csrf_token() }}', kode_cart:cart, qty:qty },
+        function(res){
+            if(res.status){
+                Swal.fire({ icon:'success', title:'Success', text:res.message })
+                .then(()=>{ location.reload(); });
+            }
+        }
+    );
+});
+
 $('.btnDeleteCart').click(function(){
     let cart = $(this).data('cart');
     Swal.fire({

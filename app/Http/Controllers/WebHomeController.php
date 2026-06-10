@@ -353,6 +353,86 @@ class WebHomeController extends Controller
         ]);
     }
 
+    // ========================================================
+    // Step 2: Participant Form
+    // ========================================================
+
+    public function showParticipantForm($kode_cart, Request $request)
+    {
+        if (!$request->session()->has('id_user')) {
+            return redirect()->route('login');
+        }
+
+        $cart = DB::table('t_event_cart as c')
+            ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
+            ->where('c.kode_cart', $kode_cart)
+            ->first();
+
+        if (!$cart) abort(404);
+
+        $qty  = (int) ($cart->qty ?? 1);
+        $user = DB::table('app_user')->where('id_user', session('id_user'))->first();
+
+        $addon = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
+        $subtotalAddon = $addon->sum('harga_paket') * $qty;
+        $grandTotal    = (int) ($cart->subtotal + $subtotalAddon);
+
+        // Load previously saved participants if any
+        $participants = DB::table('t_event_cart_peserta')
+            ->where('kode_cart', $kode_cart)
+            ->orderBy('urutan')
+            ->get();
+
+        return view('web.home.participant-form', [
+            'menu_aktif'   => 'about',
+            'menu'         => 'Participant Data',
+            'cart'         => $cart,
+            'qty'          => $qty,
+            'user'         => $user,
+            'addon'        => $addon,
+            'grandTotal'   => $grandTotal,
+            'participants' => $participants,
+            'set'          => $this->setting(),
+        ]);
+    }
+
+    public function saveParticipants(Request $request)
+    {
+        if (!session()->has('id_user')) {
+            return redirect()->route('login');
+        }
+
+        $request->validate([
+            'kode_cart'              => 'required|string',
+            'participants'           => 'required|array|min:1',
+            'participants.*.nama'    => 'required|string|max:255',
+            'participants.*.email'   => 'required|email|max:255',
+            'participants.*.no_hp'   => 'required|string|max:50',
+        ]);
+
+        $kode_cart = $request->kode_cart;
+
+        // Hapus data peserta lama lalu insert ulang
+        DB::table('t_event_cart_peserta')->where('kode_cart', $kode_cart)->delete();
+
+        foreach ($request->participants as $urutan => $p) {
+            DB::table('t_event_cart_peserta')->insert([
+                'kode_cart'       => $kode_cart,
+                'urutan'          => (int) $urutan,
+                'nama_peserta'    => $p['nama'],
+                'email_peserta'   => $p['email'],
+                'no_hp_peserta'   => $p['no_hp'],
+                'instansi_peserta'=> $p['instansi'] ?? null,
+                'created_at'      => now(),
+                'updated_at'      => now(),
+            ]);
+        }
+
+        return redirect()->route('checkout-event', $kode_cart);
+    }
+
+    // ========================================================
+
     public function detailCheckoutEvent($kode_cart, Request $request)
     {
         if (!$request->session()->has('id_user')) {
@@ -373,6 +453,12 @@ class WebHomeController extends Controller
         $addon         = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
         $subtotalAddon = $addon->sum('harga_paket') * $qty;
         $grandTotal    = (int) ($cart->subtotal + $subtotalAddon);
+
+        // Ambil data peserta yang sudah diisi
+        $peserta = DB::table('t_event_cart_peserta')
+            ->where('kode_cart', $kode_cart)
+            ->orderBy('urutan')
+            ->get();
 
         $midtransConfig = $this->midtransConfig();
         $snapToken      = null;
@@ -459,6 +545,7 @@ class WebHomeController extends Controller
             'menu_aktif'     => $menu_aktif,
             'cart'           => $cart,
             'addon'          => $addon,
+            'peserta'        => $peserta,
             'subtotalAddon'  => $subtotalAddon,
             'grandTotal'     => $grandTotal,
             'snapToken'      => $snapToken,
@@ -600,6 +687,7 @@ class WebHomeController extends Controller
         }
 
         DB::table('t_event_cart_paket')->where('kode_cart', $reg->kode_cart)->delete();
+        DB::table('t_event_cart_peserta')->where('kode_cart', $reg->kode_cart)->delete();
         DB::table('t_event_cart')->where('kode_cart', $reg->kode_cart)->delete();
     }
 
@@ -715,6 +803,7 @@ class WebHomeController extends Controller
         DB::beginTransaction();
         try {
             DB::table('t_event_cart_paket')->where('kode_cart', $request->kode_cart)->delete();
+            DB::table('t_event_cart_peserta')->where('kode_cart', $request->kode_cart)->delete();
             DB::table('t_event_cart')->where('kode_cart', $request->kode_cart)->delete();
             DB::commit();
             return response()->json(['status' => true, 'message' => 'Cart deleted successfully']);

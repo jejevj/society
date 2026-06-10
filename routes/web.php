@@ -14,6 +14,11 @@ Route::prefix('society-event')->group(function () {
 
     Route::get('/event-cart/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCartEvent'])->name('event-cart');
     Route::post('/savePackageCart',[App\Http\Controllers\WebHomeController::class, 'savePackageCart'])->name('savePackageCart');
+
+    // Step 2: Participant form
+    Route::get('/participant-form/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'showParticipantForm'])->name('participant-form');
+    Route::post('/save-participants', [App\Http\Controllers\WebHomeController::class, 'saveParticipants'])->name('save-participants');
+
     Route::get('/checkout-event/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCheckoutEvent'])->name('checkout-event');
     Route::get('/my-cart', [App\Http\Controllers\WebHomeController::class, 'myCart'])->name('my-cart');
     Route::post('/updateCartEvent', [App\Http\Controllers\WebHomeController::class, 'updateCartEvent'])->name('updateCartEvent');

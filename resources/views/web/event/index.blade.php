@@ -70,10 +70,6 @@
     pointer-events: none;
 }
 
-/* ─── SORT ─── */
-.ev-sort select { border-radius: 20px; font-size: 0.82rem; padding: 6px 14px; border: 1.5px solid #e5e7eb; }
-.ev-sort select:focus { border-color: #E62020; box-shadow: none; outline: none; }
-
 /* ─── EVENT CARD ─── */
 .ev-card {
     background: #fff;
@@ -115,8 +111,9 @@
     border-radius: 20px;
     text-transform: uppercase;
 }
-.ev-status.open   { background: #d1fae5; color: #065f46; }
-.ev-status.closed { background: #fee2e2; color: #991b1b; }
+.ev-status.open       { background: #d1fae5; color: #065f46; }
+.ev-status.closed     { background: #fee2e2; color: #991b1b; }
+.ev-status.registered { background: #dbeafe; color: #1d4ed8; }
 .ev-card-thumb .ev-peserta {
     position: absolute;
     bottom: 10px;
@@ -131,12 +128,7 @@
 }
 
 .ev-card-body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; }
-.ev-card-kol {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 8px;
-}
+.ev-card-kol { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
 .ev-kol-badge {
     font-size: 0.65rem;
     font-weight: 700;
@@ -176,23 +168,12 @@
 }
 .ev-card-meta span i { width: 14px; color: #E62020; margin-right: 4px; }
 
-/* Harga section */
 .ev-price-wrap { margin-bottom: 10px; }
 .ev-price-label { font-size: 0.7rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
-.ev-price-val {
-    font-size: 1.1rem;
-    font-weight: 900;
-    color: #E62020;
-}
+.ev-price-val { font-size: 1.1rem; font-weight: 900; color: #E62020; }
 .ev-price-val.free { color: #059669; }
 
-/* Package pills */
-.ev-paket-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 14px;
-}
+.ev-paket-wrap { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
 .ev-paket-pill {
     display: flex;
     align-items: center;
@@ -207,14 +188,9 @@
     white-space: nowrap;
 }
 .ev-paket-pill img { width: 18px; height: 18px; object-fit: contain; }
-.ev-paket-pill .pill-price {
-    font-weight: 800;
-    color: #E62020;
-    font-size: 0.68rem;
-}
+.ev-paket-pill .pill-price { font-weight: 800; color: #E62020; font-size: 0.68rem; }
 .ev-paket-pill .pill-price.free { color: #059669; }
 
-/* CTA button */
 .ev-btn-register {
     display: block;
     text-align: center;
@@ -235,6 +211,12 @@
     cursor: not-allowed;
     pointer-events: none;
 }
+.ev-btn-register.registered {
+    background: #1d4ed8;
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.85;
+}
 .ev-btn-detail {
     display: block;
     text-align: center;
@@ -251,10 +233,8 @@
 }
 .ev-btn-detail:hover { background: #fff0f0; color: #c41a1a; border-color: #c41a1a; }
 
-/* Empty state */
 .ev-empty { text-align: center; padding: 60px 20px; background: #fff; border-radius: 18px; border: 1.5px solid #f0f0f0; }
 
-/* Active filter chips */
 .filter-chip {
     display: inline-flex;
     align-items: center;
@@ -273,7 +253,6 @@
 <div class="ev-page">
 <div class="container-fluid px-5">
 
-    {{-- Header --}}
     <div class="row align-items-center mb-4">
         <div class="col">
             <div class="ev-page-title">Daftar Event</div>
@@ -289,7 +268,6 @@
                 <div class="ev-filter">
                     <div class="ev-filter-title">Filter</div>
 
-                    {{-- Keyword --}}
                     <div class="mb-3">
                         <label>Kata Kunci</label>
                         <div class="ev-search-wrap">
@@ -300,7 +278,6 @@
                         </div>
                     </div>
 
-                    {{-- Status --}}
                     <div class="mb-3">
                         <label>Status Pendaftaran</label>
                         <select name="status" class="form-select">
@@ -310,7 +287,6 @@
                         </select>
                     </div>
 
-                    {{-- Rentang Harga --}}
                     <div class="mb-3">
                         <label>Harga Minimum (Rp)</label>
                         <input type="number" name="harga_min" class="form-control"
@@ -328,7 +304,6 @@
                             max="{{ $hargaRange->max_harga ?? 99999999 }}">
                     </div>
 
-                    {{-- Sort --}}
                     <div class="mb-4">
                         <label>Urutkan</label>
                         <select name="sort" class="form-select">
@@ -352,7 +327,6 @@
         {{-- ─── MAIN CONTENT ─── --}}
         <div class="col-lg-9 col-xl-10">
 
-            {{-- Active filter chips + result count --}}
             <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
                 <span style="font-size:0.82rem;color:#666;font-weight:600;">
                     {{ $events->total() }} event ditemukan
@@ -382,7 +356,6 @@
             <div class="col-xl-4 col-md-6">
                 <div class="ev-card">
 
-                    {{-- Thumbnail --}}
                     <div class="ev-card-thumb">
                         @if($e->background_event)
                             <img src="{{ asset('storage/' . $e->background_event) }}" alt="{{ $e->judul_event }}">
@@ -392,9 +365,16 @@
                             </div>
                         @endif
 
-                        <span class="ev-status {{ $e->is_open ? 'open' : 'closed' }}">
-                            {{ $e->is_open ? 'Pendaftaran Buka' : 'Pendaftaran Tutup' }}
-                        </span>
+                        {{-- Badge: Terdaftar > Pendaftaran Buka/Tutup --}}
+                        @if($e->is_registered)
+                            <span class="ev-status registered">
+                                <i class="fa-solid fa-circle-check me-1"></i> Terdaftar
+                            </span>
+                        @else
+                            <span class="ev-status {{ $e->is_open ? 'open' : 'closed' }}">
+                                {{ $e->is_open ? 'Pendaftaran Buka' : 'Pendaftaran Tutup' }}
+                            </span>
+                        @endif
 
                         @if($e->jumlah_peserta > 0)
                         <span class="ev-peserta">
@@ -405,7 +385,6 @@
 
                     <div class="ev-card-body">
 
-                        {{-- Kolaborasi badges --}}
                         @if($e->kolaborasi->count() > 0)
                         <div class="ev-card-kol">
                             @foreach($e->kolaborasi->take(3) as $kol)
@@ -417,11 +396,9 @@
                         </div>
                         @endif
 
-                        {{-- Title & sub --}}
                         <div class="ev-card-title">{{ $e->judul_event }}</div>
                         <div class="ev-card-sub">{{ $e->sub_judul_event }}</div>
 
-                        {{-- Meta --}}
                         <div class="ev-card-meta">
                             <span><i class="fa-solid fa-location-dot"></i>{{ $e->lokasi_event }}</span>
                             <span><i class="fa-solid fa-calendar-days"></i>
@@ -431,11 +408,10 @@
                             </span>
                         </div>
 
-                        {{-- Harga event utama --}}
                         <div class="ev-price-wrap">
                             <div class="ev-price-label">Harga Dasar</div>
-                            <div class="ev-price-val {{ $e->harga_event <= 0 ? 'free' : '' }}">
-                                @if($e->harga_event <= 0)
+                            <div class="ev-price-val {{ ($e->harga_event ?? 0) <= 0 ? 'free' : '' }}">
+                                @if(($e->harga_event ?? 0) <= 0)
                                     GRATIS
                                 @else
                                     Rp {{ number_format($e->harga_event, 0, ',', '.') }}
@@ -443,7 +419,6 @@
                             </div>
                         </div>
 
-                        {{-- Package pills --}}
                         @if($e->paket->count() > 0)
                         <div style="font-size:0.7rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Paket Tambahan</div>
                         <div class="ev-paket-wrap">
@@ -456,10 +431,8 @@
                                 @endif
                                 <span>{{ $p->judul_paket }}</span>
                                 <span class="pill-price {{ $p->harga_paket <= 0 ? 'free' : '' }}">
-                                    @if($p->harga_paket <= 0)
-                                        Gratis
-                                    @else
-                                        +Rp {{ number_format($p->harga_paket, 0, ',', '.') }}
+                                    @if($p->harga_paket <= 0) Gratis
+                                    @else +Rp {{ number_format($p->harga_paket, 0, ',', '.') }}
                                     @endif
                                 </span>
                             </div>
@@ -467,15 +440,18 @@
                         </div>
                         @endif
 
-                        {{-- CTA: logic berdasarkan status login & status pendaftaran --}}
-                        @if($e->is_open)
+                        {{-- CTA Button --}}
+                        @if($e->is_registered)
+                            {{-- Sudah terdaftar: tombol disabled --}}
+                            <span class="ev-btn-register registered">
+                                <i class="fa-solid fa-circle-check me-1"></i> Sudah Terdaftar
+                            </span>
+                        @elseif($e->is_open)
                             @if(session('id_user'))
-                                {{-- User sudah login: langsung ke detail event untuk proses cart/registrasi --}}
                                 <a href="{{ route('detailEvent', ['key' => $e->kode_event]) }}" class="ev-btn-register">
                                     <i class="fa-solid fa-cart-plus me-1"></i> Daftar / Beli Tiket
                                 </a>
                             @else
-                                {{-- Guest: arahkan ke halaman register dengan event param --}}
                                 <a href="{{ route('register') }}?event={{ $e->kode_event }}" class="ev-btn-register">
                                     <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Daftar Sekarang
                                 </a>
@@ -486,7 +462,6 @@
                             </span>
                         @endif
 
-                        {{-- Tombol lihat detail selalu tersedia --}}
                         <a href="{{ route('detailEvent', ['key' => $e->kode_event]) }}" class="ev-btn-detail">
                             <i class="fa-solid fa-circle-info me-1"></i> Lihat Detail
                         </a>
@@ -497,7 +472,6 @@
             @endforeach
             </div>
 
-            {{-- Pagination --}}
             <div class="mt-4 d-flex justify-content-center">
                 {{ $events->links() }}
             </div>
@@ -509,7 +483,6 @@
 </div>
 
 <script>
-// Auto-submit on sort change
 document.querySelector('select[name="sort"]')?.addEventListener('change', function() {
     document.getElementById('filterForm').submit();
 });

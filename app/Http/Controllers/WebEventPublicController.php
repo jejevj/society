@@ -20,7 +20,6 @@ class WebEventPublicController extends Controller
         $query = DB::table('t_event as e')
             ->where('e.status_event', 'Y');
 
-        // Filter: search keyword
         if ($request->filled('q')) {
             $q = $request->q;
             $query->where(function ($sub) use ($q) {
@@ -30,7 +29,6 @@ class WebEventPublicController extends Controller
             });
         }
 
-        // Filter: status pendaftaran
         if ($request->filled('status')) {
             if ($request->status === 'open') {
                 $query->where('e.tanggal_akhir_event', '>=', now()->toDateString());
@@ -39,7 +37,6 @@ class WebEventPublicController extends Controller
             }
         }
 
-        // Filter: rentang harga
         if ($request->filled('harga_min')) {
             $query->where('e.harga_event', '>=', (float) $request->harga_min);
         }
@@ -47,13 +44,12 @@ class WebEventPublicController extends Controller
             $query->where('e.harga_event', '<=', (float) $request->harga_max);
         }
 
-        // Urutan
         $sort = $request->get('sort', 'terbaru');
         match ($sort) {
-            'termurah'  => $query->orderBy('e.harga_event', 'asc'),
-            'termahal'  => $query->orderBy('e.harga_event', 'desc'),
-            'terdekat'  => $query->orderBy('e.tanggal_awal_event', 'asc'),
-            default     => $query->orderByDesc('e.created_at_event'),
+            'termurah' => $query->orderBy('e.harga_event', 'asc'),
+            'termahal' => $query->orderBy('e.harga_event', 'desc'),
+            'terdekat' => $query->orderBy('e.tanggal_awal_event', 'asc'),
+            default    => $query->orderByDesc('e.created_at_event'),
         };
 
         $events = $query->select(
@@ -68,7 +64,15 @@ class WebEventPublicController extends Controller
             'e.keterangan_event'
         )->paginate(9)->appends($request->all());
 
-        // Attach paket & kolaborasi per event
+        // Kode event yang sudah didaftarkan user login (status apapun kecuali gagal)
+        $registeredEvents = collect();
+        if ($request->session()->has('id_user')) {
+            $registeredEvents = DB::table('t_event_registrasi')
+                ->where('id_user', session('id_user'))
+                ->whereNotIn('status_registrasi', ['CANCELLED'])
+                ->pluck('kode_event');
+        }
+
         foreach ($events as $e) {
             $e->paket = DB::table('t_event_paket')
                 ->where('event_kode_paket', $e->kode_event)
@@ -81,13 +85,16 @@ class WebEventPublicController extends Controller
                 ->get();
 
             $e->is_open = $e->tanggal_akhir_event >= now()->toDateString();
+
             $e->jumlah_peserta = DB::table('t_event_registrasi')
                 ->where('kode_event', $e->kode_event)
-                ->where('status_registrasi', 'CONFIRMED')
+                ->where('status_registrasi', 'A')
                 ->count();
+
+            // Tandai apakah user sudah terdaftar di event ini
+            $e->is_registered = $registeredEvents->contains($e->kode_event);
         }
 
-        // Harga min/max untuk range slider
         $hargaRange = DB::table('t_event')
             ->where('status_event', 'Y')
             ->selectRaw('MIN(harga_event) as min_harga, MAX(harga_event) as max_harga')

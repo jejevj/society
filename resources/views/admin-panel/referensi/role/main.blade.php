@@ -14,7 +14,7 @@
 									</div>
 									<div class="d-flex gap-4 gap-lg-13">
 										<div class="d-flex flex-column">
-											<span class="text-white fw-bold fs-3 mb-1 text-center">{{ $role_count; }}</span>
+											<span class="text-white fw-bold fs-3 mb-1 text-center">{{ $role_count }}</span>
 											<div class="text-white opacity-50 fw-bold">Role</div>
 										</div>										
 									</div>

@@ -12,7 +12,6 @@ Route::prefix('society-event')->group(function () {
     Route::get('/detailEvent/{key}', [App\Http\Controllers\WebHomeController::class, 'detailEvent'])->name('detailEvent');
     Route::post('/event/add-cart', [App\Http\Controllers\WebHomeController::class, 'addCartEvent'])->name('event.add.cart');
 
-<<<<<<< Updated upstream
     Route::get('/event-cart/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCartEvent'])->name('event-cart');
     Route::post('/savePackageCart',[App\Http\Controllers\WebHomeController::class, 'savePackageCart'])->name('savePackageCart');
     Route::get('/checkout-event/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCheckoutEvent']);
@@ -20,7 +19,6 @@ Route::prefix('society-event')->group(function () {
     Route::post('/updateCartEvent', [App\Http\Controllers\WebHomeController::class, 'updateCartEvent'])->name('updateCartEvent');
     Route::post('/deleteCartEvent', [App\Http\Controllers\WebHomeController::class, 'deleteCartEvent'])->name('deleteCartEvent');
     
-=======
     // Halaman list event publik (path /list-event agar tidak bentrok dengan backend admin /event)
     Route::get('/list-event', [App\Http\Controllers\WebEventPublicController::class, 'index'])->name('list-event');
 
@@ -40,7 +38,6 @@ Route::prefix('society-event')->group(function () {
 
     Route::get('/hubungi-kami', [App\Http\Controllers\WebHubungiController::class, 'index'])->name('hubungi-kami');
     Route::post('/hubungiKamiAction', [App\Http\Controllers\WebHubungiController::class, 'hubungiKamiAction'])->name('hubungiKamiAction');
->>>>>>> Stashed changes
 
     Route::get('/login', [App\Http\Controllers\WebLoginController::class, 'index'])->name('login');
     Route::get('/register', [App\Http\Controllers\WebLoginController::class, 'register'])->name('register');

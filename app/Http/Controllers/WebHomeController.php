@@ -46,6 +46,11 @@ class WebHomeController extends Controller
         \Midtrans\Config::$is3ds        = true;
     }
 
+    private function setting(): ?object
+    {
+        return DB::table('app_setting')->where('kode', 'SETT')->first();
+    }
+
     public function index(Request $request)
     {
         $menu_aktif = 'about';
@@ -71,7 +76,7 @@ class WebHomeController extends Controller
             'menu'       => 'Home',
             'menu_aktif' => $menu_aktif,
             'event'      => $event,
-            'set'        => DB::table('app_setting')->where('kode', 'SETT')->first(),
+            'set'        => $this->setting(),
         ];
 
         return view('web.home.main', $data);
@@ -111,7 +116,7 @@ class WebHomeController extends Controller
             'paket'      => $paket,
             'program'    => $program,
             'kolaborasi' => $kolaborasi,
-            'set'        => DB::table('app_setting')->where('kode', 'SETT')->first(),
+            'set'        => $this->setting(),
         ];
 
         return view('web.home.detail', $data);
@@ -189,7 +194,7 @@ class WebHomeController extends Controller
             'cart'          => $cart,
             'paket'         => $paket,
             'selectedPaket' => $selectedPaket,
-            'set'           => DB::table('app_setting')->where('kode', 'SETT')->first(),
+            'set'           => $this->setting(),
         ];
 
         return view('web.home.event-cart', $data);
@@ -333,16 +338,16 @@ class WebHomeController extends Controller
         }
 
         $data = [
-            'menu'          => 'Checkout',
-            'menu_aktif'    => $menu_aktif,
-            'cart'          => $cart,
-            'addon'         => $addon,
-            'subtotalAddon' => $subtotalAddon,
-            'grandTotal'    => $grandTotal,
-            'snapToken'     => $snapToken,
-            'orderId'       => $orderId,
-            'midtransConfig'=> $midtransConfig,
-            'set'           => DB::table('app_setting')->where('kode', 'SETT')->first(),
+            'menu'           => 'Checkout',
+            'menu_aktif'     => $menu_aktif,
+            'cart'           => $cart,
+            'addon'          => $addon,
+            'subtotalAddon'  => $subtotalAddon,
+            'grandTotal'     => $grandTotal,
+            'snapToken'      => $snapToken,
+            'orderId'        => $orderId,
+            'midtransConfig' => $midtransConfig,
+            'set'            => $this->setting(),
         ];
 
         return view('web.home.event-checkout', $data);
@@ -437,8 +442,11 @@ class WebHomeController extends Controller
 
     public function cartPaymentSuccess(Request $request)
     {
-        $set = DB::table('app_setting')->where('kode', 'SETT')->first();
-        return view('web.home.cart-payment-success', compact('set'));
+        return view('web.home.cart-payment-success', [
+            'menu_aktif' => 'about',
+            'menu'       => 'Payment Success',
+            'set'        => $this->setting(),
+        ]);
     }
 
     private function processCartPaid(object $reg, string $orderId): void
@@ -565,7 +573,7 @@ class WebHomeController extends Controller
             'menu'       => 'My Cart',
             'menu_aktif' => $menu_aktif,
             'cart'       => $cart,
-            'set'        => DB::table('app_setting')->where('kode', 'SETT')->first(),
+            'set'        => $this->setting(),
         ];
 
         return view('web.home.my-cart', $data);

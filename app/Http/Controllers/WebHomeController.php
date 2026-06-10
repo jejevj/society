@@ -367,6 +367,14 @@ class WebHomeController extends Controller
 
     // ── Step 3: Checkout ──────────────────────────────────────────────────
 
+    /**
+     * Status Midtrans yang dianggap "terminal" sehingga perlu generate order_id baru.
+     */
+    private function isCancelledMidtransStatus(string $status): bool
+    {
+        return in_array(strtolower($status), ['cancel', 'deny', 'expire', 'failure']);
+    }
+
     public function detailCheckoutEvent($kode_cart, Request $request)
     {
         if (!$request->session()->has('id_user')) return redirect()->route('login');
@@ -393,20 +401,47 @@ class WebHomeController extends Controller
         if ($midtransConfig && $grandTotal > 0) {
             $user = DB::table('app_user')->where('id_user', session('id_user'))->first();
 
+            // Cari registrasi yang ada untuk cart ini
             $existingReg = DB::table('t_event_registrasi')
                 ->where('kode_cart', $kode_cart)
-                ->where('payment_status', 'PENDING')
+                ->whereIn('payment_status', ['PENDING', 'FAILED', 'CANCEL', 'EXPIRE'])
+                ->orderBy('id_event_registrasi', 'desc')
                 ->first();
 
-            if ($existingReg && !empty($existingReg->snap_token)) {
-                $orderId    = $existingReg->midtrans_order_id;
-                $snapToken  = $existingReg->snap_token;
-                $pendingReg = $existingReg;
-            } else {
-                if ($existingReg) {
-                    DB::table('t_event_registrasi')->where('kode_registrasi', $existingReg->kode_registrasi)->delete();
-                }
+            $needNewOrder = true; // flag: perlu generate order_id baru
 
+            if ($existingReg && !empty($existingReg->snap_token)) {
+                // ── Cek status transaksi langsung ke Midtrans ──
+                $mtStatus = $this->getMidtransTransactionStatus($midtransConfig, $existingReg->midtrans_order_id);
+                $txStatus = $mtStatus ? strtolower($mtStatus->transaction_status ?? '') : '';
+
+                if ($txStatus === 'pending') {
+                    // Transaksi masih aktif di Midtrans → reuse token yang sama
+                    $orderId        = $existingReg->midtrans_order_id;
+                    $snapToken      = $existingReg->snap_token;
+                    $pendingReg     = $existingReg;
+                    $needNewOrder   = false;
+                } elseif ($this->isCancelledMidtransStatus($txStatus) || empty($txStatus)) {
+                    // Transaksi dibatalkan / expire / tidak ditemukan di Midtrans → hapus, buat baru
+                    DB::table('t_event_registrasi')
+                        ->where('kode_registrasi', $existingReg->kode_registrasi)
+                        ->delete();
+                    $needNewOrder = true;
+                } elseif (in_array($txStatus, ['capture', 'settlement'])) {
+                    // Sudah dibayar tapi belum diproses (edge case) → proses sekarang
+                    $this->processCartPaid($existingReg, $existingReg->midtrans_order_id);
+                    return redirect()->route('cart-payment.success');
+                }
+                // Status lain (e.g. payment_type tertentu yang masih challenge) → buat baru
+            } elseif ($existingReg) {
+                // Ada record tapi tanpa snap_token → hapus saja, buat ulang
+                DB::table('t_event_registrasi')
+                    ->where('kode_registrasi', $existingReg->kode_registrasi)
+                    ->delete();
+            }
+
+            if ($needNewOrder) {
+                // ── Generate order_id baru dan snap_token baru ──
                 $orderId        = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
                 $params         = $this->buildSnapParams($midtransConfig, $orderId, $grandTotal, $cart, $addon, $user);
                 $snapToken      = $this->getSnapToken($midtransConfig, $params);
@@ -430,6 +465,11 @@ class WebHomeController extends Controller
                     'created_at'        => now(),
                     'updated_at'        => now(),
                 ]);
+
+                // Refresh agar $pendingReg terisi
+                $pendingReg = DB::table('t_event_registrasi')
+                    ->where('midtrans_order_id', $orderId)
+                    ->first();
             }
 
         } elseif ($grandTotal <= 0) {

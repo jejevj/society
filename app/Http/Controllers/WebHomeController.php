@@ -405,43 +405,36 @@ class WebHomeController extends Controller
             $existingReg = DB::table('t_event_registrasi')
                 ->where('kode_cart', $kode_cart)
                 ->whereIn('payment_status', ['PENDING', 'FAILED', 'CANCEL', 'EXPIRE'])
-                ->orderBy('id_event_registrasi', 'desc')
+                ->orderBy('id_registrasi', 'desc')
                 ->first();
 
-            $needNewOrder = true; // flag: perlu generate order_id baru
+            $needNewOrder = true;
 
             if ($existingReg && !empty($existingReg->snap_token)) {
-                // ── Cek status transaksi langsung ke Midtrans ──
                 $mtStatus = $this->getMidtransTransactionStatus($midtransConfig, $existingReg->midtrans_order_id);
                 $txStatus = $mtStatus ? strtolower($mtStatus->transaction_status ?? '') : '';
 
                 if ($txStatus === 'pending') {
-                    // Transaksi masih aktif di Midtrans → reuse token yang sama
-                    $orderId        = $existingReg->midtrans_order_id;
-                    $snapToken      = $existingReg->snap_token;
-                    $pendingReg     = $existingReg;
-                    $needNewOrder   = false;
+                    $orderId      = $existingReg->midtrans_order_id;
+                    $snapToken    = $existingReg->snap_token;
+                    $pendingReg   = $existingReg;
+                    $needNewOrder = false;
                 } elseif ($this->isCancelledMidtransStatus($txStatus) || empty($txStatus)) {
-                    // Transaksi dibatalkan / expire / tidak ditemukan di Midtrans → hapus, buat baru
                     DB::table('t_event_registrasi')
                         ->where('kode_registrasi', $existingReg->kode_registrasi)
                         ->delete();
                     $needNewOrder = true;
                 } elseif (in_array($txStatus, ['capture', 'settlement'])) {
-                    // Sudah dibayar tapi belum diproses (edge case) → proses sekarang
                     $this->processCartPaid($existingReg, $existingReg->midtrans_order_id);
                     return redirect()->route('cart-payment.success');
                 }
-                // Status lain (e.g. payment_type tertentu yang masih challenge) → buat baru
             } elseif ($existingReg) {
-                // Ada record tapi tanpa snap_token → hapus saja, buat ulang
                 DB::table('t_event_registrasi')
                     ->where('kode_registrasi', $existingReg->kode_registrasi)
                     ->delete();
             }
 
             if ($needNewOrder) {
-                // ── Generate order_id baru dan snap_token baru ──
                 $orderId        = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
                 $params         = $this->buildSnapParams($midtransConfig, $orderId, $grandTotal, $cart, $addon, $user);
                 $snapToken      = $this->getSnapToken($midtransConfig, $params);
@@ -466,7 +459,6 @@ class WebHomeController extends Controller
                     'updated_at'        => now(),
                 ]);
 
-                // Refresh agar $pendingReg terisi
                 $pendingReg = DB::table('t_event_registrasi')
                     ->where('midtrans_order_id', $orderId)
                     ->first();
@@ -570,10 +562,8 @@ class WebHomeController extends Controller
         ]);
     }
 
-    // ── processCartPaid: assign event ke semua peserta ────────────────────
     private function processCartPaid(object $reg, string $orderId): void
     {
-        // 1. Update status registrasi utama (pembeli)
         DB::table('t_event_registrasi')
             ->where('midtrans_order_id', $orderId)
             ->update([
@@ -584,7 +574,6 @@ class WebHomeController extends Controller
                 'updated_at'        => now(),
             ]);
 
-        // 2. Simpan addon
         $addon = DB::table('t_event_cart_paket')->where('kode_cart', $reg->kode_cart)->get();
         foreach ($addon as $ad) {
             if (!DB::table('t_event_addon')->where('kode_registrasi', $reg->kode_registrasi)->where('kode_paket', $ad->kode_event_paket)->exists()) {
@@ -603,7 +592,6 @@ class WebHomeController extends Controller
             }
         }
 
-        // 3. Proses setiap peserta
         $event    = DB::table('t_event')->where('kode_event', $reg->kode_event)->first();
         $peserta  = DB::table('t_event_cart_peserta')->where('kode_cart', $reg->kode_cart)->orderBy('urutan')->get();
         $namaEvent = $event->judul_event ?? 'Event';
@@ -614,7 +602,6 @@ class WebHomeController extends Controller
                 ->first();
 
             if ($existingUser) {
-                // ── Sudah punya akun: langsung assign ──
                 $alreadyReg = DB::table('t_event_registrasi')
                     ->where('kode_event', $reg->kode_event)
                     ->where('id_user', $existingUser->id_user)
@@ -640,7 +627,6 @@ class WebHomeController extends Controller
                     ]);
                 }
             } else {
-                // ── Belum punya akun: buat invite token + kirim email ──
                 $alreadyInvited = DB::table('t_peserta_invite')
                     ->where('email_peserta', $p->email_peserta)
                     ->where('kode_event', $reg->kode_event)
@@ -653,7 +639,6 @@ class WebHomeController extends Controller
                     $expiredAt  = now()->addHours(48);
                     $registerUrl = url(env('APP_ROUTE', 'society-event') . '/peserta-register/' . $token);
 
-                    // Simpan invite
                     DB::table('t_peserta_invite')->insert([
                         'token'            => $token,
                         'kode_cart'        => $reg->kode_cart,
@@ -671,12 +656,11 @@ class WebHomeController extends Controller
                         'updated_at'       => now(),
                     ]);
 
-                    // Simpan registrasi sementara (tanpa id_user dulu)
                     DB::table('t_event_registrasi')->insert([
                         'kode_registrasi'   => $kodeReg,
                         'kode_event'        => $reg->kode_event,
                         'kode_cart'         => $reg->kode_cart,
-                        'id_user'           => 0, // akan di-update saat peserta buat akun
+                        'id_user'           => 0,
                         'nama_peserta'      => $p->nama_peserta,
                         'email_peserta'     => $p->email_peserta,
                         'no_hp_peserta'     => $p->no_hp_peserta,
@@ -689,7 +673,6 @@ class WebHomeController extends Controller
                         'updated_at'        => now(),
                     ]);
 
-                    // Kirim email undangan registrasi
                     try {
                         Mail::to($p->email_peserta)->send(new PesertaRegistrasiMail(
                             $p->nama_peserta,
@@ -705,7 +688,6 @@ class WebHomeController extends Controller
             }
         }
 
-        // 4. Bersihkan cart
         DB::table('t_event_cart_paket')->where('kode_cart', $reg->kode_cart)->delete();
         DB::table('t_event_cart_peserta')->where('kode_cart', $reg->kode_cart)->delete();
         DB::table('t_event_cart')->where('kode_cart', $reg->kode_cart)->delete();

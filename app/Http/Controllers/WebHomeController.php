@@ -29,6 +29,23 @@ class WebHomeController extends Controller
         $this->dataService = $dataService;
     }
 
+    // ── helper: ambil konfigurasi Midtrans aktif ──────────────────────────
+    private function midtransConfig(): ?object
+    {
+        return DB::table('app_midtrans_config')
+            ->where('id_midtrans', 1)
+            ->where('is_active', 'Y')
+            ->first();
+    }
+
+    private function bootMidtrans(object $cfg): void
+    {
+        \Midtrans\Config::$serverKey    = $cfg->server_key;
+        \Midtrans\Config::$isProduction = (bool) ($cfg->is_production ?? false);
+        \Midtrans\Config::$isSanitized  = true;
+        \Midtrans\Config::$is3ds        = true;
+    }
+
     public function index(Request $request)
     {
         $menu_aktif = 'about';
@@ -111,9 +128,7 @@ class WebHomeController extends Controller
             return response()->json(['status' => false, 'message' => 'Event not found.']);
         }
 
-        // Always qty = 1 per user per event
-        $qty  = 1;
-        $cek  = DB::table('t_event_cart')
+        $cek = DB::table('t_event_cart')
             ->where('id_user', session('id_user'))
             ->where('kode_event', $request->kode_event)
             ->first();
@@ -217,18 +232,12 @@ class WebHomeController extends Controller
         if (!$request->session()->has('id_user')) {
             return redirect()->route('login');
         }
-        $menu_aktif = 'about';
-        $cart       = DB::table('t_event_cart as c')
+        $menu_aktif     = 'about';
+        $cart           = DB::table('t_event_cart as c')
             ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
             ->where('c.kode_cart', $kode_cart)
-            ->select(
-                'c.*',
-                'e.judul_event',
-                'e.lokasi_event',
-                'e.tanggal_awal_event',
-                'e.tanggal_akhir_event',
-                'e.harga_event'
-            )
+            ->select('c.*', 'e.judul_event', 'e.lokasi_event',
+                     'e.tanggal_awal_event', 'e.tanggal_akhir_event', 'e.harga_event')
             ->first();
 
         if (!$cart) abort(404);
@@ -237,32 +246,25 @@ class WebHomeController extends Controller
         $subtotalAddon = $addon->sum('harga_paket');
         $grandTotal    = $cart->subtotal + $subtotalAddon;
 
-        // Generate Snap Token
-        $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+        $midtransConfig = $this->midtransConfig();
         $snapToken      = null;
         $orderId        = null;
 
         if ($midtransConfig && $grandTotal > 0) {
-            // Cek apakah sudah ada PENDING order sebelumnya untuk cart ini
             $existingReg = DB::table('t_event_registrasi')
                 ->where('kode_cart', $kode_cart)
                 ->where('payment_status', 'PENDING')
                 ->first();
 
-            if ($existingReg) {
-                $orderId = $existingReg->midtrans_order_id;
-            } else {
-                $orderId = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
-            }
+            $orderId = $existingReg
+                ? $existingReg->midtrans_order_id
+                : 'CART-' . strtoupper(Str::random(8)) . '-' . time();
 
-            \Midtrans\Config::$serverKey    = $midtransConfig->server_key;
-            \Midtrans\Config::$isProduction = (bool) ($midtransConfig->is_production ?? false);
-            \Midtrans\Config::$isSanitized  = true;
-            \Midtrans\Config::$is3ds        = true;
+            $this->bootMidtrans($midtransConfig);
 
-            $user = DB::table('app_user')->where('id_user', session('id_user'))->first();
-
+            $user        = DB::table('app_user')->where('id_user', session('id_user'))->first();
             $itemDetails = [];
+
             if ($cart->harga_event > 0) {
                 $itemDetails[] = [
                     'id'       => $cart->kode_event,
@@ -303,7 +305,6 @@ class WebHomeController extends Controller
                 Log::error('Cart getSnapToken error: ' . $e->getMessage());
             }
 
-            // Simpan/update pending registrasi
             if (!$existingReg) {
                 $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
                 DB::table('t_event_registrasi')->insert([
@@ -325,9 +326,7 @@ class WebHomeController extends Controller
                 ]);
             }
         } elseif ($grandTotal <= 0) {
-            // Gratis — langsung enroll
             $this->enrollCartEvent($kode_cart, $cart, $addon, null, 'FREE');
-            // Hapus cart
             DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->delete();
             DB::table('t_event_cart')->where('kode_cart', $kode_cart)->delete();
             return redirect()->route('cart-payment.success');
@@ -342,13 +341,13 @@ class WebHomeController extends Controller
             'grandTotal'    => $grandTotal,
             'snapToken'     => $snapToken,
             'orderId'       => $orderId,
+            'midtransConfig'=> $midtransConfig,
             'set'           => DB::table('app_setting')->where('kode', 'SETT')->first(),
         ];
 
         return view('web.home.event-checkout', $data);
     }
 
-    // ─── AJAX: cek status pembayaran cart (polling) ───
     public function cartCheckPayment(Request $request)
     {
         $orderId = $request->input('order_id');
@@ -369,8 +368,7 @@ class WebHomeController extends Controller
             return response()->json(['status' => 'failed', 'payment_status' => $reg->payment_status]);
         }
 
-        // Cross-check ke Midtrans
-        $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+        $midtransConfig = $this->midtransConfig();
         if ($midtransConfig) {
             try {
                 \Midtrans\Config::$serverKey    = $midtransConfig->server_key;
@@ -400,11 +398,10 @@ class WebHomeController extends Controller
         return response()->json(['status' => 'pending']);
     }
 
-    // ─── Midtrans Webhook untuk pembayaran cart ───
     public function cartPaymentCallback(Request $request)
     {
         try {
-            $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+            $midtransConfig = $this->midtransConfig();
             if ($midtransConfig) {
                 \Midtrans\Config::$serverKey    = $midtransConfig->server_key;
                 \Midtrans\Config::$isProduction = (bool) ($midtransConfig->is_production ?? false);
@@ -438,17 +435,14 @@ class WebHomeController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
-    // ─── Halaman sukses setelah bayar via cart ───
     public function cartPaymentSuccess(Request $request)
     {
         $set = DB::table('app_setting')->where('kode', 'SETT')->first();
         return view('web.home.cart-payment-success', compact('set'));
     }
 
-    // ─── Helper: proses assign event setelah PAID ───
     private function processCartPaid(object $reg, string $orderId): void
     {
-        // Update status registrasi
         DB::table('t_event_registrasi')
             ->where('midtrans_order_id', $orderId)
             ->update([
@@ -459,7 +453,6 @@ class WebHomeController extends Controller
                 'updated_at'        => now(),
             ]);
 
-        // Simpan add-on ke t_event_addon
         $addon = DB::table('t_event_cart_paket')
             ->where('kode_cart', $reg->kode_cart)
             ->get();
@@ -486,12 +479,10 @@ class WebHomeController extends Controller
             }
         }
 
-        // Bersihkan cart
         DB::table('t_event_cart_paket')->where('kode_cart', $reg->kode_cart)->delete();
         DB::table('t_event_cart')->where('kode_cart', $reg->kode_cart)->delete();
     }
 
-    // ─── Helper: enroll gratis via cart ───
     private function enrollCartEvent(string $kode_cart, object $cart, $addon, ?string $orderId, string $paymentStatus = 'FREE'): void
     {
         $userId = (int) session('id_user');
@@ -563,11 +554,8 @@ class WebHomeController extends Controller
             ->orderBy('c.created_at', 'desc')
             ->select(
                 'c.*',
-                'e.judul_event',
-                'e.lokasi_event',
-                'e.tanggal_awal_event',
-                'e.tanggal_akhir_event',
-                'e.harga_event',
+                'e.judul_event', 'e.lokasi_event',
+                'e.tanggal_awal_event', 'e.tanggal_akhir_event', 'e.harga_event',
                 DB::raw('COALESCE(p.total_paket,0) as total_paket'),
                 DB::raw('(COALESCE(c.subtotal,0) + COALESCE(p.total_paket,0)) as grand_total')
             )

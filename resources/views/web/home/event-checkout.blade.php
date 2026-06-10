@@ -91,12 +91,7 @@
                             <i class="fa-solid fa-credit-card me-2 text-white"></i>
                             Proceed To Payment
                         </button>
-                        <div id="paymentStatus" class="mt-3 d-none">
-                            <div class="d-flex align-items-center gap-2 text-muted">
-                                <span class="spinner-border spinner-border-sm"></span>
-                                <span>Menunggu konfirmasi pembayaran...</span>
-                            </div>
-                        </div>
+                        <div id="paymentStatus" class="mt-3 d-none"></div>
                         @else
                         <div class="alert alert-warning">
                             <i class="fa-solid fa-triangle-exclamation me-2"></i>
@@ -111,8 +106,12 @@
 </div>
 
 @if($snapToken)
-<script src="https://app{{ (DB::table('app_midtrans_config')->where('status_config','Y')->value('is_production') ? '' : '.sandbox') }}.midtrans.com/snap/snap.js"
-        data-client-key="{{ DB::table('app_midtrans_config')->where('status_config','Y')->value('client_key') }}"></script>
+@php
+    $isSandbox  = !($midtransConfig->is_production ?? false);
+    $clientKey  = $midtransConfig->client_key ?? '';
+    $snapDomain = $isSandbox ? 'app.sandbox.midtrans.com' : 'app.midtrans.com';
+@endphp
+<script src="https://{{ $snapDomain }}/snap/snap.js" data-client-key="{{ $clientKey }}"></script>
 <script>
 const SNAP_TOKEN = '{{ $snapToken }}';
 const ORDER_ID   = '{{ $orderId }}';
@@ -123,7 +122,9 @@ const CSRF_TOKEN = '{{ csrf_token() }}';
 let pollingInterval = null;
 
 function startPolling() {
-    $('#paymentStatus').removeClass('d-none');
+    $('#paymentStatus').removeClass('d-none').html(
+        '<div class="d-flex align-items-center gap-2 text-muted"><span class="spinner-border spinner-border-sm"></span><span>Menunggu konfirmasi pembayaran...</span></div>'
+    );
     pollingInterval = setInterval(function () {
         $.ajax({
             url: CHECK_URL,
@@ -153,22 +154,12 @@ function startPolling() {
 
 $('#btnPayNow').on('click', function () {
     $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Loading payment...');
-
     snap.pay(SNAP_TOKEN, {
-        onSuccess: function (result) {
-            startPolling();
-        },
-        onPending: function (result) {
-            startPolling();
-        },
+        onSuccess: function (result) { startPolling(); },
+        onPending: function (result) { startPolling(); },
         onError: function (result) {
             $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>Proceed To Payment');
-            Swal.fire({
-                icon: 'error',
-                title: 'Pembayaran Gagal',
-                text: 'Terjadi kesalahan saat proses pembayaran.',
-                confirmButtonColor: '#E62020'
-            });
+            Swal.fire({ icon: 'error', title: 'Pembayaran Gagal', text: 'Terjadi kesalahan saat proses pembayaran.', confirmButtonColor: '#E62020' });
         },
         onClose: function () {
             $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>Proceed To Payment');

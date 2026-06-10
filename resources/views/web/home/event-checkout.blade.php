@@ -79,21 +79,103 @@
                             <strong>Rp {{ number_format($subtotalAddon, 0, ',', '.') }}</strong>
                         </div>
                         <hr>
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-between align-items-center mb-5">
                             <span class="fw-bold fs-4">Total</span>
                             <span class="fw-bold fs-1 text-detail">
                                 Rp {{ number_format($grandTotal, 0, ',', '.') }}
                             </span>
                         </div>
-                        <button class="btn bg-detail text-white w-100 py-3 mt-5">
+
+                        @if($snapToken)
+                        <button id="btnPayNow" class="btn bg-detail text-white w-100 py-3">
                             <i class="fa-solid fa-credit-card me-2 text-white"></i>
                             Proceed To Payment
                         </button>
+                        <div id="paymentStatus" class="mt-3 d-none">
+                            <div class="d-flex align-items-center gap-2 text-muted">
+                                <span class="spinner-border spinner-border-sm"></span>
+                                <span>Menunggu konfirmasi pembayaran...</span>
+                            </div>
+                        </div>
+                        @else
+                        <div class="alert alert-warning">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                            Gagal memuat payment gateway. Silakan refresh halaman.
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@if($snapToken)
+<script src="https://app{{ (DB::table('app_midtrans_config')->where('status_config','Y')->value('is_production') ? '' : '.sandbox') }}.midtrans.com/snap/snap.js"
+        data-client-key="{{ DB::table('app_midtrans_config')->where('status_config','Y')->value('client_key') }}"></script>
+<script>
+const SNAP_TOKEN = '{{ $snapToken }}';
+const ORDER_ID   = '{{ $orderId }}';
+const CHECK_URL  = '{{ route('cart.check-payment') }}';
+const SUCCESS_URL = '{{ route('cart-payment.success') }}';
+const CSRF_TOKEN = '{{ csrf_token() }}';
+
+let pollingInterval = null;
+
+function startPolling() {
+    $('#paymentStatus').removeClass('d-none');
+    pollingInterval = setInterval(function () {
+        $.ajax({
+            url: CHECK_URL,
+            type: 'POST',
+            data: { _token: CSRF_TOKEN, order_id: ORDER_ID },
+            success: function (res) {
+                if (res.status === 'paid') {
+                    clearInterval(pollingInterval);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Pembayaran Berhasil!',
+                        text: 'Anda telah terdaftar untuk event ini.',
+                        confirmButtonColor: '#E62020',
+                        allowOutsideClick: false
+                    }).then(() => { window.location.href = SUCCESS_URL; });
+                } else if (res.status === 'failed') {
+                    clearInterval(pollingInterval);
+                    $('#paymentStatus').html(
+                        '<div class="alert alert-danger mt-2"><i class="fa-solid fa-circle-xmark me-2"></i>Pembayaran gagal atau dibatalkan. Silakan coba lagi.</div>'
+                    );
+                    $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>Coba Bayar Lagi');
+                }
+            }
+        });
+    }, 3000);
+}
+
+$('#btnPayNow').on('click', function () {
+    $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Loading payment...');
+
+    snap.pay(SNAP_TOKEN, {
+        onSuccess: function (result) {
+            startPolling();
+        },
+        onPending: function (result) {
+            startPolling();
+        },
+        onError: function (result) {
+            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>Proceed To Payment');
+            Swal.fire({
+                icon: 'error',
+                title: 'Pembayaran Gagal',
+                text: 'Terjadi kesalahan saat proses pembayaran.',
+                confirmButtonColor: '#E62020'
+            });
+        },
+        onClose: function () {
+            $('#btnPayNow').prop('disabled', false).html('<i class="fa-solid fa-credit-card me-2"></i>Proceed To Payment');
+        }
+    });
+});
+</script>
+@endif
 
 @include('layouts.footer-v2')

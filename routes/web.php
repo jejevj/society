@@ -14,10 +14,17 @@ Route::prefix('society-event')->group(function () {
 
     Route::get('/event-cart/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCartEvent'])->name('event-cart');
     Route::post('/savePackageCart',[App\Http\Controllers\WebHomeController::class, 'savePackageCart'])->name('savePackageCart');
-    Route::get('/checkout-event/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCheckoutEvent']);
+    Route::get('/checkout-event/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCheckoutEvent'])->name('checkout-event');
     Route::get('/my-cart', [App\Http\Controllers\WebHomeController::class, 'myCart'])->name('my-cart');
     Route::post('/updateCartEvent', [App\Http\Controllers\WebHomeController::class, 'updateCartEvent'])->name('updateCartEvent');
     Route::post('/deleteCartEvent', [App\Http\Controllers\WebHomeController::class, 'deleteCartEvent'])->name('deleteCartEvent');
+
+    // Cart payment routes
+    Route::post('/cart/check-payment', [App\Http\Controllers\WebHomeController::class, 'cartCheckPayment'])->name('cart.check-payment');
+    Route::get('/cart/payment-success', [App\Http\Controllers\WebHomeController::class, 'cartPaymentSuccess'])->name('cart-payment.success');
+    Route::post('/cart/payment-callback', [App\Http\Controllers\WebHomeController::class, 'cartPaymentCallback'])
+        ->name('cart.payment-callback')
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
     
     // Halaman list event publik (path /list-event agar tidak bentrok dengan backend admin /event)
     Route::get('/list-event', [App\Http\Controllers\WebEventPublicController::class, 'index'])->name('list-event');

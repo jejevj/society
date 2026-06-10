@@ -109,14 +109,25 @@ class WebHomeController extends Controller
                 ->get();
         }
 
+        // Cek apakah user yang login sudah terdaftar di event ini
+        $is_registered = false;
+        if (session()->has('id_user')) {
+            $is_registered = DB::table('t_event_registrasi')
+                ->where('kode_event', $key)
+                ->where('id_user', session('id_user'))
+                ->whereIn('status_registrasi', ['A', 'P'])
+                ->exists();
+        }
+
         $data = [
-            'menu'       => 'Detail',
-            'menu_aktif' => $menu_aktif,
-            'detail'     => $detail,
-            'paket'      => $paket,
-            'program'    => $program,
-            'kolaborasi' => $kolaborasi,
-            'set'        => $this->setting(),
+            'menu'          => 'Detail',
+            'menu_aktif'    => $menu_aktif,
+            'detail'        => $detail,
+            'paket'         => $paket,
+            'program'       => $program,
+            'kolaborasi'    => $kolaborasi,
+            'set'           => $this->setting(),
+            'is_registered' => $is_registered,
         ];
 
         return view('web.home.detail', $data);

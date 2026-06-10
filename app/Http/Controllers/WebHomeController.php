@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PesertaRegistrasiMail;
 use App\Services\DataService;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
 use App\Models\ReffMenu;
 use App\Models\ReffStatus;
@@ -18,8 +20,6 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-
-
 
 class WebHomeController extends Controller
 {
@@ -39,7 +39,6 @@ class WebHomeController extends Controller
             ->first();
     }
 
-    // ── helper: ambil Snap API URL berdasarkan environment ────────────────
     private function snapApiUrl(object $cfg): string
     {
         return ($cfg->environment === 'production')
@@ -47,7 +46,6 @@ class WebHomeController extends Controller
             : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
     }
 
-    // ── helper: ambil Core API base URL ───────────────────────────────────
     private function coreApiUrl(object $cfg): string
     {
         return ($cfg->environment === 'production')
@@ -55,7 +53,6 @@ class WebHomeController extends Controller
             : 'https://api.sandbox.midtrans.com';
     }
 
-    // ── helper: generate Snap Token via HTTP ──────────────────────────────
     private function getSnapToken(object $cfg, array $params): ?string
     {
         try {
@@ -80,11 +77,10 @@ class WebHomeController extends Controller
         }
     }
 
-    // ── helper: build params untuk Snap Token ────────────────────────────
     private function buildSnapParams(object $cfg, string $orderId, int $grandTotal, object $cart, $addon, object $user): array
     {
-        $email = filter_var($user->email_user ?? '', FILTER_VALIDATE_EMAIL)
-            ? $user->email_user
+        $email = filter_var($user->username_user ?? '', FILTER_VALIDATE_EMAIL)
+            ? $user->username_user
             : 'noreply@society-event.com';
 
         $qty = (int) ($cart->qty ?? 1);
@@ -115,9 +111,9 @@ class WebHomeController extends Controller
                 'gross_amount' => $grandTotal,
             ],
             'customer_details' => [
-                'first_name' => $user->nama_user ?? 'User',
+                'first_name' => $user->nama_user    ?? 'User',
                 'email'      => $email,
-                'phone'      => $user->no_hp_user ?? '',
+                'phone'      => $user->telepon_user ?? '',
             ],
         ];
 
@@ -135,7 +131,6 @@ class WebHomeController extends Controller
         return $params;
     }
 
-    // ── helper: cek status transaksi via Core API ─────────────────────────
     private function getMidtransTransactionStatus(object $cfg, string $orderId): ?object
     {
         try {
@@ -144,9 +139,7 @@ class WebHomeController extends Controller
                 ->get($this->coreApiUrl($cfg) . '/v2/' . $orderId . '/status');
 
             $res = $response->json();
-            if (empty($res['transaction_status'])) {
-                return null;
-            }
+            if (empty($res['transaction_status'])) return null;
             return (object) $res;
         } catch (\Exception $e) {
             Log::error('getMidtransTransactionStatus error: ' . $e->getMessage());
@@ -161,8 +154,6 @@ class WebHomeController extends Controller
 
     public function index(Request $request)
     {
-        $menu_aktif = 'about';
-
         $event = DB::table('t_event')
             ->where('status_event', 'Y')
             ->orderBy('created_at_event', 'asc')
@@ -173,48 +164,31 @@ class WebHomeController extends Controller
                 ->where('event_kode_paket', $e->kode_event)
                 ->orderBy('id_event_paket', 'asc')
                 ->get();
-
             $e->kolaborasi = DB::table('t_event_kolaborasi')
                 ->where('event_kode_kolaborasi', $e->kode_event)
                 ->orderBy('id_event_kolaborasi', 'asc')
                 ->get();
         }
 
-        $data = [
+        return view('web.home.main', [
             'menu'       => 'Home',
-            'menu_aktif' => $menu_aktif,
+            'menu_aktif' => 'about',
             'event'      => $event,
             'set'        => $this->setting(),
-        ];
-
-        return view('web.home.main', $data);
+        ]);
     }
 
     public function detailEvent($key, Request $request)
     {
-        $menu_aktif = 'about';
         $detail     = DB::table('t_event')->where('kode_event', $key)->first();
-
-        $paket = DB::table('t_event_paket')
-            ->where('event_kode_paket', $key)
-            ->orderBy('id_event_paket', 'asc')
-            ->get();
-
-        $program = DB::table('t_event_program')
-            ->where('event_kode_program', $key)
-            ->orderBy('hari_program', 'asc')
-            ->get();
-
-        $kolaborasi = DB::table('t_event_kolaborasi')
-            ->where('event_kode_kolaborasi', $key)
-            ->orderBy('created_at_kolaborasi', 'asc')
-            ->get();
+        $paket      = DB::table('t_event_paket')->where('event_kode_paket', $key)->orderBy('id_event_paket')->get();
+        $program    = DB::table('t_event_program')->where('event_kode_program', $key)->orderBy('hari_program')->get();
+        $kolaborasi = DB::table('t_event_kolaborasi')->where('event_kode_kolaborasi', $key)->orderBy('created_at_kolaborasi')->get();
 
         foreach ($program as $e) {
             $e->program = DB::table('t_event_program_detail')
                 ->where('event_program_kode', $e->kode_event_program)
-                ->orderBy('awal_program_detail', 'asc')
-                ->get();
+                ->orderBy('awal_program_detail')->get();
         }
 
         $is_registered = false;
@@ -226,18 +200,16 @@ class WebHomeController extends Controller
                 ->exists();
         }
 
-        $data = [
+        return view('web.home.detail', [
             'menu'          => 'Detail',
-            'menu_aktif'    => $menu_aktif,
+            'menu_aktif'    => 'about',
             'detail'        => $detail,
             'paket'         => $paket,
             'program'       => $program,
             'kolaborasi'    => $kolaborasi,
             'set'           => $this->setting(),
             'is_registered' => $is_registered,
-        ];
-
-        return view('web.home.detail', $data);
+        ]);
     }
 
     public function addCartEvent(Request $request)
@@ -251,7 +223,6 @@ class WebHomeController extends Controller
             return response()->json(['status' => false, 'message' => 'Event not found.']);
         }
 
-        // Baca dari 'quantity' (nama field di detail.blade.php) atau fallback ke 'qty'
         $qty = max(1, (int) ($request->quantity ?? $request->qty ?? 1));
 
         $cek = DB::table('t_event_cart')
@@ -261,13 +232,11 @@ class WebHomeController extends Controller
 
         if ($cek) {
             $kode_cart = $cek->kode_cart;
-            DB::table('t_event_cart')
-                ->where('id_event_cart', $cek->id_event_cart)
-                ->update([
-                    'qty'        => $qty,
-                    'subtotal'   => $event->harga_event * $qty,
-                    'updated_at' => now(),
-                ]);
+            DB::table('t_event_cart')->where('id_event_cart', $cek->id_event_cart)->update([
+                'qty'        => $qty,
+                'subtotal'   => $event->harga_event * $qty,
+                'updated_at' => now(),
+            ]);
         } else {
             $kode_cart = 'CRT' . date('YmdHis') . strtoupper(Str::random(5));
             DB::table('t_event_cart')->insert([
@@ -282,43 +251,28 @@ class WebHomeController extends Controller
             ]);
         }
 
-        return response()->json([
-            'status'    => true,
-            'message'   => 'Successfully added to cart.',
-            'kode_cart' => $kode_cart,
-        ]);
+        return response()->json(['status' => true, 'message' => 'Successfully added to cart.', 'kode_cart' => $kode_cart]);
     }
 
     public function detailCartEvent($kode_cart, Request $request)
     {
-        if (!$request->session()->has('id_user')) {
-            return redirect()->route('login');
-        }
-        $menu_aktif = 'about';
-        $cart       = DB::table('t_event_cart as c')
+        if (!$request->session()->has('id_user')) return redirect()->route('login');
+
+        $cart = DB::table('t_event_cart as c')
             ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
-            ->where('c.kode_cart', $kode_cart)
-            ->first();
+            ->where('c.kode_cart', $kode_cart)->first();
 
-        $paket = DB::table('t_event_paket')
-            ->where('event_kode_paket', $cart->kode_event)
-            ->get();
+        $paket = DB::table('t_event_paket')->where('event_kode_paket', $cart->kode_event)->get();
+        $selectedPaket = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->pluck('kode_event_paket')->toArray();
 
-        $selectedPaket = DB::table('t_event_cart_paket')
-            ->where('kode_cart', $kode_cart)
-            ->pluck('kode_event_paket')
-            ->toArray();
-
-        $data = [
+        return view('web.home.event-cart', [
             'menu'          => 'Detail',
-            'menu_aktif'    => $menu_aktif,
+            'menu_aktif'    => 'about',
             'cart'          => $cart,
             'paket'         => $paket,
             'selectedPaket' => $selectedPaket,
             'set'           => $this->setting(),
-        ];
-
-        return view('web.home.event-cart', $data);
+        ]);
     }
 
     public function savePackageCart(Request $request)
@@ -346,42 +300,26 @@ class WebHomeController extends Controller
             }
         }
 
-        return response()->json([
-            'status'    => true,
-            'message'   => 'Package selection saved successfully.',
-            'kode_cart' => $request->kode_cart,
-        ]);
+        return response()->json(['status' => true, 'message' => 'Package selection saved successfully.', 'kode_cart' => $request->kode_cart]);
     }
 
-    // ========================================================
-    // Step 2: Participant Form
-    // ========================================================
+    // ── Step 2: Participant Form ──────────────────────────────────────────
 
     public function showParticipantForm($kode_cart, Request $request)
     {
-        if (!$request->session()->has('id_user')) {
-            return redirect()->route('login');
-        }
+        if (!$request->session()->has('id_user')) return redirect()->route('login');
 
         $cart = DB::table('t_event_cart as c')
             ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
-            ->where('c.kode_cart', $kode_cart)
-            ->first();
+            ->where('c.kode_cart', $kode_cart)->first();
 
         if (!$cart) abort(404);
 
-        $qty  = (int) ($cart->qty ?? 1);
-        $user = DB::table('app_user')->where('id_user', session('id_user'))->first();
-
-        $addon = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
-        $subtotalAddon = $addon->sum('harga_paket') * $qty;
-        $grandTotal    = (int) ($cart->subtotal + $subtotalAddon);
-
-        // Load previously saved participants if any
-        $participants = DB::table('t_event_cart_peserta')
-            ->where('kode_cart', $kode_cart)
-            ->orderBy('urutan')
-            ->get();
+        $qty          = (int) ($cart->qty ?? 1);
+        $user         = DB::table('app_user')->where('id_user', session('id_user'))->first();
+        $addon        = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
+        $grandTotal   = (int) ($cart->subtotal + $addon->sum('harga_paket') * $qty);
+        $participants = DB::table('t_event_cart_peserta')->where('kode_cart', $kode_cart)->orderBy('urutan')->get();
 
         return view('web.home.participant-form', [
             'menu_aktif'   => 'about',
@@ -398,53 +336,45 @@ class WebHomeController extends Controller
 
     public function saveParticipants(Request $request)
     {
-        if (!session()->has('id_user')) {
-            return redirect()->route('login');
-        }
+        if (!session()->has('id_user')) return redirect()->route('login');
 
         $request->validate([
-            'kode_cart'              => 'required|string',
-            'participants'           => 'required|array|min:1',
-            'participants.*.nama'    => 'required|string|max:255',
-            'participants.*.email'   => 'required|email|max:255',
-            'participants.*.no_hp'   => 'required|string|max:50',
+            'kode_cart'            => 'required|string',
+            'participants'         => 'required|array|min:1',
+            'participants.*.nama'  => 'required|string|max:255',
+            'participants.*.email' => 'required|email|max:255',
+            'participants.*.no_hp' => 'required|string|max:50',
         ]);
 
         $kode_cart = $request->kode_cart;
-
-        // Hapus data peserta lama lalu insert ulang
         DB::table('t_event_cart_peserta')->where('kode_cart', $kode_cart)->delete();
 
         foreach ($request->participants as $urutan => $p) {
             DB::table('t_event_cart_peserta')->insert([
-                'kode_cart'       => $kode_cart,
-                'urutan'          => (int) $urutan,
-                'nama_peserta'    => $p['nama'],
-                'email_peserta'   => $p['email'],
-                'no_hp_peserta'   => $p['no_hp'],
-                'instansi_peserta'=> $p['instansi'] ?? null,
-                'created_at'      => now(),
-                'updated_at'      => now(),
+                'kode_cart'        => $kode_cart,
+                'urutan'           => (int) $urutan,
+                'nama_peserta'     => $p['nama'],
+                'email_peserta'    => $p['email'],
+                'no_hp_peserta'    => $p['no_hp'],
+                'instansi_peserta' => $p['instansi'] ?? null,
+                'created_at'       => now(),
+                'updated_at'       => now(),
             ]);
         }
 
         return redirect()->route('checkout-event', $kode_cart);
     }
 
-    // ========================================================
+    // ── Step 3: Checkout ──────────────────────────────────────────────────
 
     public function detailCheckoutEvent($kode_cart, Request $request)
     {
-        if (!$request->session()->has('id_user')) {
-            return redirect()->route('login');
-        }
+        if (!$request->session()->has('id_user')) return redirect()->route('login');
 
-        $menu_aktif = 'about';
-        $cart       = DB::table('t_event_cart as c')
+        $cart = DB::table('t_event_cart as c')
             ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
             ->where('c.kode_cart', $kode_cart)
-            ->select('c.*', 'e.judul_event', 'e.lokasi_event',
-                     'e.tanggal_awal_event', 'e.tanggal_akhir_event', 'e.harga_event')
+            ->select('c.*', 'e.judul_event', 'e.lokasi_event', 'e.tanggal_awal_event', 'e.tanggal_akhir_event', 'e.harga_event')
             ->first();
 
         if (!$cart) abort(404);
@@ -453,12 +383,7 @@ class WebHomeController extends Controller
         $addon         = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
         $subtotalAddon = $addon->sum('harga_paket') * $qty;
         $grandTotal    = (int) ($cart->subtotal + $subtotalAddon);
-
-        // Ambil data peserta yang sudah diisi
-        $peserta = DB::table('t_event_cart_peserta')
-            ->where('kode_cart', $kode_cart)
-            ->orderBy('urutan')
-            ->get();
+        $peserta       = DB::table('t_event_cart_peserta')->where('kode_cart', $kode_cart)->orderBy('urutan')->get();
 
         $midtransConfig = $this->midtransConfig();
         $snapToken      = null;
@@ -477,51 +402,25 @@ class WebHomeController extends Controller
                 $orderId    = $existingReg->midtrans_order_id;
                 $snapToken  = $existingReg->snap_token;
                 $pendingReg = $existingReg;
-
-            } elseif ($existingReg && empty($existingReg->snap_token)) {
-                DB::table('t_event_registrasi')
-                    ->where('kode_registrasi', $existingReg->kode_registrasi)
-                    ->delete();
-
-                $orderId   = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
-                $params    = $this->buildSnapParams($midtransConfig, $orderId, $grandTotal, $cart, $addon, $user);
-                $snapToken = $this->getSnapToken($midtransConfig, $params);
-
-                $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
-                DB::table('t_event_registrasi')->insert([
-                    'kode_registrasi'   => $kodeRegistrasi,
-                    'kode_event'        => $cart->kode_event,
-                    'kode_cart'         => $kode_cart,
-                    'id_user'           => session('id_user'),
-                    'nama_peserta'      => $user->nama_user       ?? '',
-                    'email_peserta'     => $user->email_user      ?? '',
-                    'instansi_peserta'  => $user->organisasi_user ?? null,
-                    'no_hp_peserta'     => $user->no_hp_user      ?? null,
-                    'total_bayar'       => (float) $grandTotal,
-                    'midtrans_order_id' => $orderId,
-                    'snap_token'        => $snapToken,
-                    'payment_status'    => 'PENDING',
-                    'status_registrasi' => 'P',
-                    'confirmed_at'      => null,
-                    'created_at'        => now(),
-                    'updated_at'        => now(),
-                ]);
-
             } else {
-                $orderId   = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
-                $params    = $this->buildSnapParams($midtransConfig, $orderId, $grandTotal, $cart, $addon, $user);
-                $snapToken = $this->getSnapToken($midtransConfig, $params);
+                if ($existingReg) {
+                    DB::table('t_event_registrasi')->where('kode_registrasi', $existingReg->kode_registrasi)->delete();
+                }
 
+                $orderId        = 'CART-' . strtoupper(Str::random(8)) . '-' . time();
+                $params         = $this->buildSnapParams($midtransConfig, $orderId, $grandTotal, $cart, $addon, $user);
+                $snapToken      = $this->getSnapToken($midtransConfig, $params);
                 $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
+
                 DB::table('t_event_registrasi')->insert([
                     'kode_registrasi'   => $kodeRegistrasi,
                     'kode_event'        => $cart->kode_event,
                     'kode_cart'         => $kode_cart,
                     'id_user'           => session('id_user'),
                     'nama_peserta'      => $user->nama_user       ?? '',
-                    'email_peserta'     => $user->email_user      ?? '',
+                    'email_peserta'     => $user->username_user   ?? '',
                     'instansi_peserta'  => $user->organisasi_user ?? null,
-                    'no_hp_peserta'     => $user->no_hp_user      ?? null,
+                    'no_hp_peserta'     => $user->telepon_user    ?? null,
                     'total_bayar'       => (float) $grandTotal,
                     'midtrans_order_id' => $orderId,
                     'snap_token'        => $snapToken,
@@ -540,9 +439,9 @@ class WebHomeController extends Controller
             return redirect()->route('cart-payment.success');
         }
 
-        $data = [
+        return view('web.home.event-checkout', [
             'menu'           => 'Checkout',
-            'menu_aktif'     => $menu_aktif,
+            'menu_aktif'     => 'about',
             'cart'           => $cart,
             'addon'          => $addon,
             'peserta'        => $peserta,
@@ -553,27 +452,20 @@ class WebHomeController extends Controller
             'pendingReg'     => $pendingReg,
             'midtransConfig' => $midtransConfig,
             'set'            => $this->setting(),
-        ];
-
-        return view('web.home.event-checkout', $data);
+        ]);
     }
 
     public function cartCheckPayment(Request $request)
     {
         $orderId = $request->input('order_id');
-        if (!$orderId) {
-            return response()->json(['status' => 'error', 'message' => 'Order ID tidak ditemukan.']);
-        }
+        if (!$orderId) return response()->json(['status' => 'error', 'message' => 'Order ID tidak ditemukan.']);
 
         $reg = DB::table('t_event_registrasi')->where('midtrans_order_id', $orderId)->first();
-        if (!$reg) {
-            return response()->json(['status' => 'not_found']);
-        }
+        if (!$reg) return response()->json(['status' => 'not_found']);
 
         if ($reg->payment_status === 'PAID' && $reg->status_registrasi === 'A') {
             return response()->json(['status' => 'paid']);
         }
-
         if (in_array($reg->payment_status, ['FAILED', 'CANCEL', 'EXPIRE'])) {
             return response()->json(['status' => 'failed', 'payment_status' => $reg->payment_status]);
         }
@@ -584,20 +476,16 @@ class WebHomeController extends Controller
             $txStatus    = $mt->transaction_status ?? '';
             $fraudStatus = $mt->fraud_status ?? null;
 
-            if (in_array($txStatus, ['capture', 'settlement'])
-                && ($fraudStatus === 'accept' || $fraudStatus === null)) {
+            if (in_array($txStatus, ['capture', 'settlement']) && ($fraudStatus === 'accept' || $fraudStatus === null)) {
                 $this->processCartPaid($reg, $orderId);
                 return response()->json(['status' => 'paid']);
             }
-
             if (in_array($txStatus, ['cancel', 'deny', 'expire'])) {
-                DB::table('t_event_registrasi')
-                    ->where('midtrans_order_id', $orderId)
+                DB::table('t_event_registrasi')->where('midtrans_order_id', $orderId)
                     ->update(['payment_status' => 'FAILED', 'updated_at' => now()]);
                 return response()->json(['status' => 'failed', 'payment_status' => $txStatus]);
             }
         }
-
         return response()->json(['status' => 'pending']);
     }
 
@@ -607,9 +495,7 @@ class WebHomeController extends Controller
         $orderId     = $request->input('order_id');
         $fraudStatus = $request->input('fraud_status');
 
-        if (!$txStatus || !$orderId) {
-            return response()->json(['status' => 'invalid_payload'], 400);
-        }
+        if (!$txStatus || !$orderId) return response()->json(['status' => 'invalid_payload'], 400);
 
         $midtransConfig = $this->midtransConfig();
         if ($midtransConfig) {
@@ -624,18 +510,14 @@ class WebHomeController extends Controller
             && ($fraudStatus === 'accept' || $fraudStatus === null || $fraudStatus === '');
 
         $reg = DB::table('t_event_registrasi')->where('midtrans_order_id', $orderId)->first();
-        if (!$reg) {
-            return response()->json(['status' => 'order_not_found'], 404);
-        }
+        if (!$reg) return response()->json(['status' => 'order_not_found'], 404);
 
         if ($isPaid && $reg->payment_status !== 'PAID') {
             $this->processCartPaid($reg, $orderId);
         } elseif (in_array($txStatus, ['cancel', 'deny', 'expire'])) {
-            DB::table('t_event_registrasi')
-                ->where('midtrans_order_id', $orderId)
+            DB::table('t_event_registrasi')->where('midtrans_order_id', $orderId)
                 ->update(['payment_status' => 'FAILED', 'updated_at' => now()]);
         }
-
         return response()->json(['status' => 'ok']);
     }
 
@@ -648,8 +530,10 @@ class WebHomeController extends Controller
         ]);
     }
 
+    // ── processCartPaid: assign event ke semua peserta ────────────────────
     private function processCartPaid(object $reg, string $orderId): void
     {
+        // 1. Update status registrasi utama (pembeli)
         DB::table('t_event_registrasi')
             ->where('midtrans_order_id', $orderId)
             ->update([
@@ -660,17 +544,10 @@ class WebHomeController extends Controller
                 'updated_at'        => now(),
             ]);
 
-        $addon = DB::table('t_event_cart_paket')
-            ->where('kode_cart', $reg->kode_cart)
-            ->get();
-
+        // 2. Simpan addon
+        $addon = DB::table('t_event_cart_paket')->where('kode_cart', $reg->kode_cart)->get();
         foreach ($addon as $ad) {
-            $exists = DB::table('t_event_addon')
-                ->where('kode_registrasi', $reg->kode_registrasi)
-                ->where('kode_paket', $ad->kode_event_paket)
-                ->exists();
-
-            if (!$exists) {
+            if (!DB::table('t_event_addon')->where('kode_registrasi', $reg->kode_registrasi)->where('kode_paket', $ad->kode_event_paket)->exists()) {
                 DB::table('t_event_addon')->insert([
                     'id_user'         => $reg->id_user,
                     'kode_event'      => $reg->kode_event,
@@ -686,6 +563,109 @@ class WebHomeController extends Controller
             }
         }
 
+        // 3. Proses setiap peserta
+        $event    = DB::table('t_event')->where('kode_event', $reg->kode_event)->first();
+        $peserta  = DB::table('t_event_cart_peserta')->where('kode_cart', $reg->kode_cart)->orderBy('urutan')->get();
+        $namaEvent = $event->judul_event ?? 'Event';
+
+        foreach ($peserta as $p) {
+            $existingUser = DB::table('app_user')
+                ->where('username_user', $p->email_peserta)
+                ->first();
+
+            if ($existingUser) {
+                // ── Sudah punya akun: langsung assign ──
+                $alreadyReg = DB::table('t_event_registrasi')
+                    ->where('kode_event', $reg->kode_event)
+                    ->where('id_user', $existingUser->id_user)
+                    ->exists();
+
+                if (!$alreadyReg) {
+                    $kodeReg = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
+                    DB::table('t_event_registrasi')->insert([
+                        'kode_registrasi'   => $kodeReg,
+                        'kode_event'        => $reg->kode_event,
+                        'kode_cart'         => $reg->kode_cart,
+                        'id_user'           => $existingUser->id_user,
+                        'nama_peserta'      => $p->nama_peserta,
+                        'email_peserta'     => $p->email_peserta,
+                        'no_hp_peserta'     => $p->no_hp_peserta,
+                        'instansi_peserta'  => $p->instansi_peserta,
+                        'total_bayar'       => (float) $reg->total_bayar,
+                        'payment_status'    => 'PAID',
+                        'status_registrasi' => 'A',
+                        'confirmed_at'      => now(),
+                        'created_at'        => now(),
+                        'updated_at'        => now(),
+                    ]);
+                }
+            } else {
+                // ── Belum punya akun: buat invite token + kirim email ──
+                $alreadyInvited = DB::table('t_peserta_invite')
+                    ->where('email_peserta', $p->email_peserta)
+                    ->where('kode_event', $reg->kode_event)
+                    ->where('status', 'PENDING')
+                    ->exists();
+
+                if (!$alreadyInvited) {
+                    $token      = Str::random(64);
+                    $kodeReg    = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
+                    $expiredAt  = now()->addHours(48);
+                    $registerUrl = url(env('APP_ROUTE', 'society-event') . '/peserta-register/' . $token);
+
+                    // Simpan invite
+                    DB::table('t_peserta_invite')->insert([
+                        'token'            => $token,
+                        'kode_cart'        => $reg->kode_cart,
+                        'kode_event'       => $reg->kode_event,
+                        'kode_registrasi'  => $kodeReg,
+                        'nama_peserta'     => $p->nama_peserta,
+                        'email_peserta'    => $p->email_peserta,
+                        'no_hp_peserta'    => $p->no_hp_peserta,
+                        'instansi_peserta' => $p->instansi_peserta,
+                        'nama_event'       => $namaEvent,
+                        'total_bayar'      => (float) $reg->total_bayar,
+                        'status'           => 'PENDING',
+                        'expired_at'       => $expiredAt,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+
+                    // Simpan registrasi sementara (tanpa id_user dulu)
+                    DB::table('t_event_registrasi')->insert([
+                        'kode_registrasi'   => $kodeReg,
+                        'kode_event'        => $reg->kode_event,
+                        'kode_cart'         => $reg->kode_cart,
+                        'id_user'           => 0, // akan di-update saat peserta buat akun
+                        'nama_peserta'      => $p->nama_peserta,
+                        'email_peserta'     => $p->email_peserta,
+                        'no_hp_peserta'     => $p->no_hp_peserta,
+                        'instansi_peserta'  => $p->instansi_peserta,
+                        'total_bayar'       => (float) $reg->total_bayar,
+                        'payment_status'    => 'PAID',
+                        'status_registrasi' => 'A',
+                        'confirmed_at'      => now(),
+                        'created_at'        => now(),
+                        'updated_at'        => now(),
+                    ]);
+
+                    // Kirim email undangan registrasi
+                    try {
+                        Mail::to($p->email_peserta)->send(new PesertaRegistrasiMail(
+                            $p->nama_peserta,
+                            $p->email_peserta,
+                            $namaEvent,
+                            $registerUrl,
+                            $token
+                        ));
+                    } catch (\Exception $e) {
+                        Log::error('Gagal kirim email peserta [' . $p->email_peserta . ']: ' . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        // 4. Bersihkan cart
         DB::table('t_event_cart_paket')->where('kode_cart', $reg->kode_cart)->delete();
         DB::table('t_event_cart_peserta')->where('kode_cart', $reg->kode_cart)->delete();
         DB::table('t_event_cart')->where('kode_cart', $reg->kode_cart)->delete();
@@ -696,12 +676,7 @@ class WebHomeController extends Controller
         $userId = (int) session('id_user');
         $user   = DB::table('app_user')->where('id_user', $userId)->first();
 
-        $alreadyReg = DB::table('t_event_registrasi')
-            ->where('kode_event', $cart->kode_event)
-            ->where('id_user', $userId)
-            ->exists();
-
-        if ($alreadyReg) return;
+        if (DB::table('t_event_registrasi')->where('kode_event', $cart->kode_event)->where('id_user', $userId)->exists()) return;
 
         $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
         $qty            = (int) ($cart->qty ?? 1);
@@ -713,9 +688,9 @@ class WebHomeController extends Controller
             'kode_cart'         => $kode_cart,
             'id_user'           => $userId,
             'nama_peserta'      => $user->nama_user       ?? '',
-            'email_peserta'     => $user->email_user      ?? '',
+            'email_peserta'     => $user->username_user   ?? '',
             'instansi_peserta'  => $user->organisasi_user ?? null,
-            'no_hp_peserta'     => $user->no_hp_user      ?? null,
+            'no_hp_peserta'     => $user->telepon_user    ?? null,
             'total_bayar'       => (float) $grandTotal,
             'midtrans_order_id' => $orderId,
             'payment_status'    => $paymentStatus,
@@ -743,58 +718,37 @@ class WebHomeController extends Controller
 
     public function myCart(Request $request)
     {
-        if (!$request->session()->has('id_user')) {
-            return redirect()->route('login');
-        }
-        $menu_aktif = 'cart';
-        $cart       = DB::table('t_event_cart as c')
+        if (!$request->session()->has('id_user')) return redirect()->route('login');
+
+        $cart = DB::table('t_event_cart as c')
             ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
-            ->leftJoin(
-                DB::raw("
-                    (
-                        SELECT kode_cart, COALESCE(SUM(harga_paket),0) as total_paket
-                        FROM t_event_cart_paket
-                        GROUP BY kode_cart
-                    ) p
-                "),
-                'p.kode_cart', '=', 'c.kode_cart'
-            )
+            ->leftJoin(DB::raw('(SELECT kode_cart, COALESCE(SUM(harga_paket),0) as total_paket FROM t_event_cart_paket GROUP BY kode_cart) p'), 'p.kode_cart', '=', 'c.kode_cart')
             ->where('c.id_user', session('id_user'))
             ->orderBy('c.created_at', 'desc')
-            ->select(
-                'c.*',
-                'e.judul_event', 'e.lokasi_event',
-                'e.tanggal_awal_event', 'e.tanggal_akhir_event', 'e.harga_event',
+            ->select('c.*', 'e.judul_event', 'e.lokasi_event', 'e.tanggal_awal_event', 'e.tanggal_akhir_event', 'e.harga_event',
                 DB::raw('COALESCE(p.total_paket,0) as total_paket'),
-                DB::raw('(COALESCE(c.subtotal,0) + COALESCE(p.total_paket,0)) as grand_total')
-            )
+                DB::raw('(COALESCE(c.subtotal,0) + COALESCE(p.total_paket,0)) as grand_total'))
             ->get();
 
-        $data = [
+        return view('web.home.my-cart', [
             'menu'       => 'My Cart',
-            'menu_aktif' => $menu_aktif,
+            'menu_aktif' => 'cart',
             'cart'       => $cart,
             'set'        => $this->setting(),
-        ];
-
-        return view('web.home.my-cart', $data);
+        ]);
     }
 
     public function updateCartEvent(Request $request)
     {
         $cart = DB::table('t_event_cart')->where('kode_cart', $request->kode_cart)->first();
-        if (!$cart) {
-            return response()->json(['status' => false, 'message' => 'Cart not found']);
-        }
-        $qty = max(1, (int) ($request->qty ?? 1));
-        DB::table('t_event_cart')
-            ->where('kode_cart', $request->kode_cart)
-            ->update([
-                'qty'        => $qty,
-                'subtotal'   => $cart->harga * $qty,
-                'updated_at' => now(),
-            ]);
+        if (!$cart) return response()->json(['status' => false, 'message' => 'Cart not found']);
 
+        $qty = max(1, (int) ($request->qty ?? 1));
+        DB::table('t_event_cart')->where('kode_cart', $request->kode_cart)->update([
+            'qty'        => $qty,
+            'subtotal'   => $cart->harga * $qty,
+            'updated_at' => now(),
+        ]);
         return response()->json(['status' => true, 'message' => 'Cart updated successfully']);
     }
 

@@ -3,35 +3,40 @@
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('society-event')->group(function () {
-    
+
     Route::get('/', [App\Http\Controllers\WebHomeController::class, 'index']);
 
-    // frontend 
+    // Frontend
     Route::get('/about', [App\Http\Controllers\WebHomeController::class, 'index'])->name('about');
     Route::get('/home', [App\Http\Controllers\WebHomeController::class, 'index'])->name('home');
     Route::get('/detailEvent/{key}', [App\Http\Controllers\WebHomeController::class, 'detailEvent'])->name('detailEvent');
     Route::post('/event/add-cart', [App\Http\Controllers\WebHomeController::class, 'addCartEvent'])->name('event.add.cart');
 
     Route::get('/event-cart/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCartEvent'])->name('event-cart');
-    Route::post('/savePackageCart',[App\Http\Controllers\WebHomeController::class, 'savePackageCart'])->name('savePackageCart');
+    Route::post('/savePackageCart', [App\Http\Controllers\WebHomeController::class, 'savePackageCart'])->name('savePackageCart');
 
     // Step 2: Participant form
     Route::get('/participant-form/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'showParticipantForm'])->name('participant-form');
     Route::post('/save-participants', [App\Http\Controllers\WebHomeController::class, 'saveParticipants'])->name('save-participants');
 
+    // Step 3: Checkout
     Route::get('/checkout-event/{kode_cart}', [App\Http\Controllers\WebHomeController::class, 'detailCheckoutEvent'])->name('checkout-event');
     Route::get('/my-cart', [App\Http\Controllers\WebHomeController::class, 'myCart'])->name('my-cart');
     Route::post('/updateCartEvent', [App\Http\Controllers\WebHomeController::class, 'updateCartEvent'])->name('updateCartEvent');
     Route::post('/deleteCartEvent', [App\Http\Controllers\WebHomeController::class, 'deleteCartEvent'])->name('deleteCartEvent');
 
-    // Cart payment routes
+    // Cart payment
     Route::post('/cart/check-payment', [App\Http\Controllers\WebHomeController::class, 'cartCheckPayment'])->name('cart.check-payment');
     Route::get('/cart/payment-success', [App\Http\Controllers\WebHomeController::class, 'cartPaymentSuccess'])->name('cart-payment.success');
     Route::post('/cart/payment-callback', [App\Http\Controllers\WebHomeController::class, 'cartPaymentCallback'])
         ->name('cart.payment-callback')
         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-    
-    // Halaman list event publik (path /list-event agar tidak bentrok dengan backend admin /event)
+
+    // ── Peserta Register (link dari email) ────────────────────────────────
+    Route::get('/peserta-register/{token}', [App\Http\Controllers\PesertaRegisterController::class, 'show'])->name('peserta.register.show');
+    Route::post('/peserta-register/{token}', [App\Http\Controllers\PesertaRegisterController::class, 'submit'])->name('peserta.register.submit');
+
+    // Halaman list event publik
     Route::get('/list-event', [App\Http\Controllers\WebEventPublicController::class, 'index'])->name('list-event');
 
     Route::get('/countDataDashboard', [App\Http\Controllers\WebDashboardController::class, 'getCountData'])->name('countDataDashboard');
@@ -39,15 +44,12 @@ Route::prefix('society-event')->group(function () {
     Route::get('/topikDashboard', [App\Http\Controllers\WebDashboardController::class, 'getTopik'])->name('topikDashboard');
     Route::get('/tautanDashboard', [App\Http\Controllers\WebDashboardController::class, 'getTautan'])->name('tautanDashboard');
     Route::get('/sliderDashboard', [App\Http\Controllers\WebDashboardController::class, 'getSlider'])->name('sliderDashboard');
-
     Route::get('/organisasiBottom', [App\Http\Controllers\WebDashboardController::class, 'getOrganisasi'])->name('organisasiBottom');
     Route::post('/survey-submit', [App\Http\Controllers\WebDashboardController::class, 'submit'])->name('survey-submit');
 
     Route::get('list-organisasi', [App\Http\Controllers\WebOrganisasiController::class, 'index'])->name('list-organisasi');
     Route::get('/detail-organisasi/{kode_organisasi}', [App\Http\Controllers\WebOrganisasiController::class, 'detailOrganisasi'])->name('detail-organisasi');
-
     Route::get('list-topik', [App\Http\Controllers\WebTopikController::class, 'index'])->name('list-topik');
-
     Route::get('/hubungi-kami', [App\Http\Controllers\WebHubungiController::class, 'index'])->name('hubungi-kami');
     Route::post('/hubungiKamiAction', [App\Http\Controllers\WebHubungiController::class, 'hubungiKamiAction'])->name('hubungiKamiAction');
 
@@ -62,35 +64,30 @@ Route::prefix('society-event')->group(function () {
     Route::post('/ganitPasswordAction', [App\Http\Controllers\WebLoginController::class, 'ganitPasswordAction'])->name('ganitPasswordAction');
     Route::get('/otpLogin/{otp}', [App\Http\Controllers\WebLoginController::class, 'otpLogin'])->name('otpLogin');
     Route::post('/verifyOtpAction', [App\Http\Controllers\WebLoginController::class, 'verifyOtpAction'])->name('verifyOtpAction');
-
-    // Registration OTP & Payment Steps (WebLoginController)
     Route::post('/verifyOtpRegistrasi', [App\Http\Controllers\WebLoginController::class, 'verifyOtpRegistrasi'])->name('verifyOtpRegistrasi');
     Route::post('/resendOtpRegistrasi', [App\Http\Controllers\WebLoginController::class, 'resendOtpRegistrasi'])->name('resendOtpRegistrasi');
     Route::post('/getEventPackages', [App\Http\Controllers\WebLoginController::class, 'getEventPackages'])->name('getEventPackages');
     Route::post('/getRegistrationSnapToken', [App\Http\Controllers\WebLoginController::class, 'getRegistrationSnapToken'])->name('getRegistrationSnapToken');
     Route::post('/enrollEventFree', [App\Http\Controllers\WebLoginController::class, 'enrollEventFree'])->name('enrollEventFree');
     Route::post('/paymentRegistrationCallback', [App\Http\Controllers\WebLoginController::class, 'paymentRegistrationCallback'])->name('paymentRegistrationCallback');
-
-    // Retry payment dari dashboard (user sudah login)
     Route::post('/retryPayment', [App\Http\Controllers\WebLoginController::class, 'retryPayment'])->name('retryPayment');
     Route::post('/retryPaymentCallback', [App\Http\Controllers\WebLoginController::class, 'retryPaymentCallback'])->name('retryPaymentCallback');
-
-    // Midtrans webhook - bypass CSRF
     Route::post('/midtrans-notification', [App\Http\Controllers\WebLoginController::class, 'midtransNotification'])
         ->name('midtrans-notification')
         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
     // Multi-step Event Registration
-    Route::get('/register-event/otp',            [App\Http\Controllers\WebRegisterEventController::class, 'showOtp'])->name('register-event.otp');
-    Route::post('/register-event/verify-otp',    [App\Http\Controllers\WebRegisterEventController::class, 'verifyOtp'])->name('register-event.verify-otp');
-    Route::get('/register-event/addon',          [App\Http\Controllers\WebRegisterEventController::class, 'showAddon'])->name('register-event.addon');
-    Route::post('/register-event/addon',         [App\Http\Controllers\WebRegisterEventController::class, 'saveAddon'])->name('register-event.save-addon');
-    Route::get('/register-event/payment',        [App\Http\Controllers\WebRegisterEventController::class, 'showPayment'])->name('register-event.payment');
+    Route::get('/register-event/otp', [App\Http\Controllers\WebRegisterEventController::class, 'showOtp'])->name('register-event.otp');
+    Route::post('/register-event/verify-otp', [App\Http\Controllers\WebRegisterEventController::class, 'verifyOtp'])->name('register-event.verify-otp');
+    Route::get('/register-event/addon', [App\Http\Controllers\WebRegisterEventController::class, 'showAddon'])->name('register-event.addon');
+    Route::post('/register-event/addon', [App\Http\Controllers\WebRegisterEventController::class, 'saveAddon'])->name('register-event.save-addon');
+    Route::get('/register-event/payment', [App\Http\Controllers\WebRegisterEventController::class, 'showPayment'])->name('register-event.payment');
     Route::post('/register-event/check-payment', [App\Http\Controllers\WebRegisterEventController::class, 'checkPaymentStatus'])->name('register-event.check-payment');
-    Route::get('/register-event/success',        [App\Http\Controllers\WebRegisterEventController::class, 'success'])->name('register-event.success');
-    Route::post('/register-event/resend-otp',    [App\Http\Controllers\WebRegisterEventController::class, 'resendOtp'])->name('register-event.resend-otp');
-    Route::post('/register-event/midtrans-callback', [App\Http\Controllers\WebRegisterEventController::class, 'midtransCallback'])->name('register-event.midtrans-callback')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-    // End Multi-step
+    Route::get('/register-event/success', [App\Http\Controllers\WebRegisterEventController::class, 'success'])->name('register-event.success');
+    Route::post('/register-event/resend-otp', [App\Http\Controllers\WebRegisterEventController::class, 'resendOtp'])->name('register-event.resend-otp');
+    Route::post('/register-event/midtrans-callback', [App\Http\Controllers\WebRegisterEventController::class, 'midtransCallback'])
+        ->name('register-event.midtrans-callback')
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
     Route::get('/list', [App\Http\Controllers\WebDataController::class, 'index'])->name('list');
     Route::get('/listData', [App\Http\Controllers\WebDataController::class, 'getDataList'])->name('listData');
@@ -100,16 +97,12 @@ Route::prefix('society-event')->group(function () {
     Route::get('/detail-dcat/{url_data}', [App\Http\Controllers\WebDataController::class, 'dataDcat'])->name('detail-dcat');
     Route::get('/file-preview/{fileName}', [App\Http\Controllers\WebDataController::class, 'filePreview'])->where('fileName', '.*')->name('file-preview');
     Route::get('/filePreviewShow/{sifat}/{file}', [App\Http\Controllers\WebDataController::class, 'filePreviewShow'])->where('file', '.*')->name('show-file');
-
     Route::get('/preview-csv/{kode}/{id}', [App\Http\Controllers\WebDataController::class, 'previewCsv'])->name('preview.csv');
-
     Route::get('/pushDataset/{kode}', [App\Http\Controllers\RabbitMQController::class, 'pushDataset'])->name('pushDataset');
-
     Route::get('/unduh-terbuka/{kode_data}', [App\Http\Controllers\WebDataController::class, 'unduhTerbuka'])->name('unduh-terbuka');
     Route::post('/log-preview', [App\Http\Controllers\WebDataController::class, 'logPreview'])->name('log.preview');
 
     Route::get('/tentang-kami', [App\Http\Controllers\WebTentangController::class, 'index'])->name('tentang-kami');
-
     Route::get('/monitoring-permohonan', [App\Http\Controllers\WebMonitoringController::class, 'index'])->name('monitoring-permohonan');
     Route::post('/monitoringAction', [App\Http\Controllers\WebMonitoringController::class, 'monitoringAction'])->name('monitoringAction');
 
@@ -123,9 +116,7 @@ Route::prefix('society-event')->group(function () {
         return response()->json(['captcha' => captcha_img()]);
     })->name('refresh.captcha');
 
-    Route::get('/test-captcha', function() {
-        return captcha_img();
-    });
+    Route::get('/test-captcha', function () { return captcha_img(); });
 
     Route::get('admin-panel', [App\Http\Controllers\DashboardController::class, 'index'])->name('admin-panel');
     Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
@@ -151,7 +142,7 @@ Route::prefix('society-event')->group(function () {
     Route::post('/deleteMenuRoleAction', [App\Http\Controllers\ReffRoleController::class, 'deleteMenuRoleAction'])->name('deleteMenuRoleAction');
     Route::get('/editAksesMenu/{id_akses_menu}', [App\Http\Controllers\ReffRoleController::class, 'editAksesMenu'])->name('editAksesMenu');
     Route::post('/updateAksesMenuAction', [App\Http\Controllers\ReffRoleController::class, 'updateAksesMenuAction'])->name('updateAksesMenuAction');
-    
+
     Route::get('ref-menu', [App\Http\Controllers\ReffMenuController::class, 'index'])->name('ref-menu');
     Route::get('/getTableMenu', [App\Http\Controllers\ReffMenuController::class, 'getTableMenu'])->name('getTableMenu');
     Route::get('/editMenu/{id_menu}', [App\Http\Controllers\ReffMenuController::class, 'editMenu'])->name('editMenu');
@@ -219,7 +210,6 @@ Route::prefix('society-event')->group(function () {
     Route::post('updatePasswordAction', [App\Http\Controllers\ProfilController::class, 'updatePasswordAction'])->name('updatePasswordAction');
     Route::get('ganti-password', [App\Http\Controllers\ProfilController::class, 'gantiPassword'])->name('ganti-password');
 
-    // Backend admin: manajemen event
     Route::get('event', [App\Http\Controllers\EventController::class, 'index'])->name('event');
     Route::get('/getTableEvent', [App\Http\Controllers\EventController::class, 'getTableEvent'])->name('getTableEvent');
     Route::get('tambah-event', [App\Http\Controllers\EventController::class, 'tambah'])->name('tambah-event');
@@ -230,28 +220,24 @@ Route::prefix('society-event')->group(function () {
     Route::get('/paketEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'paketEvent'])->name('paketEvent');
     Route::get('/programEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'programEvent'])->name('programEvent');
     Route::get('/kolaborasiEvent/{kode_event}', [App\Http\Controllers\EventController::class, 'kolaborasiEvent'])->name('kolaborasiEvent');
-
     Route::get('/getTablePaketEvent', [App\Http\Controllers\EventController::class, 'getTablePaketEvent'])->name('getTablePaketEvent');
     Route::get('/tambahPaketEvent/{kode_paket}', [App\Http\Controllers\EventController::class, 'tambahPaketEvent'])->name('tambahPaketEvent');
     Route::get('/editPaketEvent/{kode_paket}', [App\Http\Controllers\EventController::class, 'editPaketEvent'])->name('editPaketEvent');
     Route::post('/addPaketEventAction', [App\Http\Controllers\EventController::class, 'addPaketEventAction'])->name('addPaketEventAction');
     Route::post('/editPaketEventAction', [App\Http\Controllers\EventController::class, 'editPaketEventAction'])->name('editPaketEventAction');
     Route::post('/deletePaketEventAction', [App\Http\Controllers\EventController::class, 'deletePaketEventAction'])->name('deletePaketEventAction');
-    
     Route::get('/getTableProgramEvent', [App\Http\Controllers\EventController::class, 'getTableProgramEvent'])->name('getTableProgramEvent');
     Route::get('/tambahProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'tambahProgramEvent'])->name('tambahProgramEvent');
     Route::get('/editProgramEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'editProgramEvent'])->name('editProgramEvent');
     Route::post('/addProgramEventAction', [App\Http\Controllers\EventController::class, 'addProgramEventAction'])->name('addProgramEventAction');
     Route::post('/editProgramEventAction', [App\Http\Controllers\EventController::class, 'editProgramEventAction'])->name('editProgramEventAction');
     Route::post('/deleteProgramEventAction', [App\Http\Controllers\EventController::class, 'deleteProgramEventAction'])->name('deleteProgramEventAction');
-
     Route::get('/getTableKolaborasiEvent', [App\Http\Controllers\EventController::class, 'getTableKolaborasiEvent'])->name('getTableKolaborasiEvent');
     Route::get('/tambahKolaborasiEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'tambahKolaborasiEvent'])->name('tambahKolaborasiEvent');
     Route::get('/editKolaborasiEvent/{kode_program}', [App\Http\Controllers\EventController::class, 'editKolaborasiEvent'])->name('editKolaborasiEvent');
     Route::post('/addKolaborasiEventAction', [App\Http\Controllers\EventController::class, 'addKolaborasiEventAction'])->name('addKolaborasiEventAction');
     Route::post('/editKolaborasiEventAction', [App\Http\Controllers\EventController::class, 'editKolaborasiEventAction'])->name('editKolaborasiEventAction');
     Route::post('/deleteKolaborasiEventAction', [App\Http\Controllers\EventController::class, 'deleteKolaborasiEventAction'])->name('deleteKolaborasiEventAction');
-    
 
     Route::get('event-registrasi', [App\Http\Controllers\EventRegistrasiController::class, 'index'])->name('event-registrasi');
     Route::get('/getTableRegistrasi', [App\Http\Controllers\EventRegistrasiController::class, 'getTableRegistrasi'])->name('getTableRegistrasi');
@@ -266,5 +252,4 @@ Route::prefix('society-event')->group(function () {
     Route::post('/updatePaperAction', [App\Http\Controllers\EventPaperController::class, 'updatePaperAction'])->name('updatePaperAction');
     Route::post('/updateStatusPaperAction', [App\Http\Controllers\EventPaperController::class, 'updateStatusPaperAction'])->name('updateStatusPaperAction');
     Route::post('/deletePaperAction', [App\Http\Controllers\EventPaperController::class, 'deletePaperAction'])->name('deletePaperAction');
-
 });

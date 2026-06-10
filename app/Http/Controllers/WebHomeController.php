@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 
@@ -38,12 +39,64 @@ class WebHomeController extends Controller
             ->first();
     }
 
-    private function bootMidtrans(object $cfg): void
+    // ── helper: ambil Snap API URL berdasarkan environment ────────────────
+    private function snapApiUrl(object $cfg): string
     {
-        \Midtrans\Config::$serverKey    = $cfg->server_key;
-        \Midtrans\Config::$isProduction = (bool) ($cfg->is_production ?? false);
-        \Midtrans\Config::$isSanitized  = true;
-        \Midtrans\Config::$is3ds        = true;
+        return ($cfg->environment === 'production')
+            ? 'https://api.midtrans.com/snap/v1/transactions'
+            : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+    }
+
+    // ── helper: ambil Core API base URL ───────────────────────────────────
+    private function coreApiUrl(object $cfg): string
+    {
+        return ($cfg->environment === 'production')
+            ? 'https://api.midtrans.com'
+            : 'https://api.sandbox.midtrans.com';
+    }
+
+    // ── helper: generate Snap Token via HTTP (tanpa package midtrans-php) ─
+    private function getSnapToken(object $cfg, array $params): ?string
+    {
+        try {
+            $response = Http::withBasicAuth($cfg->server_key, '')
+                ->timeout(30)
+                ->post($this->snapApiUrl($cfg), $params);
+
+            $res = $response->json();
+
+            if ($response->failed() || empty($res['token'])) {
+                $errMsg = isset($res['error_messages'])
+                    ? implode(', ', (array) $res['error_messages'])
+                    : ($res['message'] ?? json_encode($res));
+                Log::error('Cart getSnapToken error: ' . $errMsg);
+                return null;
+            }
+
+            return $res['token'];
+        } catch (\Exception $e) {
+            Log::error('Cart getSnapToken error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    // ── helper: cek status transaksi via Core API ─────────────────────────
+    private function getMidtransTransactionStatus(object $cfg, string $orderId): ?object
+    {
+        try {
+            $response = Http::withBasicAuth($cfg->server_key, '')
+                ->timeout(15)
+                ->get($this->coreApiUrl($cfg) . '/v2/' . $orderId . '/status');
+
+            $res = $response->json();
+            if (empty($res['transaction_status'])) {
+                return null;
+            }
+            return (object) $res;
+        } catch (\Exception $e) {
+            Log::error('getMidtransTransactionStatus error: ' . $e->getMessage());
+            return null;
+        }
     }
 
     private function setting(): ?object
@@ -276,8 +329,6 @@ class WebHomeController extends Controller
                 ? $existingReg->midtrans_order_id
                 : 'CART-' . strtoupper(Str::random(8)) . '-' . time();
 
-            $this->bootMidtrans($midtransConfig);
-
             $user        = DB::table('app_user')->where('id_user', session('id_user'))->first();
             $itemDetails = [];
 
@@ -300,6 +351,11 @@ class WebHomeController extends Controller
                 }
             }
 
+            // Validasi email sebelum dikirim ke Midtrans
+            $email = filter_var($user->email_user ?? '', FILTER_VALIDATE_EMAIL)
+                ? $user->email_user
+                : 'noreply@society-event.com';
+
             $params = [
                 'transaction_details' => [
                     'order_id'     => $orderId,
@@ -307,7 +363,7 @@ class WebHomeController extends Controller
                 ],
                 'customer_details' => [
                     'first_name' => $user->nama_user  ?? 'User',
-                    'email'      => $user->email_user ?? '',
+                    'email'      => $email,
                     'phone'      => $user->no_hp_user ?? '',
                 ],
             ];
@@ -315,11 +371,15 @@ class WebHomeController extends Controller
                 $params['item_details'] = $itemDetails;
             }
 
-            try {
-                $snapToken = \Midtrans\Snap::getSnapToken($params);
-            } catch (\Exception $e) {
-                Log::error('Cart getSnapToken error: ' . $e->getMessage());
+            // Tambahkan enabled_payments jika dikonfigurasi
+            if (!empty($midtransConfig->payment_types)) {
+                $types = json_decode($midtransConfig->payment_types, true);
+                if (!empty($types)) {
+                    $params['enabled_payments'] = $types;
+                }
             }
+
+            $snapToken = $this->getSnapToken($midtransConfig, $params);
 
             if (!$existingReg) {
                 $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
@@ -386,28 +446,21 @@ class WebHomeController extends Controller
 
         $midtransConfig = $this->midtransConfig();
         if ($midtransConfig) {
-            try {
-                \Midtrans\Config::$serverKey    = $midtransConfig->server_key;
-                \Midtrans\Config::$isProduction = (bool) ($midtransConfig->is_production ?? false);
+            $mt          = $this->getMidtransTransactionStatus($midtransConfig, $orderId);
+            $txStatus    = $mt->transaction_status ?? '';
+            $fraudStatus = $mt->fraud_status ?? null;
 
-                $mt          = \Midtrans\Transaction::status($orderId);
-                $txStatus    = $mt->transaction_status ?? '';
-                $fraudStatus = $mt->fraud_status ?? null;
+            if (in_array($txStatus, ['capture', 'settlement'])
+                && ($fraudStatus === 'accept' || $fraudStatus === null)) {
+                $this->processCartPaid($reg, $orderId);
+                return response()->json(['status' => 'paid']);
+            }
 
-                if (in_array($txStatus, ['capture', 'settlement'])
-                    && ($fraudStatus === 'accept' || $fraudStatus === null)) {
-                    $this->processCartPaid($reg, $orderId);
-                    return response()->json(['status' => 'paid']);
-                }
-
-                if (in_array($txStatus, ['cancel', 'deny', 'expire'])) {
-                    DB::table('t_event_registrasi')
-                        ->where('midtrans_order_id', $orderId)
-                        ->update(['payment_status' => 'FAILED', 'updated_at' => now()]);
-                    return response()->json(['status' => 'failed', 'payment_status' => $txStatus]);
-                }
-            } catch (\Exception $e) {
-                Log::error('cartCheckPayment error: ' . $e->getMessage());
+            if (in_array($txStatus, ['cancel', 'deny', 'expire'])) {
+                DB::table('t_event_registrasi')
+                    ->where('midtrans_order_id', $orderId)
+                    ->update(['payment_status' => 'FAILED', 'updated_at' => now()]);
+                return response()->json(['status' => 'failed', 'payment_status' => $txStatus]);
             }
         }
 
@@ -416,20 +469,24 @@ class WebHomeController extends Controller
 
     public function cartPaymentCallback(Request $request)
     {
-        try {
-            $midtransConfig = $this->midtransConfig();
-            if ($midtransConfig) {
-                \Midtrans\Config::$serverKey    = $midtransConfig->server_key;
-                \Midtrans\Config::$isProduction = (bool) ($midtransConfig->is_production ?? false);
+        // Ambil notifikasi dari request body (Midtrans server-to-server callback)
+        $txStatus    = $request->input('transaction_status');
+        $orderId     = $request->input('order_id');
+        $fraudStatus = $request->input('fraud_status');
+
+        // Jika tidak ada di body, verifikasi ulang ke Midtrans API
+        if (!$txStatus || !$orderId) {
+            return response()->json(['status' => 'invalid_payload'], 400);
+        }
+
+        // Verifikasi ke Midtrans untuk mencegah pemalsuan notifikasi
+        $midtransConfig = $this->midtransConfig();
+        if ($midtransConfig) {
+            $verified = $this->getMidtransTransactionStatus($midtransConfig, $orderId);
+            if ($verified) {
+                $txStatus    = $verified->transaction_status ?? $txStatus;
+                $fraudStatus = $verified->fraud_status ?? $fraudStatus;
             }
-            $notif       = new \Midtrans\Notification();
-            $txStatus    = $notif->transaction_status;
-            $orderId     = $notif->order_id;
-            $fraudStatus = $notif->fraud_status;
-        } catch (\Exception $e) {
-            $txStatus    = $request->input('transaction_status');
-            $orderId     = $request->input('order_id');
-            $fraudStatus = $request->input('fraud_status');
         }
 
         $isPaid = in_array($txStatus, ['capture', 'settlement'])

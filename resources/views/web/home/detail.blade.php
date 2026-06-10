@@ -191,62 +191,73 @@
                                 </div>
                             </div>
 
-                            <div>
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold mb-3">
-                                        Number of Participants
-                                    </label>
+                            @if(!$is_registered)
+                                <div>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold mb-3">
+                                            Number of Participants
+                                        </label>
 
-                                    <div class="qty-wrapper">
-                                        <button type="button" class="qty-btn" id="btn-minus">
-                                            <i class="fa fa-minus"></i>
-                                        </button>
+                                        <div class="qty-wrapper">
+                                            <button type="button" class="qty-btn" id="btn-minus">
+                                                <i class="fa fa-minus"></i>
+                                            </button>
 
-                                        <input type="number"
-                                            id="qty"
-                                            class="qty-input"
-                                            value="1"
-                                            min="1"
-                                            step="1">
+                                            <input type="number"
+                                                id="qty"
+                                                class="qty-input"
+                                                value="1"
+                                                min="1"
+                                                step="1">
 
-                                        <button type="button" class="qty-btn" id="btn-plus">
-                                            <i class="fa fa-plus"></i>
-                                        </button>
+                                            <button type="button" class="qty-btn" id="btn-plus">
+                                                <i class="fa fa-plus"></i>
+                                            </button>
+                                        </div>
+
+                                        <small class="text-muted mt-2 d-block">
+                                            Select the number of participants.
+                                        </small>
                                     </div>
-
-                                    <small class="text-muted mt-2 d-block">
-                                        Select the number of participants.
-                                    </small>
                                 </div>
-                            </div>
 
-                            <hr>
+                                <hr>
 
-                            <div class="d-flex justify-content-between mb-4">
-                                <span class="fw-semibold">Total</span>
-                                <span class="fw-bold fs-3 text-detail" id="total-harga">
-                                    Rp {{ number_format($detail->harga_event ?? 0,0,',','.') }}
-                                </span>
-                            </div>
+                                <div class="d-flex justify-content-between mb-4">
+                                    <span class="fw-semibold">Total</span>
+                                    <span class="fw-bold fs-3 text-detail" id="total-harga">
+                                        Rp {{ number_format($detail->harga_event ?? 0,0,',','.') }}
+                                    </span>
+                                </div>
 
-                            <form id="formCart">
-                                @csrf
+                                <form id="formCart">
+                                    @csrf
 
-                                <input type="hidden"
-                                    name="kode_event"
-                                    value="{{ $detail->kode_event }}">
+                                    <input type="hidden"
+                                        name="kode_event"
+                                        value="{{ $detail->kode_event }}">
 
-                                <input type="hidden"
-                                    name="quantity"
-                                    id="quantity_submit"
-                                    value="1">
+                                    <input type="hidden"
+                                        name="quantity"
+                                        id="quantity_submit"
+                                        value="1">
 
-                                <button type="submit"
-                                        class="btn bg-detail w-100 py-3">
-                                    <i class="fa fa-cart-shopping me-2 text-white"></i>
-                                    Buy Now
+                                    <button type="submit"
+                                            class="btn bg-detail w-100 py-3">
+                                        <i class="fa fa-cart-shopping me-2 text-white"></i>
+                                        Buy Now
+                                    </button>
+                                </form>
+                            @else
+                                <hr>
+
+                                <button type="button"
+                                        class="btn btn-secondary w-100 py-3"
+                                        disabled>
+                                    <i class="fa fa-circle-check me-2"></i>
+                                    Terdaftar
                                 </button>
-                            </form>
+                            @endif
 
                         </div>
                     </div>
@@ -255,6 +266,7 @@
         </div>
     </div>
 <script>
+@if(!$is_registered)
 $('#formCart').on('submit', function(e){
 
     e.preventDefault();
@@ -336,5 +348,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     hitungTotal();
 });
+@endif
 </script>
 @include('layouts.footer-v2')

@@ -358,13 +358,13 @@
                     {{ $events->total() }} event ditemukan
                 </span>
                 @if(request('q'))
-                    <span class="filter-chip">"{{ request('q') }}" <a href="{{ request()->fullUrlWithoutParameters(['q']) }}"><i class="fa-solid fa-xmark"></i></a></span>
+                    <span class="filter-chip">"{{ request('q') }}" <a href="{{ route('list-event', array_filter(request()->except(['q']), fn($v) => $v !== '')) }}"><i class="fa-solid fa-xmark"></i></a></span>
                 @endif
                 @if(request('status'))
-                    <span class="filter-chip">{{ request('status') === 'open' ? 'Masih Buka' : 'Sudah Tutup' }} <a href="{{ request()->fullUrlWithoutParameters(['status']) }}"><i class="fa-solid fa-xmark"></i></a></span>
+                    <span class="filter-chip">{{ request('status') === 'open' ? 'Masih Buka' : 'Sudah Tutup' }} <a href="{{ route('list-event', array_filter(request()->except(['status']), fn($v) => $v !== '')) }}"><i class="fa-solid fa-xmark"></i></a></span>
                 @endif
                 @if(request('harga_min') || request('harga_max'))
-                    <span class="filter-chip">Rp {{ number_format(request('harga_min',0),0,',','.') }} &ndash; Rp {{ number_format(request('harga_max', $hargaRange->max_harga ?? 0),0,',','.') }} <a href="{{ request()->fullUrlWithoutParameters(['harga_min','harga_max']) }}"><i class="fa-solid fa-xmark"></i></a></span>
+                    <span class="filter-chip">Rp {{ number_format(request('harga_min',0),0,',','.') }} &ndash; Rp {{ number_format(request('harga_max', $hargaRange->max_harga ?? 0),0,',','.') }} <a href="{{ route('list-event', array_filter(request()->except(['harga_min','harga_max']), fn($v) => $v !== '')) }}"><i class="fa-solid fa-xmark"></i></a></span>
                 @endif
             </div>
 

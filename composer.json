@@ -12,7 +12,6 @@
         "laravel/tinker": "^2.10.1",
         "league/flysystem-sftp-v3": "^3.33",
         "mews/captcha": "^3.4",
-        "midtrans/midtrans-php": "^2.5",
         "phpoffice/phpword": "^1.4",
         "vish4395/laravel-file-viewer": "^1.0",
         "yajra/laravel-datatables-oracle": "^12.4"

@@ -19,6 +19,12 @@ class PesertaRegisterController extends Controller
     /** Tampilkan form registrasi peserta berdasarkan token */
     public function show(string $token)
     {
+        // Jika sudah login, tidak boleh mengakses halaman ini
+        if (session()->has('id_user')) {
+            return redirect()->route('home')
+                ->with('info', 'Anda sudah login. Halaman registrasi peserta hanya dapat diakses oleh tamu.');
+        }
+
         $invite = DB::table('t_peserta_invite')
             ->where('token', $token)
             ->where('status', 'PENDING')
@@ -45,6 +51,12 @@ class PesertaRegisterController extends Controller
     /** Proses submit form registrasi peserta */
     public function submit(Request $request, string $token)
     {
+        // Jika sudah login, tidak boleh submit form ini
+        if (session()->has('id_user')) {
+            return redirect()->route('home')
+                ->with('info', 'Anda sudah login. Halaman registrasi peserta hanya dapat diakses oleh tamu.');
+        }
+
         $invite = DB::table('t_peserta_invite')
             ->where('token', $token)
             ->where('status', 'PENDING')

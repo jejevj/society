@@ -372,6 +372,12 @@ class WebHomeController extends Controller
         return in_array(strtolower($status), ['cancel', 'deny', 'expire', 'failure']);
     }
 
+    // ── Helper: cek apakah environment bukan production ──────────────────────
+    private function isNonProduction(): bool
+    {
+        return config('app.env') !== 'production';
+    }
+
     public function detailCheckoutEvent($kode_cart, Request $request)
     {
         if (!$request->session()->has('id_user')) return redirect()->route('login');
@@ -434,6 +440,11 @@ class WebHomeController extends Controller
                     $snapToken    = $existingReg->snap_token;
                     $pendingReg   = $existingReg;
                     $needNewOrder = false;
+                } elseif ($txStatus === 'cancel' && $this->isNonProduction()) {
+                    // [NON-PRODUCTION] cancel dianggap berhasil — proses sebagai PAID
+                    Log::info('[detailCheckoutEvent] Non-production: cancel treated as paid for order ' . $existingReg->midtrans_order_id);
+                    $this->processCartPaid($existingReg, $existingReg->midtrans_order_id);
+                    return redirect()->route('cart-payment.success');
                 } elseif ($this->isCancelledMidtransStatus($txStatus) || empty($txStatus)) {
                     DB::table('t_event_registrasi')
                         ->where('kode_registrasi', $existingReg->kode_registrasi)
@@ -444,6 +455,12 @@ class WebHomeController extends Controller
                     return redirect()->route('cart-payment.success');
                 }
             } elseif ($existingReg) {
+                // Tidak ada snap_token — cek apakah status CANCEL dan non-production
+                if ($existingReg->payment_status === 'CANCEL' && $this->isNonProduction()) {
+                    Log::info('[detailCheckoutEvent] Non-production: CANCEL (no snap_token) treated as paid for cart ' . $kode_cart);
+                    $this->processCartPaid($existingReg, $existingReg->midtrans_order_id);
+                    return redirect()->route('cart-payment.success');
+                }
                 DB::table('t_event_registrasi')
                     ->where('kode_registrasi', $existingReg->kode_registrasi)
                     ->delete();
@@ -522,6 +539,14 @@ class WebHomeController extends Controller
         if ($reg->payment_status === 'PAID' && $reg->status_registrasi === 'A') {
             return response()->json(['status' => 'paid']);
         }
+
+        // [NON-PRODUCTION] status CANCEL di DB dianggap berhasil — proses sebagai PAID
+        if ($reg->payment_status === 'CANCEL' && $this->isNonProduction()) {
+            Log::info('[cartCheckPayment] Non-production: CANCEL treated as paid for order ' . $orderId);
+            $this->processCartPaid($reg, $orderId);
+            return response()->json(['status' => 'paid']);
+        }
+
         if (in_array($reg->payment_status, ['FAILED', 'CANCEL', 'EXPIRE'])) {
             return response()->json(['status' => 'failed', 'payment_status' => $reg->payment_status]);
         }
@@ -536,6 +561,14 @@ class WebHomeController extends Controller
                 $this->processCartPaid($reg, $orderId);
                 return response()->json(['status' => 'paid']);
             }
+
+            // [NON-PRODUCTION] cancel dari Midtrans dianggap berhasil
+            if ($txStatus === 'cancel' && $this->isNonProduction()) {
+                Log::info('[cartCheckPayment] Non-production: Midtrans cancel treated as paid for order ' . $orderId);
+                $this->processCartPaid($reg, $orderId);
+                return response()->json(['status' => 'paid']);
+            }
+
             if (in_array($txStatus, ['cancel', 'deny', 'expire'])) {
                 DB::table('t_event_registrasi')->where('midtrans_order_id', $orderId)
                     ->update(['payment_status' => 'FAILED', 'updated_at' => now()]);
@@ -570,6 +603,12 @@ class WebHomeController extends Controller
 
         if ($isPaid && $reg->payment_status !== 'PAID') {
             $this->processCartPaid($reg, $orderId);
+        } elseif ($txStatus === 'cancel' && $this->isNonProduction()) {
+            // [NON-PRODUCTION] webhook cancel dianggap berhasil
+            Log::info('[cartPaymentCallback] Non-production: cancel webhook treated as paid for order ' . $orderId);
+            if ($reg->payment_status !== 'PAID') {
+                $this->processCartPaid($reg, $orderId);
+            }
         } elseif (in_array($txStatus, ['cancel', 'deny', 'expire'])) {
             DB::table('t_event_registrasi')->where('midtrans_order_id', $orderId)
                 ->update(['payment_status' => 'FAILED', 'updated_at' => now()]);

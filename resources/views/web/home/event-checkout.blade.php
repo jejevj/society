@@ -97,6 +97,7 @@
                         </div>
 
                         @if($snapToken)
+                            {{-- ── Ada snap token: tampilkan tombol bayar normal ── --}}
                             @if($pendingReg ?? null)
                             <div class="alert alert-light-warning py-2 px-3 mb-3 fs-7">
                                 <i class="fa-solid fa-triangle-exclamation me-1"></i>
@@ -116,12 +117,20 @@
                             <div id="paymentStatus" class="mt-3 d-none"></div>
 
                         @elseif($pendingReg ?? null)
+                            {{-- ── Ada order pending tapi snap token kosong ── --}}
                             <div class="alert alert-warning mb-3">
                                 <i class="fa-solid fa-clock-rotate-left me-2"></i>
                                 <strong>Pembayaran Tertunda</strong><br>
                                 <small>Order ID: {{ $pendingReg->midtrans_order_id }}</small>
                             </div>
-                            <button class="btn btn-warning w-100 py-3" onclick="window.location.reload()">
+
+                            {{-- Status polling indicator --}}
+                            <div id="pollingStatus" class="d-flex align-items-center gap-2 text-muted mb-3 fs-7">
+                                <span class="spinner-border spinner-border-sm"></span>
+                                <span>Mengecek status pembayaran otomatis...</span>
+                            </div>
+
+                            <button class="btn btn-warning w-100 py-3 mb-2" onclick="window.location.reload()">
                                 <i class="fa-solid fa-rotate me-2"></i>
                                 Refresh & Coba Lagi
                             </button>
@@ -130,7 +139,7 @@
                             </div>
 
                         @else
-                            {{-- Gagal load snap token --}}
+                            {{-- ── Tidak ada snap token & tidak ada pending order ── --}}
                             <div class="alert alert-warning mb-3">
                                 <i class="fa-solid fa-triangle-exclamation me-2"></i>
                                 Gagal memuat payment gateway. Silakan refresh halaman.
@@ -167,6 +176,7 @@
     </div>
 </div>
 
+{{-- ── SNAP JS + polling saat snap token tersedia ───────────────────────────────── --}}
 @if($snapToken)
 @php
     $isSandbox  = ($midtransConfig->environment ?? 'sandbox') !== 'production';
@@ -234,6 +244,71 @@ $('#btnPayNow').on('click', function () {
         }
     });
 });
+</script>
+@endif
+
+{{-- ── AUTO-POLLING: aktif di semua kondisi jika ada order_id (pending/simulasi/dsb) ── --}}
+@if(!$snapToken && ($pendingReg ?? null) && !empty($pendingReg->midtrans_order_id))
+<script>
+(function () {
+    const CHECK_URL   = '{{ route('cart.check-payment') }}';
+    const SUCCESS_URL = '{{ route('cart-payment.success') }}';
+    const CSRF_TOKEN  = '{{ csrf_token() }}';
+    const ORDER_ID    = @json($pendingReg->midtrans_order_id);
+    const INTERVAL_MS = 4000; // cek setiap 4 detik
+    let   attempt     = 0;
+    const MAX_ATTEMPT = 75;   // berhenti setelah 5 menit (75 × 4s)
+
+    const $status = $('#pollingStatus');
+
+    const timer = setInterval(function () {
+        attempt++;
+        if (attempt > MAX_ATTEMPT) {
+            clearInterval(timer);
+            if ($status.length) {
+                $status.html(
+                    '<div class="alert alert-secondary py-2 fs-7 mb-0"><i class="fa-solid fa-clock me-1"></i>Waktu pengecekan habis. Silakan refresh manual.</div>'
+                );
+            }
+            return;
+        }
+
+        $.ajax({
+            url: CHECK_URL,
+            type: 'POST',
+            data: { _token: CSRF_TOKEN, order_id: ORDER_ID },
+            success: function (res) {
+                if (res.status === 'paid') {
+                    clearInterval(timer);
+                    if ($status.length) {
+                        $status.html(
+                            '<div class="d-flex align-items-center gap-2 text-success"><i class="fa-solid fa-circle-check"></i><span>Pembayaran terkonfirmasi! Mengalihkan...</span></div>'
+                        );
+                    }
+                    // Tampilkan SweetAlert lalu redirect
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Pembayaran Berhasil!',
+                            text: 'Anda telah terdaftar untuk event ini.',
+                            confirmButtonColor: '#E62020',
+                            allowOutsideClick: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        }).then(() => { window.location.href = SUCCESS_URL; });
+                    } else {
+                        window.location.href = SUCCESS_URL;
+                    }
+                }
+                // status 'pending' atau 'not_found': lanjut polling
+                // status 'failed': biarkan, user bisa klik Coba Lagi / Simulasi
+            },
+            error: function () {
+                // jaringan error: lanjut saja, jangan hentikan polling
+            }
+        });
+    }, INTERVAL_MS);
+})();
 </script>
 @endif
 

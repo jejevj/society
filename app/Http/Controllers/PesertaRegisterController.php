@@ -30,6 +30,8 @@ class PesertaRegisterController extends Controller
         }
 
         return view('web.home.peserta-register', [
+            'menu'         => 'Registrasi Peserta',
+            'menu_aktif'   => 'about',
             'token'        => $token,
             'emailPeserta' => $invite->email_peserta,
             'namaPeserta'  => $invite->nama_peserta,
@@ -77,20 +79,20 @@ class PesertaRegisterController extends Controller
         try {
             // Buat akun user baru (field identik dengan registrasiAction)
             $idUser = DB::table('app_user')->insertGetId([
-                'nama_user'           => $request->nama,
-                'username_user'       => $invite->email_peserta,  // email sebagai username
-                'password_user'       => Hash::make($request->password),
-                'telepon_user'        => $request->telepon,
-                'identitas_user'      => $request->identitas,
-                'file_user'           => $filePath,
-                'organisasi_user'     => $request->organisasi,
-                'tipe_organisasi_user'=> $request->tipe_organisasi,
-                'pekerjaan_user'      => $request->pekerjaan,
-                'alamat_user'         => $request->alamat,
-                'role_id'             => 2,
-                'status_user'         => 1,  // langsung aktif karena sudah verifikasi lewat email
-                'created_at'          => now(),
-                'updated_at'          => now(),
+                'nama_user'            => $request->nama,
+                'username_user'        => $invite->email_peserta,  // email sebagai username
+                'password_user'        => Hash::make($request->password),
+                'telepon_user'         => $request->telepon,
+                'identitas_user'       => $request->identitas,
+                'file_user'            => $filePath,
+                'organisasi_user'      => $request->organisasi,
+                'tipe_organisasi_user' => $request->tipe_organisasi,
+                'pekerjaan_user'       => $request->pekerjaan,
+                'alamat_user'          => $request->alamat,
+                'role_id'              => 2,
+                'status_user'          => 1,  // langsung aktif karena sudah verifikasi lewat email
+                'created_at'           => now(),
+                'updated_at'           => now(),
             ]);
 
             // Assign event ke user baru

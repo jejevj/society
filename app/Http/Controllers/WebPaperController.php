@@ -25,15 +25,13 @@ class WebPaperController extends Controller
 
         $idUser = $request->session()->get('id_user');
 
-        // Ambil semua event unik yang terdaftar oleh user ini.
-        // Gunakan groupBy untuk menghindari duplikat jika user memiliki
-        // lebih dari satu baris registrasi pada event yang sama.
-        // MAX(r.kode_registrasi) digunakan untuk mengambil satu kode_registrasi
-        // representatif per event.
+        // Ambil semua event unik yang terdaftar & dikonfirmasi oleh user ini.
+        // Filter by status_registrasi = 'A' (Approved/confirmed) agar mencakup
+        // semua metode pembayaran: PAID, FREE, maupun data dari seeder.
         $events = DB::table('t_event_registrasi as r')
             ->join('t_event as e', 'e.kode_event', '=', 'r.kode_event')
             ->where('r.id_user', $idUser)
-            ->where('r.payment_status', 'PAID')
+            ->where('r.status_registrasi', 'A')
             ->groupBy(
                 'e.kode_event',
                 'e.judul_event',
@@ -54,7 +52,7 @@ class WebPaperController extends Controller
             ->orderBy('e.tanggal_awal_event', 'desc')
             ->get();
 
-        // Cek per event apakah user sudah upload paper
+        // Cek per event apakah sudah ada paper yang diupload
         foreach ($events as $ev) {
             $ev->has_paper = DB::table('t_paper')
                 ->where('kode_event', $ev->kode_event)

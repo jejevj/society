@@ -32,8 +32,18 @@ Route::prefix('society-event')->group(function () {
         ->name('cart.payment-callback')
         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
+    // ── Midtrans Webhook (server-to-server notification) ──────────────────────
+    // SANDBOX: deny/cancel/expire juga di-treat sebagai PAID (lihat MidtransWebhookController)
+    Route::post('/midtrans/webhook', [App\Http\Controllers\MidtransWebhookController::class, 'handle'])
+        ->name('midtrans.webhook')
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+    // ── Finish Redirect URL (setelah pembayaran selesai di popup Midtrans) ────
+    Route::get('/payment/success', [App\Http\Controllers\MidtransWebhookController::class, 'paymentSuccess'])
+        ->name('payment.success');
+
     // ── Peserta Register (link dari email) ────────────────────────────────────
-Route::get('/peserta-register/{token}', [App\Http\Controllers\PesertaRegisterController::class, 'show'])->name('peserta.register.show');
+    Route::get('/peserta-register/{token}', [App\Http\Controllers\PesertaRegisterController::class, 'show'])->name('peserta.register.show');
     Route::post('/peserta-register/{token}', [App\Http\Controllers\PesertaRegisterController::class, 'submit'])->name('peserta.register.submit');
 
     // Halaman list event publik

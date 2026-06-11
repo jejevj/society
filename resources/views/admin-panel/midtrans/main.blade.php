@@ -530,7 +530,6 @@
         s.src = snapScriptUrl;
         s.setAttribute('data-client-key', snapClientKey);
         s.onload = function () {
-            // snap.js may load asynchronously; wait a tick before calling back
             setTimeout(callback, 100);
         };
         s.onerror = function () {
@@ -721,10 +720,14 @@
     $('#btnGetStatus').on('click', function () {
         var orderId = $('#status_order_id').val().trim();
         if (!orderId) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Masukkan Order ID.' });
+        var btn = $(this);
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Checking...');
+        $('#statusResult').html('');
         $.ajax({
             url: '{{ route("getMidtransStatusAction") }}',
             type: 'POST', data: { order_id: orderId },
             success: function (res) {
+                btn.prop('disabled', false).html('<i class="fa fa-search me-1"></i> Check');
                 if (res.success) {
                     $('#statusResult').html('<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:300px">' + JSON.stringify(res.data, null, 2) + '</pre>');
                 } else {
@@ -732,45 +735,84 @@
                 }
             },
             error: function () {
+                btn.prop('disabled', false).html('<i class="fa fa-search me-1"></i> Check');
                 $('#statusResult').html('<div class="alert alert-danger mt-2">Terjadi kesalahan jaringan.</div>');
             }
         });
     });
 
-    function doTransactionAction(url, data, resultDiv) {
+    // ================================================================
+    // TRANSACTION ACTIONS — Approve / Cancel / Expire
+    // FIX: loading state per tombol, alert jika order_id kosong,
+    //      tampilkan pesan sukses & JSON response di #actionResult
+    // ================================================================
+    function doTransactionAction(url, data, resultDiv, btn, originalHtml) {
+        $(resultDiv).html('');
+        btn.prop('disabled', true);
+
         $.ajax({
-            url: url, type: 'POST', data: data,
+            url: url,
+            type: 'POST',
+            data: data,
             success: function (res) {
+                btn.prop('disabled', false).html(originalHtml);
                 if (res.success) {
-                    $(resultDiv).html('<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:200px">' + JSON.stringify(res.data, null, 2) + '</pre>');
+                    var statusText = (res.data && res.data.transaction_status) ? res.data.transaction_status : '';
+                    var successMsg = res.message + (statusText ? ' <strong>(' + statusText.toUpperCase() + ')</strong>' : '');
+                    $(resultDiv).html(
+                        '<div class="alert alert-success mt-2"><i class="fa fa-check-circle me-2"></i>' + successMsg + '</div>' +
+                        (res.data ? '<pre class="bg-light rounded p-3 mt-2" style="font-size:12px;overflow:auto;max-height:200px">' + JSON.stringify(res.data, null, 2) + '</pre>' : '')
+                    );
+                    if (window._dtTransaksiLoaded) dtTransaksi.ajax.reload(null, false);
                 } else {
-                    $(resultDiv).html('<div class="alert alert-danger mt-2">' + res.message + '</div>');
+                    $(resultDiv).html('<div class="alert alert-danger mt-2"><i class="fa fa-times-circle me-2"></i>' + res.message + '</div>');
                 }
             },
-            error: function () {
-                $(resultDiv).html('<div class="alert alert-danger mt-2">Terjadi kesalahan jaringan.</div>');
+            error: function (xhr) {
+                btn.prop('disabled', false).html(originalHtml);
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Terjadi kesalahan jaringan.';
+                if (xhr.status === 419) msg = 'CSRF token mismatch. Coba refresh halaman.';
+                $(resultDiv).html('<div class="alert alert-danger mt-2"><i class="fa fa-times-circle me-2"></i>' + msg + '</div>');
             }
         });
     }
 
     $('#btnApprove').on('click', function () {
-        var o = $('#action_order_id').val().trim(); if (!o) return;
-        doTransactionAction('{{ route("approveMidtransAction") }}', { order_id: o }, '#actionResult');
+        var o = $('#action_order_id').val().trim();
+        if (!o) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Masukkan Order ID terlebih dahulu.' });
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.html('<i class="fa fa-spinner fa-spin me-1"></i> Approving...');
+        doTransactionAction('{{ route("approveMidtransAction") }}', { order_id: o }, '#actionResult', btn, originalHtml);
     });
+
     $('#btnCancel').on('click', function () {
-        var o = $('#action_order_id').val().trim(); if (!o) return;
-        doTransactionAction('{{ route("cancelMidtransAction") }}', { order_id: o }, '#actionResult');
+        var o = $('#action_order_id').val().trim();
+        if (!o) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Masukkan Order ID terlebih dahulu.' });
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.html('<i class="fa fa-spinner fa-spin me-1"></i> Cancelling...');
+        doTransactionAction('{{ route("cancelMidtransAction") }}', { order_id: o }, '#actionResult', btn, originalHtml);
     });
+
     $('#btnExpire').on('click', function () {
-        var o = $('#action_order_id').val().trim(); if (!o) return;
-        doTransactionAction('{{ route("expireMidtransAction") }}', { order_id: o }, '#actionResult');
+        var o = $('#action_order_id').val().trim();
+        if (!o) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Masukkan Order ID terlebih dahulu.' });
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.html('<i class="fa fa-spinner fa-spin me-1"></i> Expiring...');
+        doTransactionAction('{{ route("expireMidtransAction") }}', { order_id: o }, '#actionResult', btn, originalHtml);
     });
+
     $('#btnRefund').on('click', function () {
         var o   = $('#refund_order_id').val().trim();
         var amt = $('#refund_amount').val().trim();
         var rsn = $('#refund_reason').val().trim();
         if (!o || !amt || !rsn) return Swal.fire({ icon: 'warning', title: 'Input', text: 'Lengkapi semua field refund.' });
-        doTransactionAction('{{ route("refundMidtransAction") }}', { order_id: o, amount: amt, reason: rsn }, '#refundResult');
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.html('<i class="fa fa-spinner fa-spin me-1"></i> Processing...');
+        doTransactionAction('{{ route("refundMidtransAction") }}', { order_id: o, amount: amt, reason: rsn }, '#refundResult', btn, originalHtml);
     });
 
     $('#btnSyncAll').on('click', function () {
@@ -806,7 +848,6 @@
 
     // ================================================================
     // CREATE SNAP TOKEN & OPEN PAYMENT POPUP
-    // Uses window.snap.pay() — Midtrans SNAP JS API
     // ================================================================
     $('#btnCreateSnap').on('click', function () {
         var orderId   = $('#snap_order_id').val().trim();

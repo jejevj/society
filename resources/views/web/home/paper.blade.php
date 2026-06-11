@@ -161,8 +161,8 @@
 
             {{-- Header --}}
             <div class="event-accordion-header" onclick="toggleAccordion('{{ $ev->kode_event }}')" id="header-{{ $ev->kode_event }}">
-                @if($ev->gambar_event)
-                    <img src="{{ asset('storage/'.$ev->gambar_event) }}" alt="" class="event-thumb">
+                @if(!empty($ev->gambar_event ?? null))
+                    <img src="{{ asset('storage/'.($ev->gambar_event ?? '')) }}" alt="" class="event-thumb">
                 @else
                     <div class="event-thumb-placeholder"><i class="fa fa-calendar"></i></div>
                 @endif
@@ -293,7 +293,7 @@
 <script>
 var _currentEventKode = null;
 
-// ── Accordion toggle ──────────────────────────────────────────────────
+// ── Accordion toggle ────────────────────────────────────────────────────
 function toggleAccordion(kodeEvent) {
     var body    = document.getElementById('body-' + kodeEvent);
     var header  = document.getElementById('header-' + kodeEvent);
@@ -324,7 +324,7 @@ function toggleAccordion(kodeEvent) {
     }
 }
 
-// ── Load DataTable per event ──────────────────────────────────────────
+// ── Load DataTable per event ───────────────────────────────────────
 function loadPaperDatatable(kodeEvent) {
     var tableId = '#dt-paper-' + kodeEvent;
 

@@ -130,10 +130,35 @@
                             </div>
 
                         @else
-                            <div class="alert alert-warning">
+                            {{-- Gagal load snap token --}}
+                            <div class="alert alert-warning mb-3">
                                 <i class="fa-solid fa-triangle-exclamation me-2"></i>
                                 Gagal memuat payment gateway. Silakan refresh halaman.
                             </div>
+                            <a href="{{ route('checkout-event', $cart->kode_cart) }}" class="btn btn-warning w-100 mb-3">
+                                <i class="fa-solid fa-rotate me-2"></i> Coba Lagi
+                            </a>
+
+                            {{-- ════════════════════════════════════════════════════════════
+                                 TOMBOL SIMULASI — HANYA UNTUK DEV / SANDBOX
+                                 Hapus blok ini sebelum naik ke production!
+                            ═══════════════════════════════════════════════════════════════ --}}
+                            @if(config('app.env') !== 'production')
+                            <hr class="my-3">
+                            <div class="alert alert-info py-2 px-3 mb-3 fs-7">
+                                <i class="fa-solid fa-flask me-1"></i>
+                                <strong>[DEV ONLY]</strong> Simulasi pembayaran berhasil tanpa gateway.
+                            </div>
+                            <form method="POST" action="{{ route('cart.simulate-paid') }}">
+                                @csrf
+                                <input type="hidden" name="kode_cart" value="{{ $cart->kode_cart }}">
+                                <button type="submit" class="btn btn-success w-100 py-3">
+                                    <i class="fa-solid fa-circle-check me-2"></i>
+                                    Simulasi Pembayaran Berhasil
+                                </button>
+                            </form>
+                            @endif
+
                         @endif
                     </div>
                 </div>

@@ -32,6 +32,9 @@ Route::prefix('society-event')->group(function () {
         ->name('cart.payment-callback')
         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
+    // [DEV / SANDBOX ONLY] Simulasi pembayaran berhasil — hapus di production!
+    Route::post('/cart/simulate-paid', [App\Http\Controllers\WebHomeController::class, 'simulatePaid'])->name('cart.simulate-paid');
+
     // ── Midtrans Webhook (server-to-server notification) ──────────────────────
     // SANDBOX: deny/cancel/expire juga di-treat sebagai PAID (lihat MidtransWebhookController)
     Route::post('/midtrans/webhook', [App\Http\Controllers\MidtransWebhookController::class, 'handle'])

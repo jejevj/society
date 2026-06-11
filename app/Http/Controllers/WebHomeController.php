@@ -30,7 +30,7 @@ class WebHomeController extends Controller
         $this->dataService = $dataService;
     }
 
-    // ── helper: ambil konfigurasi Midtrans aktif ──────────────────────────
+    // ── helper: ambil konfigurasi Midtrans aktif ────────────────────────────
     private function midtransConfig(): ?object
     {
         return DB::table('app_midtrans_config')
@@ -303,7 +303,7 @@ class WebHomeController extends Controller
         return response()->json(['status' => true, 'message' => 'Package selection saved successfully.', 'kode_cart' => $request->kode_cart]);
     }
 
-    // ── Step 2: Participant Form ──────────────────────────────────────────
+    // ── Step 2: Participant Form ──────────────────────────────────────
 
     public function showParticipantForm($kode_cart, Request $request)
     {
@@ -365,11 +365,8 @@ class WebHomeController extends Controller
         return redirect()->route('checkout-event', $kode_cart);
     }
 
-    // ── Step 3: Checkout ──────────────────────────────────────────────────
+    // ── Step 3: Checkout ────────────────────────────────────────────────────
 
-    /**
-     * Status Midtrans yang dianggap "terminal" sehingga perlu generate order_id baru.
-     */
     private function isCancelledMidtransStatus(string $status): bool
     {
         return in_array(strtolower($status), ['cancel', 'deny', 'expire', 'failure']);
@@ -401,7 +398,6 @@ class WebHomeController extends Controller
         if ($midtransConfig && $grandTotal > 0) {
             $user = DB::table('app_user')->where('id_user', session('id_user'))->first();
 
-            // Cari registrasi yang ada untuk cart ini
             $existingReg = DB::table('t_event_registrasi')
                 ->where('kode_cart', $kode_cart)
                 ->whereIn('payment_status', ['PENDING', 'FAILED', 'CANCEL', 'EXPIRE'])
@@ -560,6 +556,87 @@ class WebHomeController extends Controller
             'menu'       => 'Payment Success',
             'set'        => $this->setting(),
         ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // [DEV / SANDBOX ONLY] Simulasi pembayaran berhasil tanpa gateway
+    // POST /cart/simulate-paid
+    // Hapus route & method ini sebelum deploy ke production!
+    // ─────────────────────────────────────────────────────────────────────────
+    public function simulatePaid(Request $request)
+    {
+        // Blokir di production
+        if (config('app.env') === 'production') {
+            abort(403, 'Tidak tersedia di production.');
+        }
+
+        if (!session()->has('id_user')) {
+            return redirect()->route('login');
+        }
+
+        $kode_cart = $request->input('kode_cart');
+        if (!$kode_cart) {
+            return back()->with('error', 'kode_cart tidak ditemukan.');
+        }
+
+        // Ambil cart + event
+        $cart = DB::table('t_event_cart as c')
+            ->join('t_event as e', 'e.kode_event', '=', 'c.kode_event')
+            ->where('c.kode_cart', $kode_cart)
+            ->select('c.*', 'e.judul_event', 'e.lokasi_event', 'e.harga_event',
+                     'e.tanggal_awal_event', 'e.tanggal_akhir_event')
+            ->first();
+
+        if (!$cart) {
+            return back()->with('error', 'Cart tidak ditemukan.');
+        }
+
+        $addon = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
+        $qty   = (int) ($cart->qty ?? 1);
+        $grandTotal = (int) ($cart->subtotal + $addon->sum('harga_paket') * $qty);
+
+        // Cari atau buat registrasi pending
+        $reg = DB::table('t_event_registrasi')
+            ->where('kode_cart', $kode_cart)
+            ->orderBy('id_registrasi', 'desc')
+            ->first();
+
+        if (!$reg) {
+            // Buat registrasi baru dengan order id simulasi
+            $user           = DB::table('app_user')->where('id_user', session('id_user'))->first();
+            $orderId        = 'SIM-' . strtoupper(Str::random(8)) . '-' . time();
+            $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
+
+            DB::table('t_event_registrasi')->insert([
+                'kode_registrasi'   => $kodeRegistrasi,
+                'kode_event'        => $cart->kode_event,
+                'kode_cart'         => $kode_cart,
+                'id_user'           => session('id_user'),
+                'nama_peserta'      => $user->nama_user       ?? '',
+                'email_peserta'     => $user->username_user   ?? '',
+                'instansi_peserta'  => $user->organisasi_user ?? null,
+                'no_hp_peserta'     => $user->telepon_user    ?? null,
+                'total_bayar'       => (float) $grandTotal,
+                'midtrans_order_id' => $orderId,
+                'snap_token'        => null,
+                'payment_status'    => 'PENDING',
+                'status_registrasi' => 'P',
+                'confirmed_at'      => null,
+                'created_at'        => now(),
+                'updated_at'        => now(),
+            ]);
+
+            $reg = DB::table('t_event_registrasi')
+                ->where('midtrans_order_id', $orderId)
+                ->first();
+        }
+
+        // Tandai PAID dan jalankan full flow (kirim email, buat user peserta, dll)
+        $this->processCartPaid($reg, $reg->midtrans_order_id);
+
+        Log::info('[simulatePaid] Simulated PAID for kode_cart: ' . $kode_cart . ' order: ' . $reg->midtrans_order_id);
+
+        return redirect()->route('cart-payment.success');
     }
 
     private function processCartPaid(object $reg, string $orderId): void

@@ -11,16 +11,22 @@ use Illuminate\Support\Str;
 class MidtransWebhookController extends Controller
 {
     /**
-     * Handle Midtrans server-to-server notification (webhook).
-     *
      * SANDBOX NOTE:
      * Di sandbox, transaksi kartu kredit sering mendapat status "deny" karena
-     * tidak ada proses approval manual. Untuk keperluan development, status
-     * "deny", "cancel", dan "expire" di-treat sebagai PAID agar flow bisa ditest.
-     *
-     * Hapus konstanta SANDBOX_TREAT_DENY_AS_PAID atau set ke false di production.
+     * tidak ada proses approval manual. Status "deny", "cancel", dan "expire"
+     * di-treat sebagai PAID agar flow bisa ditest.
+     * Set ke false di production.
      */
     private const SANDBOX_TREAT_DENY_AS_PAID = true;
+
+    // ── Helper: ambil config Midtrans aktif ───────────────────────────────────
+    private function getMidtransConfig(): ?object
+    {
+        return DB::table('app_midtrans_config')
+            ->where('id_midtrans', 1)
+            ->where('is_active', 'Y')
+            ->first();
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Webhook Handler (POST /midtrans/webhook)
@@ -30,7 +36,7 @@ class MidtransWebhookController extends Controller
     {
         Log::info('[Midtrans Webhook] Incoming notification', $request->all());
 
-        $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+        $midtransConfig = $this->getMidtransConfig();
 
         if (!$midtransConfig) {
             Log::warning('[Midtrans Webhook] No active Midtrans config found.');
@@ -49,7 +55,6 @@ class MidtransWebhookController extends Controller
             $statusCode  = $notif->status_code  ?? null;
             $grossAmount = $notif->gross_amount  ?? null;
         } catch (\Exception $e) {
-            // Fallback: baca langsung dari request body
             Log::warning('[Midtrans Webhook] Midtrans\\Notification() failed, using raw request: ' . $e->getMessage());
             $txStatus    = $request->input('transaction_status');
             $orderId     = $request->input('order_id');
@@ -88,7 +93,6 @@ class MidtransWebhookController extends Controller
         $isPaid = in_array($txStatus, ['capture', 'settlement'])
             && ($fraudStatus === 'accept' || $fraudStatus === null || $fraudStatus === '');
 
-        // Khusus SANDBOX: deny/cancel/expire juga dianggap berhasil untuk testing
         if (!$isPaid && $isSandbox && self::SANDBOX_TREAT_DENY_AS_PAID) {
             if (in_array($txStatus, ['deny', 'cancel', 'expire'])) {
                 Log::info("[Midtrans Webhook] SANDBOX MODE: treating '{$txStatus}' as PAID for order: {$orderId}");
@@ -108,7 +112,6 @@ class MidtransWebhookController extends Controller
             return response()->json(['status' => 'already_paid']);
         }
 
-        // Jika bukan sandbox atau SANDBOX_TREAT_DENY_AS_PAID = false
         if (in_array($txStatus, ['cancel', 'deny', 'expire'])) {
             DB::table('t_event_registrasi')
                 ->where('midtrans_order_id', $orderId)
@@ -123,17 +126,17 @@ class MidtransWebhookController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
     // Finish Redirect URL (GET /payment/success)
     // Dipanggil oleh browser user setelah popup Midtrans selesai
-    // Midtrans akan append: ?order_id=...&status_code=...&transaction_status=...
+    // Midtrans append: ?order_id=...&status_code=...&transaction_status=...
     // ─────────────────────────────────────────────────────────────────────────
     public function paymentSuccess(Request $request)
     {
-        $orderId   = $request->query('order_id');
-        $txStatus  = $request->query('transaction_status');
+        $orderId  = $request->query('order_id');
+        $txStatus = $request->query('transaction_status');
 
         $reg       = null;
         $isSandbox = false;
 
-        $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+        $midtransConfig = $this->getMidtransConfig();
         if ($midtransConfig) {
             $isSandbox = !(bool) ($midtransConfig->is_production ?? false);
         }
@@ -147,7 +150,6 @@ class MidtransWebhookController extends Controller
             if ($reg && $reg->payment_status !== 'PAID') {
                 $shouldPay = in_array($txStatus, ['capture', 'settlement']);
 
-                // Sandbox workaround: deny/cancel/expire juga dianggap PAID
                 if (!$shouldPay && $isSandbox && self::SANDBOX_TREAT_DENY_AS_PAID) {
                     if (in_array($txStatus, ['deny', 'cancel', 'expire'])) {
                         $shouldPay = true;
@@ -157,7 +159,6 @@ class MidtransWebhookController extends Controller
 
                 if ($shouldPay) {
                     $this->processPaidRegistration($reg, $orderId);
-                    // Reload data terbaru
                     $reg = DB::table('t_event_registrasi')
                         ->where('midtrans_order_id', $orderId)
                         ->first();
@@ -170,7 +171,6 @@ class MidtransWebhookController extends Controller
 
     // ─────────────────────────────────────────────────────────────────────────
     // Helper: Proses registrasi setelah konfirmasi PAID
-    // Buat user, update status registrasi ke PAID & Aktif, simpan add-on
     // ─────────────────────────────────────────────────────────────────────────
     private function processPaidRegistration(object $reg, string $orderId): void
     {

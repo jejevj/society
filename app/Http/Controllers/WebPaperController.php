@@ -25,20 +25,31 @@ class WebPaperController extends Controller
 
         $idUser = $request->session()->get('id_user');
 
-        // Ambil semua event yang terdaftar oleh user ini
+        // Ambil semua event unik yang terdaftar oleh user ini.
+        // Gunakan groupBy untuk menghindari duplikat jika user memiliki
+        // lebih dari satu baris registrasi pada event yang sama.
+        // MAX(r.kode_registrasi) digunakan untuk mengambil satu kode_registrasi
+        // representatif per event.
         $events = DB::table('t_event_registrasi as r')
             ->join('t_event as e', 'e.kode_event', '=', 'r.kode_event')
             ->where('r.id_user', $idUser)
             ->where('r.payment_status', 'PAID')
+            ->groupBy(
+                'e.kode_event',
+                'e.judul_event',
+                'e.lokasi_event',
+                'e.tanggal_awal_event',
+                'e.tanggal_akhir_event'
+            )
             ->select(
                 'e.kode_event',
                 'e.judul_event',
                 'e.lokasi_event',
                 'e.tanggal_awal_event',
                 'e.tanggal_akhir_event',
-                'r.kode_registrasi',
-                'r.nama_peserta',
-                'r.email_peserta'
+                DB::raw('MAX(r.kode_registrasi) as kode_registrasi'),
+                DB::raw('MAX(r.nama_peserta) as nama_peserta'),
+                DB::raw('MAX(r.email_peserta) as email_peserta')
             )
             ->orderBy('e.tanggal_awal_event', 'desc')
             ->get();
@@ -46,7 +57,7 @@ class WebPaperController extends Controller
         // Cek per event apakah user sudah upload paper
         foreach ($events as $ev) {
             $ev->has_paper = DB::table('t_paper')
-                ->where('kode_registrasi', $ev->kode_registrasi)
+                ->where('kode_event', $ev->kode_event)
                 ->exists();
         }
 

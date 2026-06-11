@@ -22,6 +22,10 @@ class MidtransWebhookController extends Controller
      */
     private const SANDBOX_TREAT_DENY_AS_PAID = true;
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Webhook Handler (POST /midtrans/webhook)
+    // Dipanggil oleh server Midtrans, bukan browser user
+    // ─────────────────────────────────────────────────────────────────────────
     public function handle(Request $request)
     {
         Log::info('[Midtrans Webhook] Incoming notification', $request->all());
@@ -73,7 +77,6 @@ class MidtransWebhookController extends Controller
             ->where('midtrans_order_id', $orderId)
             ->first();
 
-        // Jika tidak ada di t_event_registrasi, coba di t_cart (cart payment flow)
         if (!$reg) {
             Log::info('[Midtrans Webhook] Order not found in t_event_registrasi, skipping: ' . $orderId);
             return response()->json(['message' => 'order_not_found'], 404);
@@ -117,16 +120,62 @@ class MidtransWebhookController extends Controller
         return response()->json(['status' => 'pending', 'transaction_status' => $txStatus]);
     }
 
-    /**
-     * Proses registrasi setelah konfirmasi PAID.
-     * Buat user, update status registrasi ke PAID & Aktif, simpan add-on.
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Finish Redirect URL (GET /payment/success)
+    // Dipanggil oleh browser user setelah popup Midtrans selesai
+    // Midtrans akan append: ?order_id=...&status_code=...&transaction_status=...
+    // ─────────────────────────────────────────────────────────────────────────
+    public function paymentSuccess(Request $request)
+    {
+        $orderId   = $request->query('order_id');
+        $txStatus  = $request->query('transaction_status');
+
+        $reg       = null;
+        $isSandbox = false;
+
+        $midtransConfig = DB::table('app_midtrans_config')->where('status_config', 'Y')->first();
+        if ($midtransConfig) {
+            $isSandbox = !(bool) ($midtransConfig->is_production ?? false);
+        }
+
+        if ($orderId) {
+            $reg = DB::table('t_event_registrasi')
+                ->where('midtrans_order_id', $orderId)
+                ->first();
+
+            // Jika webhook belum memproses (race condition), proses di sini
+            if ($reg && $reg->payment_status !== 'PAID') {
+                $shouldPay = in_array($txStatus, ['capture', 'settlement']);
+
+                // Sandbox workaround: deny/cancel/expire juga dianggap PAID
+                if (!$shouldPay && $isSandbox && self::SANDBOX_TREAT_DENY_AS_PAID) {
+                    if (in_array($txStatus, ['deny', 'cancel', 'expire'])) {
+                        $shouldPay = true;
+                        Log::info("[Payment Success Page] SANDBOX: treating '{$txStatus}' as PAID for order: {$orderId}");
+                    }
+                }
+
+                if ($shouldPay) {
+                    $this->processPaidRegistration($reg, $orderId);
+                    // Reload data terbaru
+                    $reg = DB::table('t_event_registrasi')
+                        ->where('midtrans_order_id', $orderId)
+                        ->first();
+                }
+            }
+        }
+
+        return view('web.register-event.payment-success', compact('reg', 'isSandbox'));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helper: Proses registrasi setelah konfirmasi PAID
+    // Buat user, update status registrasi ke PAID & Aktif, simpan add-on
+    // ─────────────────────────────────────────────────────────────────────────
     private function processPaidRegistration(object $reg, string $orderId): void
     {
-        // Buat atau ambil user
         $userId = $this->createOrGetUser($reg);
 
-        // Update registrasi
         DB::table('t_event_registrasi')
             ->where('midtrans_order_id', $orderId)
             ->update([
@@ -138,12 +187,10 @@ class MidtransWebhookController extends Controller
                 'updated_at'        => now(),
             ]);
 
-        // Aktifkan user
         DB::table('app_user')
             ->where('id_user', $userId)
             ->update(['status_user' => 'Y', 'updated_at' => now()]);
 
-        // Simpan add-on jika ada (dari t_event_paket berdasarkan kode_paket di registrasi)
         if (!empty($reg->kode_paket)) {
             $paket = DB::table('t_event_paket')->where('kode_paket', $reg->kode_paket)->first();
             if ($paket) {
@@ -170,9 +217,9 @@ class MidtransWebhookController extends Controller
         }
     }
 
-    /**
-     * Buat atau ambil user dari data registrasi.
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helper: Buat atau ambil user dari data registrasi
+    // ─────────────────────────────────────────────────────────────────────────
     private function createOrGetUser(object $reg): int
     {
         $existing = DB::table('app_user')->where('email_user', $reg->email_peserta)->first();

@@ -36,7 +36,6 @@ class WebPaperController extends Controller
                 'e.lokasi_event',
                 'e.tanggal_awal_event',
                 'e.tanggal_akhir_event',
-                'e.gambar_event',
                 'r.kode_registrasi',
                 'r.nama_peserta',
                 'r.email_peserta'
@@ -154,16 +153,16 @@ class WebPaperController extends Controller
 
         // Simpan ke t_paper
         DB::table('t_paper')->insert([
-            'kode_paper'      => 'PPR' . date('ymdHis') . strtoupper(Str::random(4)),
-            'kode_registrasi' => $request->kode_registrasi,
-            'kode_event'      => $reg->kode_event,
-            'judul_paper'     => $request->judul_paper,
-            'file_paper'      => $filePath,
-            'tipe_file_paper' => $ext,
-            'status_paper'    => 'P',  // Pending — menunggu review admin
-            'created_by_paper'=> $idUser,
-            'created_at'      => now(),
-            'updated_at'      => now(),
+            'kode_paper'       => 'PPR' . date('ymdHis') . strtoupper(Str::random(4)),
+            'kode_registrasi'  => $request->kode_registrasi,
+            'kode_event'       => $reg->kode_event,
+            'judul_paper'      => $request->judul_paper,
+            'file_paper'       => $filePath,
+            'tipe_file_paper'  => $ext,
+            'status_paper'     => 'P',  // Pending — menunggu review admin
+            'created_by_paper' => $idUser,
+            'created_at'       => now(),
+            'updated_at'       => now(),
         ]);
 
         return response()->json(['success' => true, 'message' => 'Paper berhasil diupload dan menunggu review admin.']);

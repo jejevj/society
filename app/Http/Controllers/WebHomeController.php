@@ -382,7 +382,17 @@ class WebHomeController extends Controller
             ->select('c.*', 'e.judul_event', 'e.lokasi_event', 'e.tanggal_awal_event', 'e.tanggal_akhir_event', 'e.harga_event')
             ->first();
 
-        if (!$cart) abort(404);
+        if (!$cart) {
+            // Cart sudah dihapus (sudah PAID) — cek apakah ada registrasi PAID untuk cart ini
+            $paidReg = DB::table('t_event_registrasi')
+                ->where('kode_cart', $kode_cart)
+                ->where('payment_status', 'PAID')
+                ->first();
+            if ($paidReg) {
+                return redirect()->route('cart-payment.success');
+            }
+            abort(404);
+        }
 
         $qty           = (int) ($cart->qty ?? 1);
         $addon         = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
@@ -394,6 +404,15 @@ class WebHomeController extends Controller
         $snapToken      = null;
         $orderId        = null;
         $pendingReg     = null;
+
+        // ── Selalu cek dulu apakah sudah ada registrasi PAID untuk cart ini ──
+        $paidReg = DB::table('t_event_registrasi')
+            ->where('kode_cart', $kode_cart)
+            ->where('payment_status', 'PAID')
+            ->first();
+        if ($paidReg) {
+            return redirect()->route('cart-payment.success');
+        }
 
         if ($midtransConfig && $grandTotal > 0) {
             $user = DB::table('app_user')->where('id_user', session('id_user'))->first();
@@ -465,6 +484,15 @@ class WebHomeController extends Controller
             DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->delete();
             DB::table('t_event_cart')->where('kode_cart', $kode_cart)->delete();
             return redirect()->route('cart-payment.success');
+
+        } else {
+            // midtransConfig null (gateway tidak aktif) — tetap set pendingReg
+            // agar blok polling di view bisa berjalan (misal setelah simulatePaid)
+            $pendingReg = DB::table('t_event_registrasi')
+                ->where('kode_cart', $kode_cart)
+                ->whereIn('payment_status', ['PENDING', 'FAILED', 'CANCEL', 'EXPIRE'])
+                ->orderBy('id_registrasi', 'desc')
+                ->first();
         }
 
         return view('web.home.event-checkout', [
@@ -565,7 +593,6 @@ class WebHomeController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
     public function simulatePaid(Request $request)
     {
-        // Blokir di production
         if (config('app.env') === 'production') {
             abort(403, 'Tidak tersedia di production.');
         }
@@ -588,21 +615,36 @@ class WebHomeController extends Controller
             ->first();
 
         if (!$cart) {
+            // Cart mungkin sudah ada yang berhasil PAID sebelumnya
+            $paidReg = DB::table('t_event_registrasi')
+                ->where('kode_cart', $kode_cart)
+                ->where('payment_status', 'PAID')
+                ->first();
+            if ($paidReg) {
+                return redirect()->route('cart-payment.success');
+            }
             return back()->with('error', 'Cart tidak ditemukan.');
         }
 
-        $addon = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
-        $qty   = (int) ($cart->qty ?? 1);
+        $addon      = DB::table('t_event_cart_paket')->where('kode_cart', $kode_cart)->get();
+        $qty        = (int) ($cart->qty ?? 1);
         $grandTotal = (int) ($cart->subtotal + $addon->sum('harga_paket') * $qty);
 
-        // Cari atau buat registrasi pending
+        // Hapus semua registrasi lama yang FAILED/CANCEL/EXPIRE untuk cart ini
+        // agar tidak ada konflik saat processCartPaid berjalan
+        DB::table('t_event_registrasi')
+            ->where('kode_cart', $kode_cart)
+            ->whereIn('payment_status', ['FAILED', 'CANCEL', 'EXPIRE'])
+            ->delete();
+
+        // Ambil registrasi PENDING yang tersisa, atau buat baru
         $reg = DB::table('t_event_registrasi')
             ->where('kode_cart', $kode_cart)
+            ->where('payment_status', 'PENDING')
             ->orderBy('id_registrasi', 'desc')
             ->first();
 
         if (!$reg) {
-            // Buat registrasi baru dengan order id simulasi
             $user           = DB::table('app_user')->where('id_user', session('id_user'))->first();
             $orderId        = 'SIM-' . strtoupper(Str::random(8)) . '-' . time();
             $kodeRegistrasi = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
@@ -631,7 +673,7 @@ class WebHomeController extends Controller
                 ->first();
         }
 
-        // Tandai PAID dan jalankan full flow (kirim email, buat user peserta, dll)
+        // Jalankan full flow: update PAID, kirim email peserta, hapus cart
         $this->processCartPaid($reg, $reg->midtrans_order_id);
 
         Log::info('[simulatePaid] Simulated PAID for kode_cart: ' . $kode_cart . ' order: ' . $reg->midtrans_order_id);
@@ -669,8 +711,8 @@ class WebHomeController extends Controller
             }
         }
 
-        $event    = DB::table('t_event')->where('kode_event', $reg->kode_event)->first();
-        $peserta  = DB::table('t_event_cart_peserta')->where('kode_cart', $reg->kode_cart)->orderBy('urutan')->get();
+        $event     = DB::table('t_event')->where('kode_event', $reg->kode_event)->first();
+        $peserta   = DB::table('t_event_cart_peserta')->where('kode_cart', $reg->kode_cart)->orderBy('urutan')->get();
         $namaEvent = $event->judul_event ?? 'Event';
 
         foreach ($peserta as $p) {
@@ -711,9 +753,9 @@ class WebHomeController extends Controller
                     ->exists();
 
                 if (!$alreadyInvited) {
-                    $token      = Str::random(64);
-                    $kodeReg    = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
-                    $expiredAt  = now()->addHours(48);
+                    $token       = Str::random(64);
+                    $kodeReg     = 'REG' . date('ymdHis') . strtoupper(Str::random(4));
+                    $expiredAt   = now()->addHours(48);
                     $registerUrl = url(env('APP_ROUTE', 'society-event') . '/peserta-register/' . $token);
 
                     DB::table('t_peserta_invite')->insert([

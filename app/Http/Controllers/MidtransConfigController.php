@@ -69,8 +69,6 @@ class MidtransConfigController extends Controller
         } catch (\Exception $e) {
             Log::warning('MidtransConfigController@index: gagal hitung tabCounts', [
                 'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
             ]);
         }
 
@@ -92,7 +90,7 @@ class MidtransConfigController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // Helper: parse Midtrans response body (JSON atau raw string)
+    // Helper: parse Midtrans response — JSON dulu, fallback ke raw body
     // ─────────────────────────────────────────────────────────────────
     private function parseMidtransResponse($response): array
     {
@@ -100,7 +98,6 @@ class MidtransConfigController extends Controller
         if (!is_null($json)) {
             return $json;
         }
-        // Midtrans kadang return HTML / plain-text saat error infrastruktur
         $raw = trim($response->body());
         return [
             '__raw'          => $raw ?: '(empty body)',
@@ -109,20 +106,38 @@ class MidtransConfigController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // Helper: pesan user-friendly berdasarkan HTTP status code Midtrans
+    // Helper: pesan user-friendly per HTTP status Midtrans
     // ─────────────────────────────────────────────────────────────────
     private function midtransHttpMessage(int $status, string $orderId, array $res): string
     {
         return match ($status) {
             400 => 'Permintaan tidak valid. Periksa kembali data yang dikirim. (' . ($res['status_message'] ?? 'Bad Request') . ')',
             401 => 'Server Key tidak valid atau tidak berwenang.',
-            404 => "Order ID \"{$orderId}\" tidak ditemukan di Midtrans. Pastikan transaksi pernah dibuat melalui API Midtrans.",
-            405 => 'Aksi tidak diperbolehkan untuk status transaksi saat ini di Midtrans.',
+            404 => "Order ID \"{$orderId}\" tidak ditemukan di Midtrans. Pastikan transaksi pernah dibuat via Midtrans API.",
+            405 => 'Aksi tidak diperbolehkan untuk status transaksi saat ini.',
             406 => 'Transaksi tidak dapat diproses. Status saat ini tidak mendukung aksi ini. (' . ($res['status_message'] ?? '') . ')',
             408 => 'Request timeout. Coba beberapa saat lagi.',
             500, 502, 503 => 'Server Midtrans sedang bermasalah (HTTP ' . $status . '). Coba beberapa saat lagi.',
             default       => 'Midtrans API error (HTTP ' . $status . '): ' . ($res['status_message'] ?? 'Unknown error'),
         };
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Helper: update DB lokal jika record sudah ada (tidak paksa insert)
+    // ─────────────────────────────────────────────────────────────────
+    private function updateLocalIfExists(string $orderId, array $fields): void
+    {
+        if (!Schema::hasTable('app_midtrans_transaction')) {
+            return;
+        }
+        if (DB::table('app_midtrans_transaction')->where('order_id', $orderId)->exists()) {
+            DB::table('app_midtrans_transaction')
+                ->where('order_id', $orderId)
+                ->update(array_merge($fields, [
+                    'updated_by' => session('nama'),
+                    'updated_at' => now(),
+                ]));
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -183,10 +198,8 @@ class MidtransConfigController extends Controller
             }
         }
 
-        if (!empty($config->finish_redirect_url) || !empty($config->unfinish_redirect_url) || !empty($config->error_redirect_url)) {
-            $payload['callbacks'] = [
-                'finish' => $config->finish_redirect_url ?? '',
-            ];
+        if (!empty($config->finish_redirect_url)) {
+            $payload['callbacks'] = ['finish' => $config->finish_redirect_url];
         }
 
         try {
@@ -208,11 +221,7 @@ class MidtransConfigController extends Controller
                     'raw_body'    => $response->body(),
                 ]);
 
-                return response()->json([
-                    'success' => false,
-                    'message' => $errMsg,
-                    'data'    => $res,
-                ]);
+                return response()->json(['success' => false, 'message' => $errMsg, 'data' => $res]);
             }
 
             if (Schema::hasTable('app_midtrans_transaction')) {
@@ -243,8 +252,6 @@ class MidtransConfigController extends Controller
             Log::error('MidtransConfigController@createSnapTokenAction: exception', [
                 'order_id' => $orderId,
                 'error'    => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
             ]);
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -327,11 +334,7 @@ class MidtransConfigController extends Controller
                     'raw_body'    => $response->body(),
                 ]);
 
-                return response()->json([
-                    'success' => false,
-                    'message' => $errMsg,
-                    'data'    => $res,
-                ]);
+                return response()->json(['success' => false, 'message' => $errMsg, 'data' => $res]);
             }
 
             if (Schema::hasTable('app_midtrans_transaction')) {
@@ -362,8 +365,6 @@ class MidtransConfigController extends Controller
             Log::error('MidtransConfigController@createChargeAction: exception', [
                 'order_id' => $orderId,
                 'error'    => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
             ]);
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -444,11 +445,7 @@ class MidtransConfigController extends Controller
                 'data'            => $rows,
             ]);
         } catch (\Exception $e) {
-            Log::error('MidtransConfigController@getTableTransaksi: exception', [
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-            ]);
+            Log::error('MidtransConfigController@getTableTransaksi: exception', ['error' => $e->getMessage()]);
             return response()->json(['draw' => (int) $request->get('draw'), 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => [], 'error' => $e->getMessage()]);
         }
     }
@@ -471,10 +468,7 @@ class MidtransConfigController extends Controller
             return response()->json(['success' => false, 'message' => 'Tabel transaksi belum tersedia.']);
         }
 
-        $baseUrl = $config->environment === 'production'
-            ? 'https://api.midtrans.com'
-            : 'https://api.sandbox.midtrans.com';
-
+        $baseUrl  = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
         $orderIds = DB::table('app_midtrans_transaction')->pluck('order_id');
 
         $synced = 0;
@@ -483,55 +477,43 @@ class MidtransConfigController extends Controller
 
         foreach ($orderIds as $orderId) {
             try {
-                $response = Http::withBasicAuth($config->server_key, '')
-                    ->timeout(10)
-                    ->get($baseUrl . '/v2/' . $orderId . '/status');
-
-                $res = $this->parseMidtransResponse($response);
+                $response = Http::withBasicAuth($config->server_key, '')->timeout(10)->get($baseUrl . '/v2/' . $orderId . '/status');
+                $res      = $this->parseMidtransResponse($response);
 
                 if (!isset($res['transaction_status'])) {
                     $failed++;
-                    $errMsg  = $res['status_message'] ?? 'No status returned';
-                    $errors[] = $orderId . ': ' . $errMsg;
+                    $errors[] = $orderId . ': ' . ($res['status_message'] ?? 'No status returned');
                     Log::warning('MidtransConfigController@fetchMidtransTransactionsAction: no transaction_status', [
                         'order_id'    => $orderId,
                         'http_status' => $response->status(),
-                        'response'    => $res,
                         'raw_body'    => $response->body(),
                     ]);
                     continue;
                 }
 
-                DB::table('app_midtrans_transaction')
-                    ->where('order_id', $orderId)
-                    ->update([
-                        'transaction_id'     => $res['transaction_id'] ?? null,
-                        'transaction_status' => $res['transaction_status'] ?? null,
-                        'payment_type'       => $res['payment_type'] ?? null,
-                        'gross_amount'       => isset($res['gross_amount']) ? (float) $res['gross_amount'] : null,
-                        'currency'           => $res['currency'] ?? 'IDR',
-                        'fraud_status'       => $res['fraud_status'] ?? null,
-                        'status_message'     => $res['status_message'] ?? null,
-                        'bank'               => $res['bank'] ?? null,
-                        'masked_card'        => $res['masked_card'] ?? null,
-                        'approval_code'      => $res['approval_code'] ?? null,
-                        'raw_response'       => json_encode($res),
-                        'transaction_time'   => isset($res['transaction_time']) ? \Carbon\Carbon::parse($res['transaction_time']) : null,
-                        'settlement_time'    => isset($res['settlement_time']) ? \Carbon\Carbon::parse($res['settlement_time']) : null,
-                        'updated_by'         => session('nama'),
-                        'updated_at'         => now(),
-                    ]);
+                DB::table('app_midtrans_transaction')->where('order_id', $orderId)->update([
+                    'transaction_id'     => $res['transaction_id'] ?? null,
+                    'transaction_status' => $res['transaction_status'] ?? null,
+                    'payment_type'       => $res['payment_type'] ?? null,
+                    'gross_amount'       => isset($res['gross_amount']) ? (float) $res['gross_amount'] : null,
+                    'currency'           => $res['currency'] ?? 'IDR',
+                    'fraud_status'       => $res['fraud_status'] ?? null,
+                    'status_message'     => $res['status_message'] ?? null,
+                    'bank'               => $res['bank'] ?? null,
+                    'masked_card'        => $res['masked_card'] ?? null,
+                    'approval_code'      => $res['approval_code'] ?? null,
+                    'raw_response'       => json_encode($res),
+                    'transaction_time'   => isset($res['transaction_time']) ? \Carbon\Carbon::parse($res['transaction_time']) : null,
+                    'settlement_time'    => isset($res['settlement_time']) ? \Carbon\Carbon::parse($res['settlement_time']) : null,
+                    'updated_by'         => session('nama'),
+                    'updated_at'         => now(),
+                ]);
 
                 $synced++;
             } catch (\Exception $e) {
                 $failed++;
                 $errors[] = $orderId . ': ' . $e->getMessage();
-                Log::error('MidtransConfigController@fetchMidtransTransactionsAction: exception per order', [
-                    'order_id' => $orderId,
-                    'error'    => $e->getMessage(),
-                    'file'     => $e->getFile(),
-                    'line'     => $e->getLine(),
-                ]);
+                Log::error('MidtransConfigController@fetchMidtransTransactionsAction: exception', ['order_id' => $orderId, 'error' => $e->getMessage()]);
             }
         }
 
@@ -563,30 +545,22 @@ class MidtransConfigController extends Controller
             return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
         }
 
-        $baseUrl = $config->environment === 'production'
-            ? 'https://api.midtrans.com'
-            : 'https://api.sandbox.midtrans.com';
+        $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
 
         try {
-            $response = Http::withBasicAuth($config->server_key, '')
-                ->timeout(15)
-                ->get($baseUrl . '/v2/' . $request->order_id . '/status');
-
-            $res = $this->parseMidtransResponse($response);
+            $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->get($baseUrl . '/v2/' . $request->order_id . '/status');
+            $res      = $this->parseMidtransResponse($response);
 
             if (!isset($res['transaction_status'])) {
-                Log::warning('MidtransConfigController@syncTransaksiAction: no transaction_status returned', [
+                Log::warning('MidtransConfigController@syncTransaksiAction: no transaction_status', [
                     'order_id'    => $request->order_id,
                     'http_status' => $response->status(),
-                    'response'    => $res,
                     'raw_body'    => $response->body(),
                 ]);
-                $errMsg = $this->midtransHttpMessage($response->status(), $request->order_id, $res);
-                return response()->json(['success' => false, 'message' => $errMsg]);
+                return response()->json(['success' => false, 'message' => $this->midtransHttpMessage($response->status(), $request->order_id, $res)]);
             }
 
-            $exists = DB::table('app_midtrans_transaction')->where('order_id', $res['order_id'] ?? $request->order_id)->exists();
-
+            $exists  = Schema::hasTable('app_midtrans_transaction') && DB::table('app_midtrans_transaction')->where('order_id', $res['order_id'] ?? $request->order_id)->exists();
             $payload = [
                 'transaction_id'     => $res['transaction_id'] ?? null,
                 'transaction_status' => $res['transaction_status'] ?? null,
@@ -606,9 +580,7 @@ class MidtransConfigController extends Controller
             ];
 
             if ($exists) {
-                DB::table('app_midtrans_transaction')
-                    ->where('order_id', $res['order_id'] ?? $request->order_id)
-                    ->update($payload);
+                DB::table('app_midtrans_transaction')->where('order_id', $res['order_id'] ?? $request->order_id)->update($payload);
             } else {
                 $payload['order_id']   = $res['order_id'] ?? $request->order_id;
                 $payload['created_by'] = session('nama');
@@ -622,12 +594,7 @@ class MidtransConfigController extends Controller
                 'status'  => $res['transaction_status'] ?? '-',
             ]);
         } catch (\Exception $e) {
-            Log::error('MidtransConfigController@syncTransaksiAction: exception', [
-                'order_id' => $request->order_id,
-                'error'    => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
-            ]);
+            Log::error('MidtransConfigController@syncTransaksiAction: exception', ['order_id' => $request->order_id, 'error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -712,11 +679,7 @@ class MidtransConfigController extends Controller
             $this->dataService->createLog($request, 'updateMidtransConfigAction', 'Midtrans config updated', json_encode($updateData), json_encode($dt_exist));
             return response()->json(['success' => true, 'message' => 'Midtrans configuration saved successfully']);
         } catch (\Exception $e) {
-            Log::error('MidtransConfigController@updateMidtransConfigAction: exception', [
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-            ]);
+            Log::error('MidtransConfigController@updateMidtransConfigAction: exception', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Gagal menyimpan konfigurasi: ' . $e->getMessage()]);
         }
     }
@@ -735,17 +698,12 @@ class MidtransConfigController extends Controller
             return response()->json(['success' => false, 'message' => 'Server key not configured yet']);
         }
 
-        $baseUrl = $config->environment === 'production'
-            ? 'https://api.midtrans.com'
-            : 'https://api.sandbox.midtrans.com';
+        $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
 
         try {
             $response = Http::withBasicAuth($config->server_key, '')->timeout(10)->get($baseUrl . '/v2/payment-types');
 
             if ($response->status() === 401) {
-                Log::warning('MidtransConfigController@testConnectionAction: 401 Unauthorized — server key invalid', [
-                    'environment' => $config->environment,
-                ]);
                 return response()->json(['success' => false, 'message' => 'Invalid server key (401 Unauthorized)']);
             }
 
@@ -755,11 +713,7 @@ class MidtransConfigController extends Controller
                 'status_code' => $response->status(),
             ]);
         } catch (\Exception $e) {
-            Log::error('MidtransConfigController@testConnectionAction: exception', [
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-            ]);
+            Log::error('MidtransConfigController@testConnectionAction: exception', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Connection failed: ' . $e->getMessage()]);
         }
     }
@@ -783,22 +737,16 @@ class MidtransConfigController extends Controller
             return response()->json(['success' => false, 'message' => 'Midtrans not configured']);
         }
 
-        $baseUrl = $config->environment === 'production'
-            ? 'https://api.midtrans.com'
-            : 'https://api.sandbox.midtrans.com';
+        $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
 
         try {
-            $response = Http::withBasicAuth($config->server_key, '')
-                ->timeout(15)
-                ->get($baseUrl . '/v2/' . $request->order_id . '/status');
-
-            $res = $this->parseMidtransResponse($response);
+            $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->get($baseUrl . '/v2/' . $request->order_id . '/status');
+            $res      = $this->parseMidtransResponse($response);
 
             if ($response->failed()) {
                 Log::warning('MidtransConfigController@getTransactionStatusAction: API error', [
                     'order_id'    => $request->order_id,
                     'http_status' => $response->status(),
-                    'response'    => $res,
                     'raw_body'    => $response->body(),
                 ]);
                 return response()->json([
@@ -810,19 +758,14 @@ class MidtransConfigController extends Controller
 
             return response()->json(['success' => true, 'data' => $res]);
         } catch (\Exception $e) {
-            Log::error('MidtransConfigController@getTransactionStatusAction: exception', [
-                'order_id' => $request->order_id,
-                'error'    => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
-            ]);
+            Log::error('MidtransConfigController@getTransactionStatusAction: exception', ['order_id' => $request->order_id, 'error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
 
     // ─────────────────────────────────────────────────────────────────
     // APPROVE TRANSACTION
-    // Hanya berlaku untuk transaksi berstatus 'capture' atau 'authorize'
+    // Langsung hit Midtrans API — tidak perlu order_id ada di DB lokal
     // ─────────────────────────────────────────────────────────────────
     public function approveTransactionAction(Request $request)
     {
@@ -840,33 +783,7 @@ class MidtransConfigController extends Controller
             return response()->json(['success' => false, 'message' => 'Midtrans belum dikonfigurasi.']);
         }
 
-        // Pre-flight: cek status lokal sebelum hit Midtrans API
-        if (Schema::hasTable('app_midtrans_transaction')) {
-            $localTrx = DB::table('app_midtrans_transaction')
-                ->where('order_id', $request->order_id)
-                ->first();
-
-            if (!$localTrx) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Order ID \"{$request->order_id}\" tidak ditemukan di database lokal. Pastikan transaksi sudah dibuat atau sync terlebih dahulu.",
-                ]);
-            }
-
-            $approvableStatuses = ['capture', 'authorize'];
-            if (!in_array(strtolower($localTrx->transaction_status ?? ''), $approvableStatuses)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Transaksi tidak bisa di-approve. Status saat ini: \"{$localTrx->transaction_status}\". "
-                               . "Hanya transaksi berstatus 'capture' atau 'authorize' yang dapat di-approve.",
-                    'current_status' => $localTrx->transaction_status,
-                ]);
-            }
-        }
-
-        $baseUrl = $config->environment === 'production'
-            ? 'https://api.midtrans.com'
-            : 'https://api.sandbox.midtrans.com';
+        $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
 
         try {
             $response = Http::withBasicAuth($config->server_key, '')
@@ -876,29 +793,26 @@ class MidtransConfigController extends Controller
             $res = $this->parseMidtransResponse($response);
 
             if ($response->failed()) {
-                $errMsg = $this->midtransHttpMessage($response->status(), $request->order_id, $res);
                 Log::warning('MidtransConfigController@approveTransactionAction: API error', [
                     'order_id'    => $request->order_id,
                     'http_status' => $response->status(),
                     'response'    => $res,
                     'raw_body'    => $response->body(),
                 ]);
-                return response()->json(['success' => false, 'message' => $errMsg, 'data' => $res]);
+                return response()->json([
+                    'success' => false,
+                    'message' => $this->midtransHttpMessage($response->status(), $request->order_id, $res),
+                    'data'    => $res,
+                ]);
             }
 
-            // Update status lokal setelah approve berhasil
-            if (Schema::hasTable('app_midtrans_transaction')) {
-                DB::table('app_midtrans_transaction')
-                    ->where('order_id', $request->order_id)
-                    ->update([
-                        'transaction_status' => $res['transaction_status'] ?? 'settlement',
-                        'approval_code'      => $res['approval_code'] ?? null,
-                        'status_message'     => $res['status_message'] ?? null,
-                        'raw_response'       => json_encode($res),
-                        'updated_by'         => session('nama'),
-                        'updated_at'         => now(),
-                    ]);
-            }
+            // Update DB lokal jika record kebetulan sudah ada (opsional)
+            $this->updateLocalIfExists($request->order_id, [
+                'transaction_status' => $res['transaction_status'] ?? 'settlement',
+                'approval_code'      => $res['approval_code'] ?? null,
+                'status_message'     => $res['status_message'] ?? null,
+                'raw_response'       => json_encode($res),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -909,8 +823,6 @@ class MidtransConfigController extends Controller
             Log::error('MidtransConfigController@approveTransactionAction: exception', [
                 'order_id' => $request->order_id,
                 'error'    => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
             ]);
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -935,39 +847,26 @@ class MidtransConfigController extends Controller
             return response()->json(['success' => false, 'message' => 'Midtrans belum dikonfigurasi.']);
         }
 
-        $baseUrl = $config->environment === 'production'
-            ? 'https://api.midtrans.com'
-            : 'https://api.sandbox.midtrans.com';
+        $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
 
         try {
-            $response = Http::withBasicAuth($config->server_key, '')
-                ->timeout(15)
-                ->post($baseUrl . '/v2/' . $request->order_id . '/cancel');
-
-            $res = $this->parseMidtransResponse($response);
+            $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/v2/' . $request->order_id . '/cancel');
+            $res      = $this->parseMidtransResponse($response);
 
             if ($response->failed()) {
-                $errMsg = $this->midtransHttpMessage($response->status(), $request->order_id, $res);
                 Log::warning('MidtransConfigController@cancelTransactionAction: API error', [
                     'order_id'    => $request->order_id,
                     'http_status' => $response->status(),
-                    'response'    => $res,
                     'raw_body'    => $response->body(),
                 ]);
-                return response()->json(['success' => false, 'message' => $errMsg, 'data' => $res]);
+                return response()->json(['success' => false, 'message' => $this->midtransHttpMessage($response->status(), $request->order_id, $res), 'data' => $res]);
             }
 
-            if (Schema::hasTable('app_midtrans_transaction')) {
-                DB::table('app_midtrans_transaction')
-                    ->where('order_id', $request->order_id)
-                    ->update([
-                        'transaction_status' => $res['transaction_status'] ?? 'cancel',
-                        'status_message'     => $res['status_message'] ?? null,
-                        'raw_response'       => json_encode($res),
-                        'updated_by'         => session('nama'),
-                        'updated_at'         => now(),
-                    ]);
-            }
+            $this->updateLocalIfExists($request->order_id, [
+                'transaction_status' => $res['transaction_status'] ?? 'cancel',
+                'status_message'     => $res['status_message'] ?? null,
+                'raw_response'       => json_encode($res),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -975,12 +874,7 @@ class MidtransConfigController extends Controller
                 'data'    => $res,
             ]);
         } catch (\Exception $e) {
-            Log::error('MidtransConfigController@cancelTransactionAction: exception', [
-                'order_id' => $request->order_id,
-                'error'    => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
-            ]);
+            Log::error('MidtransConfigController@cancelTransactionAction: exception', ['order_id' => $request->order_id, 'error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -1008,9 +902,7 @@ class MidtransConfigController extends Controller
             return response()->json(['success' => false, 'message' => 'Midtrans belum dikonfigurasi.']);
         }
 
-        $baseUrl = $config->environment === 'production'
-            ? 'https://api.midtrans.com'
-            : 'https://api.sandbox.midtrans.com';
+        $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
 
         try {
             $response = Http::withBasicAuth($config->server_key, '')
@@ -1023,27 +915,19 @@ class MidtransConfigController extends Controller
             $res = $this->parseMidtransResponse($response);
 
             if ($response->failed()) {
-                $errMsg = $this->midtransHttpMessage($response->status(), $request->order_id, $res);
                 Log::warning('MidtransConfigController@refundTransactionAction: API error', [
                     'order_id'    => $request->order_id,
                     'http_status' => $response->status(),
-                    'response'    => $res,
                     'raw_body'    => $response->body(),
                 ]);
-                return response()->json(['success' => false, 'message' => $errMsg, 'data' => $res]);
+                return response()->json(['success' => false, 'message' => $this->midtransHttpMessage($response->status(), $request->order_id, $res), 'data' => $res]);
             }
 
-            if (Schema::hasTable('app_midtrans_transaction')) {
-                DB::table('app_midtrans_transaction')
-                    ->where('order_id', $request->order_id)
-                    ->update([
-                        'transaction_status' => $res['transaction_status'] ?? 'refund',
-                        'status_message'     => $res['status_message'] ?? null,
-                        'raw_response'       => json_encode($res),
-                        'updated_by'         => session('nama'),
-                        'updated_at'         => now(),
-                    ]);
-            }
+            $this->updateLocalIfExists($request->order_id, [
+                'transaction_status' => $res['transaction_status'] ?? 'refund',
+                'status_message'     => $res['status_message'] ?? null,
+                'raw_response'       => json_encode($res),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -1051,12 +935,7 @@ class MidtransConfigController extends Controller
                 'data'    => $res,
             ]);
         } catch (\Exception $e) {
-            Log::error('MidtransConfigController@refundTransactionAction: exception', [
-                'order_id' => $request->order_id,
-                'error'    => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
-            ]);
+            Log::error('MidtransConfigController@refundTransactionAction: exception', ['order_id' => $request->order_id, 'error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -1080,39 +959,26 @@ class MidtransConfigController extends Controller
             return response()->json(['success' => false, 'message' => 'Midtrans belum dikonfigurasi.']);
         }
 
-        $baseUrl = $config->environment === 'production'
-            ? 'https://api.midtrans.com'
-            : 'https://api.sandbox.midtrans.com';
+        $baseUrl = $config->environment === 'production' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
 
         try {
-            $response = Http::withBasicAuth($config->server_key, '')
-                ->timeout(15)
-                ->post($baseUrl . '/v2/' . $request->order_id . '/expire');
-
-            $res = $this->parseMidtransResponse($response);
+            $response = Http::withBasicAuth($config->server_key, '')->timeout(15)->post($baseUrl . '/v2/' . $request->order_id . '/expire');
+            $res      = $this->parseMidtransResponse($response);
 
             if ($response->failed()) {
-                $errMsg = $this->midtransHttpMessage($response->status(), $request->order_id, $res);
                 Log::warning('MidtransConfigController@expireTransactionAction: API error', [
                     'order_id'    => $request->order_id,
                     'http_status' => $response->status(),
-                    'response'    => $res,
                     'raw_body'    => $response->body(),
                 ]);
-                return response()->json(['success' => false, 'message' => $errMsg, 'data' => $res]);
+                return response()->json(['success' => false, 'message' => $this->midtransHttpMessage($response->status(), $request->order_id, $res), 'data' => $res]);
             }
 
-            if (Schema::hasTable('app_midtrans_transaction')) {
-                DB::table('app_midtrans_transaction')
-                    ->where('order_id', $request->order_id)
-                    ->update([
-                        'transaction_status' => $res['transaction_status'] ?? 'expire',
-                        'status_message'     => $res['status_message'] ?? null,
-                        'raw_response'       => json_encode($res),
-                        'updated_by'         => session('nama'),
-                        'updated_at'         => now(),
-                    ]);
-            }
+            $this->updateLocalIfExists($request->order_id, [
+                'transaction_status' => $res['transaction_status'] ?? 'expire',
+                'status_message'     => $res['status_message'] ?? null,
+                'raw_response'       => json_encode($res),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -1120,12 +986,7 @@ class MidtransConfigController extends Controller
                 'data'    => $res,
             ]);
         } catch (\Exception $e) {
-            Log::error('MidtransConfigController@expireTransactionAction: exception', [
-                'order_id' => $request->order_id,
-                'error'    => $e->getMessage(),
-                'file'     => $e->getFile(),
-                'line'     => $e->getLine(),
-            ]);
+            Log::error('MidtransConfigController@expireTransactionAction: exception', ['order_id' => $request->order_id, 'error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
     }
